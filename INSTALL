@@ -1,0 +1,7 @@
+Installation Instructions
+*************************
+
+./configure 
+make 
+make install 
+
