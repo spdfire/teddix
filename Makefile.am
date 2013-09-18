@@ -43,25 +43,14 @@ do_substitution = sed -e 's,[@]pythondir[@],$(pythondir),g' \
 						-e 's,[@]PACKAGE[@],$(PACKAGE),g' \
 						-e 's,[@]VERSION[@],$(VERSION),g' 
 
-#do_substitution = sed -i 's,[@]pythondir[@],$(pythondir),g' \
-#						-i 's,[@]PACKAGE[@],$(PACKAGE),g' \
-#						-i 's,[@]VERSION[@],$(VERSION),g'
-
 CLEANDIRS = build/*
 clean-local:
 	test -e "$(CLEANDIRS)" || rm -rf $(CLEANDIRS)
-	test -d build || rmdir build
-
-#install-exec-local:
-#	$(mkinstalldirs) $(DESTDIR)$(localstatedir)/lib/teddix/archive
-#	echo "Teddix workdir" > $(DESTDIR)$(localstatedir)/lib/teddix/.placekeeper
+	test -e build || rmdir build
 
 build/TeddixServer: Makefile
 	test -e build || mkdir build
 	$(do_substitution) src/TeddixServer.py > build/TeddixServer 
 	$(do_substitution) src/TeddixAgent.py > build/TeddixAgent 
-	$(do_substitution) src/TeddixCron.py > build/TeddixCron
 	chmod +x $(bin_SCRIPTS) 
 
-#make -f Makefile.cfg2html build 
-#make -f Makefile.ora2html build 
