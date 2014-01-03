@@ -29,6 +29,7 @@ teddixlogdir = $(localstatedir)/log/teddix
 # libteddix
 libteddix_PYTHON = src/TeddixLogger.py \
 						 src/TeddixConfigFile.py \
+						 src/TeddixDatabase.py \
 						 src/TeddixInventory.py \
 						 src/TeddixLinux.py \
 						 src/TeddixAix.py \

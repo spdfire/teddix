@@ -52,6 +52,9 @@ AC_PYTHON_MODULE(subprocess)
 AC_PYTHON_MODULE(xml.dom.minidom)
 AC_PYTHON_MODULE(xml.etree.ElementTree)
 
+# SQL
+AC_PYTHON_MODULE(MySQLdb)
+
 # Checks for programs.
 AC_PROG_AWK
 AC_PROG_SED

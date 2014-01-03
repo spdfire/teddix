@@ -68,10 +68,16 @@ class TeddixServer:
     def print_time(self):
         self.syslog.debug("Time: " )
 
+    def convert_to_seconds(self,s):
+        s = s.strip()
+        s = s.lower()
+        seconds_per_unit = {"s": 1, "m": 60, "h": 3600, "d": 86400, "w": 604800, "y": 31556926 }
+        return int(s[:-1]) * seconds_per_unit[s[-1]]
+
     def make_request(self,host,request):
         self.syslog.debug("%s: Make request \"GET %s\" " % (host,request))
         try:
-            conn = httplib.HTTPSConnection(host, 45003,timeout=120)
+            conn = httplib.HTTPSConnection(host, 45003,timeout=30)
             conn.request("GET", request)
             resp = conn.getresponse()
             conn.close()
@@ -101,7 +107,7 @@ class TeddixServer:
                 os.makedirs(host)
             except Exception, e:
                 syslog.error("%s: Unable to create workdir" % host )
-                syslog.exception('__init__(): %s' % e )
+                syslog.exception('save_request(): %s' % e )
                 exit(20)
 
         if not os.access(host, os.R_OK):
@@ -152,7 +158,7 @@ class TeddixServer:
             workers = cfg.server_workers
 
         if cfg.server_refresh == None:
-            refresh = 86400
+            refresh = "1d"
         else: 
             refresh = cfg.server_refresh
         
@@ -199,15 +205,14 @@ class TeddixServer:
             while (threading.active_count() > 1) and (not self.terminate):
                 time.sleep(1)
 
-            refresh = 60 
             if not self.terminate:
-                syslog.info("main: Sleeping for %s seconds" % refresh )
-                time.sleep(refresh)
+                syslog.info("main: Sleeping for %s " % refresh )
+                time.sleep(self.convert_to_seconds(refresh))
 
         # wait for process to finish their job 
         if threading.active_count() > 1: 
-            syslog.debug('main: waiting 10s for remaining %d workers' % (threading.active_count()-1))
-            time.sleep(10)
+            syslog.debug('main: waiting 30s for remaining %d workers' % (threading.active_count()-1))
+            time.sleep(30)
         
         # if there are any workers left, teminate them.
         if threading.active_count() > 1: 

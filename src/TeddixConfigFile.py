@@ -26,9 +26,15 @@ class TeddixConfigFile ():
     server_user       = "root"
     server_group      = "root"
     server_workers    = 10
-    server_refresh    = 86400
+    server_refresh    = "1d"
     server_pidfile    = "/var/run/TeddixServer.pid"
     server_serverlist = "/etc/teddix/serverlist"
+    server_dbtype     = "mysql"
+    server_dbhost     = "localhost"
+    server_dbport     = 3306
+    server_dbuser     = "teddix"
+    server_dbpass     = "test123"
+    server_dbname     = "teddix"
 
     def __init__ (self,config=None):
 
@@ -102,7 +108,19 @@ class TeddixConfigFile ():
             if parser.has_option('server','pidfile'):
                 self.server_pidfile    = parser.getint('server','pidfile').strip()
             if parser.has_option('server','serverlist'):
-                self.server_serverlist   = parser.get('server','serverlist').strip()
+                self.server_serverlist = parser.get('server','serverlist').strip()
+            if parser.has_option('server','dbtype'):
+                self.server_dbtype     = parser.getint('server','dbtype').strip()
+            if parser.has_option('server','dbhost'):
+                self.server_dbhost     = parser.getint('server','dbhost').strip()
+            if parser.has_option('server','dbport'):
+                self.server_dbport     = parser.getint('server','dbport').strip()
+            if parser.has_option('server','dbuser'):
+                self.server_dbuser     = parser.getint('server','dbuser').strip()
+            if parser.has_option('server','dbpass'):
+                self.server_dbpass     = parser.getint('server','dbpass').strip()
+            if parser.has_option('server','dbname'):
+                self.server_dbname     = parser.getint('server','dbname').strip()
 
         except:
             print "Error parsing %s: wrong option detected!" % config
@@ -146,4 +164,10 @@ if __name__ == "__main__":
     print "refresh=%s"      % cfg.server_refresh
     print "pidfile=%s"      % cfg.server_pidfile
     print "serverlist=%s"   % cfg.server_serverlist
+    print "dbtype=%s"       % cfg.server_dbtype
+    print "dbhost=%s"       % cfg.server_dbhost
+    print "dbport=%s"       % cfg.server_dbport
+    print "dbuser=%s"       % cfg.server_dbuser
+    print "dbpass=%s"       % cfg.server_dbpass
+    print "dbname=%s"       % cfg.server_dbname
 
