@@ -81,13 +81,13 @@ class TeddixConfigFile ():
             if parser.has_option('agent','port'):
                 self.agent_port       = parser.getint('agent','port').strip()
             if parser.has_option('agent','user'):
-                self.agent_user       = parser.getint('agent','user').strip()
+                self.agent_user       = parser.get('agent','user').strip()
             if parser.has_option('agent','group'):
-                self.agent_group       = parser.getint('agent','group').strip()
+                self.agent_group       = parser.get('agent','group').strip()
             if parser.has_option('agent','workers'):
                 self.agent_workers    = parser.getint('agent','workers').strip()
             if parser.has_option('agent','pidfile'):
-                self.agent_pidfile    = parser.getint('agent','pidfile').strip()
+                self.agent_pidfile    = parser.get('agent','pidfile').strip()
             if parser.has_option('agent','cfg2html'):
                 self.agent_cfg2html   = parser.get('agent','cfg2html').strip()
             if parser.has_option('agent','ora2html'):
@@ -98,29 +98,29 @@ class TeddixConfigFile ():
                 self.agent_ora2html   = parser.get('agent','keyfile').strip()
 
             if parser.has_option('server','user'):
-                self.server_user       = parser.getint('server','user').strip()
+                self.server_user       = parser.get('server','user').strip()
             if parser.has_option('server','group'):
-                self.server_group       = parser.getint('server','group').strip()
+                self.server_group       = parser.get('server','group').strip()
             if parser.has_option('server','workers'):
                 self.server_workers    = parser.getint('server','workers').strip()
             if parser.has_option('server','refresh'):
-                self.server_workers    = parser.getint('server','refresh').strip()
+                self.server_refresh    = parser.get('server','refresh').strip()
             if parser.has_option('server','pidfile'):
-                self.server_pidfile    = parser.getint('server','pidfile').strip()
+                self.server_pidfile    = parser.get('server','pidfile').strip()
             if parser.has_option('server','serverlist'):
                 self.server_serverlist = parser.get('server','serverlist').strip()
             if parser.has_option('server','dbtype'):
-                self.server_dbtype     = parser.getint('server','dbtype').strip()
+                self.server_dbtype     = parser.get('server','dbtype').strip()
             if parser.has_option('server','dbhost'):
-                self.server_dbhost     = parser.getint('server','dbhost').strip()
+                self.server_dbhost     = parser.get('server','dbhost').strip()
             if parser.has_option('server','dbport'):
                 self.server_dbport     = parser.getint('server','dbport').strip()
             if parser.has_option('server','dbuser'):
-                self.server_dbuser     = parser.getint('server','dbuser').strip()
+                self.server_dbuser     = parser.get('server','dbuser').strip()
             if parser.has_option('server','dbpass'):
-                self.server_dbpass     = parser.getint('server','dbpass').strip()
+                self.server_dbpass     = parser.get('server','dbpass').strip()
             if parser.has_option('server','dbname'):
-                self.server_dbname     = parser.getint('server','dbname').strip()
+                self.server_dbname     = parser.get('server','dbname').strip()
 
         except:
             print "Error parsing %s: wrong option detected!" % config
