@@ -79,13 +79,13 @@ class TeddixConfigFile ():
             if parser.has_option('agent','listen'):
                 self.agent_listen     = parser.get('agent','listen').strip()
             if parser.has_option('agent','port'):
-                self.agent_port       = parser.getint('agent','port').strip()
+                self.agent_port       = parser.getint('agent','port')
             if parser.has_option('agent','user'):
                 self.agent_user       = parser.get('agent','user').strip()
             if parser.has_option('agent','group'):
                 self.agent_group       = parser.get('agent','group').strip()
             if parser.has_option('agent','workers'):
-                self.agent_workers    = parser.getint('agent','workers').strip()
+                self.agent_workers    = parser.getint('agent','workers')
             if parser.has_option('agent','pidfile'):
                 self.agent_pidfile    = parser.get('agent','pidfile').strip()
             if parser.has_option('agent','cfg2html'):
@@ -102,7 +102,7 @@ class TeddixConfigFile ():
             if parser.has_option('server','group'):
                 self.server_group       = parser.get('server','group').strip()
             if parser.has_option('server','workers'):
-                self.server_workers    = parser.getint('server','workers').strip()
+                self.server_workers    = parser.getint('server','workers')
             if parser.has_option('server','refresh'):
                 self.server_refresh    = parser.get('server','refresh').strip()
             if parser.has_option('server','pidfile'):
@@ -114,7 +114,7 @@ class TeddixConfigFile ():
             if parser.has_option('server','dbhost'):
                 self.server_dbhost     = parser.get('server','dbhost').strip()
             if parser.has_option('server','dbport'):
-                self.server_dbport     = parser.getint('server','dbport').strip()
+                self.server_dbport     = parser.getint('server','dbport')
             if parser.has_option('server','dbuser'):
                 self.server_dbuser     = parser.get('server','dbuser').strip()
             if parser.has_option('server','dbpass'):
