@@ -77,7 +77,7 @@ class TeddixServer:
     def make_request(self,host,request):
         self.syslog.debug("%s: Make request \"GET %s\" " % (host,request))
         try:
-            conn = httplib.HTTPSConnection(host, 45003,timeout=30)
+            conn = httplib.HTTPSConnection(host, 45003,timeout=600)
             conn.request("GET", request)
             resp = conn.getresponse()
             conn.close()
@@ -87,8 +87,8 @@ class TeddixServer:
             return 
 
         except Exception, e:
-            self.syslog.error("%s: Unable to connect to server" % host)
-            self.syslog.exception('make_request(): %s' % e )
+            self.syslog.warn("%s: Unable to connect to server" % host)
+            # self.syslog.exception('make_request(): %s' % e )
             return 
 
         if resp.status != httplib.OK: 
@@ -135,15 +135,18 @@ class TeddixServer:
 
         # 1. GET /cfg2html 
         req = self.make_request(host,'/cfg2html')
-        self.save_request(req,'cfg2html.html',host)
+        if req != None: 
+            self.save_request(req,'cfg2html.html',host)
 
         # 2. GET /ora2html
         req = self.make_request(host,'/ora2html')
-        self.save_request(req,'ora2html.html',host)
+        if req != None: 
+            self.save_request(req,'ora2html.html',host)
 
         # 3. GET /baseline 
         req = self.make_request(host,'/baseline')
-        self.save_request(req,'baseline.xml',host)
+        if req != None: 
+            self.save_request(req,'baseline.xml',host)
 
         self.syslog.debug("%s: Stopping worker" % host )
         self.queue.task_done()
@@ -184,9 +187,10 @@ class TeddixServer:
                 exit(20)
 
             for host in f:
+                if (threading.active_count() > workers) and (not self.terminate): 
+                    syslog.debug('main: Reached max active workers count (%d): sleeping ...' % (threading.active_count() -1) )
                 while (threading.active_count() > workers) and (not self.terminate): 
-                    syslog.debug('main: Reached max active workers count (%d): sleeping...' % threading.active_count())
-                    time.sleep(60)
+                    time.sleep(1)
                 
                 if not self.terminate:
                     t = threading.Thread(target=self.worker_thread)
