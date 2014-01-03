@@ -461,7 +461,7 @@ class TeddixCfg2Html:
 
     def run(self):
         try:
-            subprocess.check_call(self.cfg.agent_cfg2html)
+            subprocess.Popen(self.cfg.agent_cfg2html,stderr=subprocess.STDOUT, stdout=subprocess.PIPE).communicate()[0]
             self.syslog.info("cfg2html succeeded ")
         except Exception, e:
             self.syslog.warn("cfg2html failed ")
@@ -482,7 +482,7 @@ class TeddixOra2Html:
 
     def run(self):
         try:
-            subprocess.check_call([self.cfg.agent_ora2html,"-file", self.ora2html_file])
+            subprocess.Popen([self.cfg.agent_ora2html,"-file", self.ora2html_file], stderr=subprocess.STDOUT, stdout=subprocess.PIPE).communicate()[0]
             self.syslog.info("ora2html succeeded ")
         except Exception, e:
             self.syslog.warn("ora2html failed ")
