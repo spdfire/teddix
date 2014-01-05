@@ -47,6 +47,9 @@ import TeddixConfigFile
 # Teddix Baseline
 import TeddixInventory
 
+# SQL Database
+import TeddixDatabase
+
 
 
 class TeddixServer:
@@ -125,7 +128,27 @@ class TeddixServer:
         outfile.write(html)
         outfile.close()
 
+    def save_into_database(self,database,host,cfg2html,ora2html,baseline):
+        self.syslog.debug("%s: Save in database " % (host))
 
+        # Get server ID 
+        sql = "SELECT id FROM server WHERE LOWER(name) = \"%s\" " % host 
+        database.execute(sql)
+        result = database.fetchall()
+        for row in result:
+            server_id = row[0] 
+        
+        #TODO: check if only one record is returned, rollback if req 
+        if database.rowcount() > 1: 
+            self.syslog.warn("SQL Duplicate IDs for server %s " % host)
+
+        syslog.debug("SQL result: server %s have ID %s " % (host,row[0]))
+
+        sql  = "INSERT INTO extra(server_id,created,cfg2html,ora2html,baseline) "
+        sql += "VALUES(%s,CURDATE(),\"%s\",\"%s\",\"%s\")" 
+        sql = sql % (server_id,cfg2html,ora2html,baseline)
+        database.execute(sql)
+    
     
     def worker_thread(self):
        
@@ -134,42 +157,109 @@ class TeddixServer:
         self.syslog.debug("%s: Starting worker " % host )
 
         # 1. GET /cfg2html 
-        req = self.make_request(host,'/cfg2html')
-        if req != None: 
-            self.save_request(req,'cfg2html.html',host)
+        cfg2html = self.make_request(host,'/cfg2html')
 
         # 2. GET /ora2html
-        req = self.make_request(host,'/ora2html')
-        if req != None: 
-            self.save_request(req,'ora2html.html',host)
+        ora2html = self.make_request(host,'/ora2html')
 
         # 3. GET /baseline 
-        req = self.make_request(host,'/baseline')
-        if req != None: 
-            self.save_request(req,'baseline.xml',host)
+        baseline = self.make_request(host,'/baseline')
+
+        # 4. Insert report to Database
+        if cfg2html == None and ora2html == None and baseline == None:
+            self.syslog.debug("%s: Agent is not responding" % host )
+        else:
+            # We have some results 
+            if cfg2html == None: 
+                cfg2html = "Empty cfg2html message from agent"
+            if ora2html == None: 
+                ora2html = "Empty ora2html message from agent"
+            if baseline == None: 
+                baseline = "Empty baseline message from agent"
+            
+            # keep it in b64
+            root = xml.fromstring(cfg2html)
+            cfg2html = root.find('data').text
+            root = xml.fromstring(ora2html)
+            ora2html = root.find('data').text
+            root = xml.fromstring(baseline)
+            baseline = root.find('data').text
+
+            # TODO: SQLi
+
+            database = TeddixDatabase.TeddixDatabase(syslog,cfg);
+            self.save_into_database(database,host,cfg2html,ora2html,baseline)
+            database.commit()
+            database.disconnect()
 
         self.syslog.debug("%s: Stopping worker" % host )
         self.queue.task_done()
 
 
     def create_server(self,syslog,cfg):
-
-        # Start workers
-        if cfg.server_workers == None:
-            workers = 10
-        else: 
-            workers = cfg.server_workers
-
-        if cfg.server_refresh == None:
-            refresh = "1d"
-        else: 
-            refresh = cfg.server_refresh
         
-        serverlist = cfg.server_serverlist
-            
-        self.queue = Queue.Queue()
         self.terminate = False 
-            
+        self.queue = Queue.Queue()
+             
+        try: 
+            f = open(cfg.server_serverlist, 'r')
+        except Exception, e:
+            self.syslog.error("main: Unable to open: %s " % cfg.server_serverlist)
+            self.syslog.exception('create_server(): %s' % e )
+            exit(20)
+
+        # find duplicates in server_list 
+        seen = set()
+        line_number = 0
+        for line in f:
+            line_number += 1  
+            line = line.strip()
+            line = line.lower()
+            if line in seen:
+                self.syslog.error("main: duplicate entry: %s on line: %d " % (line,line_number))
+                exit(21)
+            else:
+                seen.add(line)
+
+        # Connect to Database 
+        database = TeddixDatabase.TeddixDatabase(syslog,cfg);
+        database.execute("SELECT VERSION();")
+        
+        # keep hostlist in sync to DB
+        self.syslog.info("main: Checking database integrity ")
+        for host in f:
+            if not self.terminate: 
+                host = host.strip()
+                host = host.lower()
+                sql = "SELECT id FROM server WHERE LOWER(name) = \"%s\" " % host 
+                database.execute(sql)
+                count = database.rowcount() 
+
+                if count < 1:
+                    self.syslog.info("SQL adding new host(%s) to database" % host)
+                    sql = "INSERT INTO server(name,created) VALUES (\"%s\",NOW()); " % host 
+                    database.execute(sql)
+                    database.commit()
+
+                if count > 1: 
+                    self.syslog.warn("SQL Cleaning duplicate server names %s " % host)
+                    result = database.fetchall()
+                    for row in result:
+                        server_id = row[0]
+                        sql = "DELETE FROM extra WHERE server_id = %s " % server_id 
+                        database.execute(sql)
+                        sql = "DELETE FROM baseline WHERE server_id = %s " % server_id 
+                        database.execute(sql)
+                        sql = "DELETE FROM server WHERE id = \"%s\" " % server_id
+                        database.execute(sql)
+
+                    sql = "INSERT INTO server(name,created) VALUES (\"%s\",NOW()); " % host 
+                    database.execute(sql)
+                    database.commit()
+
+        database.disconnect()
+        f.close()
+    
         syslog.info("main: Entering Server loop" )
         while not self.terminate:
             # start scheduler
@@ -180,16 +270,16 @@ class TeddixServer:
             syslog.info("main: Started queue run" )
 
             try: 
-                f = open(serverlist, 'r')
+                f = open(cfg.server_serverlist, 'r')
             except Exception, e:
-                syslog.error("main: Unable to open: %s " % serverlist)
-                syslog.exception('__init__(): %s' % e )
+                syslog.error("main: Unable to open: %s " % cfg.server_serverlist)
+                syslog.exception('create_server(): %s' % e )
                 exit(20)
 
             for host in f:
-                if (threading.active_count() > workers) and (not self.terminate): 
+                if (threading.active_count() > cfg.server_workers) and (not self.terminate): 
                     syslog.debug('main: Reached max active workers count (%d): sleeping ...' % (threading.active_count() -1) )
-                while (threading.active_count() > workers) and (not self.terminate): 
+                while (threading.active_count() > cfg.server_workers) and (not self.terminate): 
                     time.sleep(1)
                 
                 if not self.terminate:
@@ -197,7 +287,9 @@ class TeddixServer:
                     t.setDaemon(1)
                     t.start()
 
-                    self.queue.put(host.strip())
+                    host = host.strip()
+                    host = host.lower()
+                    self.queue.put(host)
 
             f.close()
             syslog.info("main: Finished queue run" )
@@ -210,8 +302,8 @@ class TeddixServer:
                 time.sleep(1)
 
             if not self.terminate:
-                syslog.info("main: Sleeping for %s " % refresh )
-                time.sleep(self.convert_to_seconds(refresh))
+                syslog.info("main: Sleeping for %s " % cfg.server_refresh )
+                time.sleep(self.convert_to_seconds(cfg.server_refresh))
 
         # wait for process to finish their job 
         if threading.active_count() > 1: 
@@ -226,7 +318,7 @@ class TeddixServer:
                     syslog.info('main: TODO: killing workerX ')
                     #thread.kill()
 
-        # Stop TCP server
+        # Stop server
         syslog.info("main: Stopping TeddixServer")
 
 
@@ -307,6 +399,8 @@ class TeddixServer:
             signal.signal(signal.SIGINT, self.sig_handler)
             signal.signal(signal.SIGTERM, self.sig_handler)
             self.create_server(syslog,cfg)
+
+
 
 
 def parse_opts():

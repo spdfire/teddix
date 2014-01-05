@@ -50,13 +50,12 @@ class TeddixDatabase:
 
     def execute(self,sql):
         # Try to run the query and catch any exception
-        self.syslog.debug("SQL execute(): \"%s\" " % sql )
+        self.syslog.debug("SQL execute(): %s " % sql[:100] )
         try:
             self.cursor.execute(sql)
-            self.db.commit()
         except Exception, e:
             self.syslog.error("SQL error: %s" % e)
-            self.syslog.warning("Starting rollback")
+            self.syslog.warn("Starting rollback")
             self.db.rollback()
     
     def fetchall(self):
@@ -69,11 +68,38 @@ class TeddixDatabase:
 
         return result
 
+    def rowcount(self):
+        try:
+            result = self.cursor.rowcount
+            self.syslog.debug("SQL rowcount(): %s" % result)
+        except Exception, e:
+            self.syslog.warn("Error in SQL rowcount(): %s" % e)
+            return 
+
+        return result
+
+    def commit(self):
+        self.syslog.debug("SQL commit()")
+        try:
+            self.db.commit()
+        except Exception, e:
+            self.syslog.warn("Error in SQL commit(): %s" % e)
+            return 
+
+    def rollback(self):
+        self.syslog.debug("SQL rollback()")
+        try:
+            self.db.rollback()
+        except Exception, e:
+            self.syslog.warn("Error in SQL rollback(): %s" % e)
+            return 
+
     def __init__(self,syslog,cfg):
         self.syslog = syslog
         self.dbtype = cfg.server_dbtype 
         self.connect(cfg.server_dbtype,cfg.server_dbhost,int(cfg.server_dbport),cfg.server_dbname,cfg.server_dbpass,cfg.server_dbname)
         self.cursor = self.db.cursor()
+        self.db.autocommit(False)
 
 def parse_opts():
 
