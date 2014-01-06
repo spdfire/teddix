@@ -91,40 +91,50 @@ class TeddixTCPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 
     def do_GET(self):
+        # TODO: remove thread synchronization 
         if self.path == '/cfg2html':
             self.syslog.info("Generating /cfg2html")
+            self.lock.acquire()
             try:
                 cfg2html = TeddixInventory.TeddixCfg2Html(self.syslog,self.cfg)
                 cfg2html.run()
                 html = base64.b64encode(cfg2html.create_html())
                 self.send_message(200,"Request successful",html)
                 self.syslog.info("%s: /cfg2html request sent" % self.address_string())
+                self.lock.release()
             except Exception, e:
                 self.syslog.warn("%s: /cfg2html request failed" % self.address_string())
                 self.syslog.debug("do_GET() %s " % e)
+                self.lock.release()
 
         elif self.path == '/ora2html':
             self.syslog.info("Generating /ora2html")
+            self.lock.acquire()
             try:
                 ora2html = TeddixInventory.TeddixOra2Html(self.syslog,self.cfg)
                 ora2html.run()
                 html = base64.b64encode(ora2html.create_html())
                 self.send_message(200,"Request successful",html)
                 self.syslog.info("%s: /ora2html request sent" % self.address_string())
+                self.lock.release()
             except Exception, e:
                 self.syslog.warn("%s: /ora2html request failed" % self.address_string())
                 self.syslog.debug("do_GET() %s " % e)
+                self.lock.release()
 
         elif self.path == '/baseline':
             self.syslog.info("Generating /baseline")
+            self.lock.acquire()
             try:
                 baseline = TeddixInventory.TeddixBaseline(self.syslog,self.cfg)
                 xml = base64.b64encode(baseline.create_xml())
                 self.send_message(200,"Request successful",xml)
                 self.syslog.info("%s: /baseline request sent" % self.address_string())
+                self.lock.release()
             except Exception, e:
                 self.syslog.warn("%s: /baseline request failed" % self.address_string())
                 self.syslog.debug("do_GET() %s " % e)
+                self.lock.release()
 
         else:
             self.send_error(501, "Unsupported location (%s)" % self.path)
@@ -133,6 +143,7 @@ class TeddixTCPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def setup(self):
         self.syslog = self.server.syslog
         self.cfg = self.server.cfg
+        self.lock = self.server.lock
         self.timeout = 30
 
         self.error_message_format = TEDDIX_ERROR_MESSAGE
@@ -177,6 +188,7 @@ class TeddixTCPServer(SocketServer.ThreadingMixIn, BaseHTTPServer.HTTPServer):
         self.syslog = syslog
         self.cfg = cfg
         self.numThreads = threads
+        self.lock = threading.Lock()
 
         try:
             BaseHTTPServer.HTTPServer.__init__(self, server_address, TeddixTCPRequestHandler, bind_and_activate=False)
@@ -198,6 +210,7 @@ class TeddixTCPServer(SocketServer.ThreadingMixIn, BaseHTTPServer.HTTPServer):
         # setup the threadpool
         self.numThreads = workers
         self.requests = Queue.Queue(self.numThreads)
+
 
         for x in range(self.numThreads):
             t = threading.Thread(target = self.process_request_thread)
