@@ -102,31 +102,57 @@ class TeddixServer:
             data = resp.read()
             return data
 
-    def save_request(self,request,ofile,host):
-        self.syslog.debug("%s: Save request in \"%s\" " % (host,ofile))
-        # Switch to working directory
-        if not os.path.exists(host):
-            try:
-                os.makedirs(host)
-            except Exception, e:
-                syslog.error("%s: Unable to create workdir" % host )
-                syslog.exception('save_request(): %s' % e )
-                exit(20)
+    def parse_reply(self,host,msg):
+        root = xml.fromstring(msg)
+        if root.get('version') != '2.0':
+            self.syslog.warn("%s: Unknown message protocol version" % host)
+            return None
+        if root.get('program') != 'teddix':
+            self.syslog.warn("%s: Unknown message " % host)
+            return None
+        if root.get('type') != 'reply':
+            self.syslog.warn("%s: Unknown message " % host)
+            return None
+       
+        reply = root.find('reply')
+        request = reply.find('request').text
+        
+        if reply.find('code').text != '200': 
+            result = reply.find('result').text
+            info = reply.find('info').text
+            code = reply.find('code').text
+            self.syslog.warn("%s: server error: %s(code: %s) info: %s " % (host,result,code,info) )
+            return None
 
-        if not os.access(host, os.R_OK):
-            syslog.error("workdir %s needs to be readable" % host )
-        if not os.access(host, os.W_OK):
-            syslog.error("workdir %s needs to be writable" % host)
-        if not os.access(host, os.X_OK):
-            syslog.error("workdir %s needs to be executable" % host)
+        data = reply.find('data')
+        return data
+        
 
-        root = xml.fromstring(request)
-        b64 = root.find('data').text
-        html = base64.b64decode(b64)
-        #print html
-        outfile = file(host + '/' + ofile, 'w')
-        outfile.write(html)
-        outfile.close()
+#    def save_request(self,request,ofile,host):
+#        self.syslog.debug("%s: Save request in \"%s\" " % (host,ofile))
+#        # Switch to working directory
+#        if not os.path.exists(host):
+#            try:
+#                os.makedirs(host)
+#            except Exception, e:
+#                syslog.error("%s: Unable to create workdir" % host )
+#                syslog.exception('save_request(): %s' % e )
+#                exit(20)
+#
+#        if not os.access(host, os.R_OK):
+#            syslog.error("workdir %s needs to be readable" % host )
+#        if not os.access(host, os.W_OK):
+#            syslog.error("workdir %s needs to be writable" % host)
+#        if not os.access(host, os.X_OK):
+#            syslog.error("workdir %s needs to be executable" % host)
+##
+#        root = xml.fromstring(request)
+#        b64 = root.find('data').text
+#        html = base64.b64decode(b64)
+#        #print html
+#        outfile = file(host + '/' + ofile, 'w')
+#        outfile.write(html)
+#        outfile.close()
 
     def save_into_database(self,database,host,cfg2html,ora2html,baseline):
         self.syslog.debug("%s: Save in database " % (host))
@@ -169,13 +195,41 @@ class TeddixServer:
         if cfg2html == None and ora2html == None and baseline == None:
             self.syslog.debug("%s: Agent is not responding" % host )
         else:
+            # 4.1 Insert baseline report to database
+            data = self.parse_reply(host,baseline)
+            if data == None: 
+                self.syslog.warn("%s: Unable to parse reply" % host )
+
+            else: 
+                baseline = data.find('baseline')
+                # Put into DB 
+
+            # 4.2 Insert cfg2html report to database
+            data = self.parse_reply(host,cfg2html)
+            if data == None: 
+                self.syslog.warn("%s: Unable to parse reply" % host )
+
+            else: 
+                cfg2html = data.find('cfg2html')
+                # Put into DB 
+
+            # 4.3 Insert ora2html report to database
+            data = self.parse_reply(host,ora2html)
+            if data == None: 
+                self.syslog.warn("%s: Unable to parse reply" % host )
+
+            else: 
+                ora2html = data.find('cfg2html')
+                # Put into DB 
+
+
             # We have some results 
-            if cfg2html == None: 
-                cfg2html = "Empty cfg2html message from agent"
-            if ora2html == None: 
-                ora2html = "Empty ora2html message from agent"
-            if baseline == None: 
-                baseline = "Empty baseline message from agent"
+            #if cfg2html == None: 
+            #    cfg2html = "Empty cfg2html message from agent"
+            #if ora2html == None: 
+            #    ora2html = "Empty ora2html message from agent"
+            #if baseline == None: 
+            #    baseline = "Empty baseline message from agent"
             
             # Parse MSG
             # save result in db 
