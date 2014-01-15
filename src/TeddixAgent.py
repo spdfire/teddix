@@ -22,6 +22,9 @@ import pwd
 import grp
 import os
 
+import xml.dom.minidom as minidom
+import xml.etree.ElementTree as xml
+
 # Signals
 import signal
 
@@ -46,30 +49,85 @@ import TeddixConfigFile
 # Teddix Baseline
 import TeddixInventory
 
-# Default error message template
-TEDDIX_ERROR_MESSAGE = """\
-<reply>
-    <type>ERROR</type>
-    <code>%(code)d</code>
-    <message>Message: %(message)s</message>
-    <data>Error code explanation: %(code)s = %(explain)s</data>
-</reply>
-"""
-
-TEDDIX_DEFAULT_MESSAGE = """\
-<reply>
-    <type>SUCCESS</type>
-    <code>%(code)d</code>
-    <message>Message: %(message)s</message>
-    <data>%(data)s</data>
-</reply>
-"""
-
-TEDDIX_ERROR_CONTENT_TYPE = "text/xml"
-TEDDIX_DEFAULT_CONTENT_TYPE = "text/xml"
-
 
 class TeddixTCPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+
+    def create_message_baseline(self,syslog,cfg):
+        baseline = TeddixInventory.TeddixBaseline(syslog,cfg)
+        raw_baseline = baseline.create_xml()
+        report_root = xml.fromstring(raw_baseline)
+        
+        baseline = xml.Element('baseline')
+        baseline.append(report_root)
+
+        return xml.tostring(baseline, 'utf-8')
+ 
+    def create_message_cfg2html(self,syslog,cfg):
+        cfg2html = TeddixInventory.TeddixCfg2Html(syslog,cfg)
+        cfg2html.run()
+        b64 = base64.b64encode(cfg2html.create_html())
+
+        cfg2html = xml.Element('cfg2html')
+        cfg2html.text = b64
+
+        return xml.tostring(cfg2html, 'utf-8')
+  
+    def create_message_ora2html(self,syslog,cfg):
+        ora2html = TeddixInventory.TeddixOra2Html(syslog,cfg)
+        ora2html.run()
+        b64 = base64.b64encode(ora2html.create_html())
+
+        ora2html = xml.Element('ora2html')
+        ora2html.text = b64
+
+        return xml.tostring(ora2html, 'utf-8')
+              
+
+
+    def create_message(self, code=200, info=None, req=None, raw_data=None):
+        msg = xml.Element('message')
+        msg.attrib['program'] = 'teddix'
+        msg.attrib['version'] = '2.0'
+        msg.attrib['type']    = 'reply'
+        
+        reply = xml.Element('reply')
+        msg.append(reply)
+
+        r = xml.Element('request')
+        r.text = req
+        reply.append(r)
+        
+        res = xml.Element('result')
+        if code == 200: 
+            res.text = 'SUCCESS'
+        else:
+            res.text = 'FAILURE'
+        reply.append(res)
+
+        c = xml.Element('code')
+        c.text = str(code)
+        reply.append(c)
+        
+        i = xml.Element('info')
+        i.text = info 
+        reply.append(i)
+        
+        d = xml.Element('data')
+        root_data = xml.fromstring(raw_data)
+        d.append(root_data)
+
+        reply.append(d)
+
+        # make xml pretty ;)
+        raw_xml = xml.tostring(msg, 'utf-8')
+        reparsed_xml = minidom.parseString(raw_xml)
+        pretty_xml = reparsed_xml.toprettyxml(indent="  ")
+        return pretty_xml 
+
+
+        #f = open("/tmp/test.xml", 'w')
+        #f.write(pretty_xml)
+        #f.close()
 
     def send_message(self, code=200, message=None, data=None):
         try:
@@ -79,15 +137,13 @@ class TeddixTCPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         if message is None:
             message = short
         explain = long
-        # self.log_error("code %d, message %s", code, message)
-        content = (self.default_message_format % {'code': code, 'message': message, 'data': data })
         
         self.send_response(code, message)
         self.send_header("Content-Type", self.default_content_type)
         self.send_header('Connection', 'close')
         self.end_headers()
         if self.command != 'HEAD' and code >= 200 and code not in (204, 304):
-            self.wfile.write(content)
+            self.wfile.write(data)
 
 
     def do_GET(self):
@@ -96,45 +152,51 @@ class TeddixTCPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.syslog.info("Generating /cfg2html")
             self.lock.acquire()
             try:
-                cfg2html = TeddixInventory.TeddixCfg2Html(self.syslog,self.cfg)
-                cfg2html.run()
-                html = base64.b64encode(cfg2html.create_html())
-                self.send_message(200,"Request successful",html)
-                self.syslog.info("%s: /cfg2html request sent" % self.address_string())
+                raw_cfg2html = self.create_message_cfg2html(self.syslog,self.cfg)
                 self.lock.release()
+                raw_message = self.create_message(200,"Request successful",'cfg2html',raw_cfg2html)
+
+                self.send_message(200,"Request successful",raw_message)
+                self.syslog.info("%s: /cfg2html request sent" % self.address_string())
             except Exception, e:
+                self.lock.release()
                 self.syslog.warn("%s: /cfg2html request failed" % self.address_string())
                 self.syslog.debug("do_GET() %s " % e)
-                self.lock.release()
 
         elif self.path == '/ora2html':
             self.syslog.info("Generating /ora2html")
             self.lock.acquire()
             try:
-                ora2html = TeddixInventory.TeddixOra2Html(self.syslog,self.cfg)
-                ora2html.run()
-                html = base64.b64encode(ora2html.create_html())
-                self.send_message(200,"Request successful",html)
-                self.syslog.info("%s: /ora2html request sent" % self.address_string())
+                raw_ora2html = self.create_message_ora2html(self.syslog,self.cfg)
                 self.lock.release()
+                raw_message = self.create_message(200,"Request successful",'ora2html',raw_ora2html)
+
+                self.send_message(200,"Request successful",raw_message)
+                self.syslog.info("%s: /ora2html request sent" % self.address_string())
             except Exception, e:
+                self.lock.release()
                 self.syslog.warn("%s: /ora2html request failed" % self.address_string())
                 self.syslog.debug("do_GET() %s " % e)
-                self.lock.release()
+
 
         elif self.path == '/baseline':
             self.syslog.info("Generating /baseline")
             self.lock.acquire()
             try:
-                baseline = TeddixInventory.TeddixBaseline(self.syslog,self.cfg)
-                xml = base64.b64encode(baseline.create_xml())
-                self.send_message(200,"Request successful",xml)
-                self.syslog.info("%s: /baseline request sent" % self.address_string())
+                raw_baseline = self.create_message_baseline(self.syslog,self.cfg)
                 self.lock.release()
+                raw_message = self.create_message(200,"Request successful",'baseline',raw_baseline)
+                
+                self.send_message(200,"Request successful",raw_message)
+                self.syslog.info("%s: /baseline request sent" % self.address_string())
             except Exception, e:
+                self.lock.release()
                 self.syslog.warn("%s: /baseline request failed" % self.address_string())
                 self.syslog.debug("do_GET() %s " % e)
-                self.lock.release()
+        
+        elif self.path == '/test':
+            self.syslog.info("Generating /test")
+
 
         else:
             self.send_error(501, "Unsupported location (%s)" % self.path)
@@ -146,11 +208,8 @@ class TeddixTCPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.lock = self.server.lock
         self.timeout = 30
 
-        self.error_message_format = TEDDIX_ERROR_MESSAGE
-        self.error_content_type = TEDDIX_ERROR_CONTENT_TYPE
-
-        self.default_message_format = TEDDIX_DEFAULT_MESSAGE
-        self.default_content_type = TEDDIX_DEFAULT_CONTENT_TYPE
+        self.error_content_type = 'text/xml'
+        self.default_content_type = 'text/xml'
         
         self.server_version = "Teddix/2.0"
         self.sys_version = "Python/" + sys.version.split()[0] + ' (BaseHTTP/' +  BaseHTTPServer.__version__ +')'

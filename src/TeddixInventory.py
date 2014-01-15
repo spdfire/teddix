@@ -442,10 +442,10 @@ class TeddixBaseline:
 
         # make xml pretty ;)
         raw_xml = xml.tostring(server, 'utf-8')
-        reparsed_xml = minidom.parseString(raw_xml)
-        pretty_xml = reparsed_xml.toprettyxml(indent="  ")
+        #reparsed_xml = minidom.parseString(raw_xml)
+        #pretty_xml = reparsed_xml.toprettyxml(indent="  ")
 
-        return pretty_xml
+        return raw_xml
         #f = open("/tmp/test.xml", 'w')
         #f.write(pretty_xml)
         #f.close()

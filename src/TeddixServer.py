@@ -177,19 +177,26 @@ class TeddixServer:
             if baseline == None: 
                 baseline = "Empty baseline message from agent"
             
+            # Parse MSG
+            # save result in db 
+            #   - cfg2html in b64 
+            #   - ora2html in b64
+            #   - baseline put in correct tables
+
             # keep it in b64
-            root = xml.fromstring(cfg2html)
-            cfg2html = root.find('data').text
-            root = xml.fromstring(ora2html)
-            ora2html = root.find('data').text
-            root = xml.fromstring(baseline)
-            baseline = root.find('data').text
+            #root = xml.fromstring(cfg2html)
+            #cfg2html = root.find('data')
+            #root = xml.fromstring(ora2html)
+            #ora2html = root.find('data').text
+            #root = xml.fromstring(baseline)
+            #baseline = root.find('data').text
+            #baseline = base64.b64encode(xml.tostring(root.find('baseline'), 'utf-8'))
 
             # TODO: SQLi
 
             database = TeddixDatabase.TeddixDatabase(syslog,cfg);
-            self.save_into_database(database,host,cfg2html,ora2html,baseline)
-            database.commit()
+            #self.save_into_database(database,host,cfg2html,ora2html,baseline)
+            #database.commit()
             database.disconnect()
 
         self.syslog.debug("%s: Stopping worker" % host )
