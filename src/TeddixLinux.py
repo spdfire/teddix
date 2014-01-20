@@ -344,38 +344,34 @@ class TeddixLinux:
         t_systemd = "test -x /bin/systemctl || test -x /usr/bin/systemctl || test -x /usr/local/bin/systemctl"
         t_chkconfig = "test -x /sbin/chkconfig"
         t_insserv = "test -x /sbin/insserv"
+        svcs = [ ]  
         if subprocess.call(t_systemd,shell=True) == 0:
             self.syslog.debug("System %s has systemctl command" % self.dist[0])
             cmd = "systemctl list-unit-files "
             state = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             lines = state.stdout.read().split('\n')
-            svcs = [ ]  
             for line in lines:
                 service = re.findall(r'(.+).service\W*(\w+)\W*',line)
                 if service:
                     svcs.append(service[0][0] + '/' + service[0][1]) 
 
-            return svcs
         
-        elif subprocess.call(t_chkconfig,shell=True) == 0:
+        if subprocess.call(t_chkconfig,shell=True) == 0:
             self.syslog.debug("System %s has chkconfig command" % self.dist[0])
             cmd = "chkconfig --list"
             state = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             lines = state.stdout.read().split('\n')
-            svcs = [ ]  
             for line in lines:
                 service = re.findall(r'(.+)[ ]+(.+)',line)
                 if service:
                     svcs.append(service[0][0] + '/' + service[0][1]) 
 
-            return svcs
         
-        elif subprocess.call(t_insserv,shell=True) == 0:
+        if subprocess.call(t_insserv,shell=True) == 0:
             self.syslog.debug("System %s has insserv command" % self.dist[0])
             cmd = "insserv --showall"
             state = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             lines = state.stdout.read().split('\n')
-            svcs = [ ]  
             for line in lines:
                 service = re.findall(r'([SK]):\d+:\w+:(.+)',line)
                 if service:
@@ -384,11 +380,11 @@ class TeddixLinux:
                     if service[0][0] == 'S':
                         svcs.append(service[0][1] + '/' + 'enabled') 
 
-            return svcs
 
-        else:
-            self.syslog.warn("Unable to get service configuration ")
-            return ''
+        #else:
+        #   self.syslog.warn("Unable to get service configuration ")
+        #   return ''
 
+        return svcs
 
 
