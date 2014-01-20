@@ -190,7 +190,7 @@ class TeddixBaseline:
         server = xml.Element('server')
 
         generated = xml.Element('generated')
-        generated.attrib['script'] = sys.argv[0]
+        generated.attrib['program'] = sys.argv[0]
         generated.attrib['version'] = '2.0'
         generated.attrib['scantime'] = time.asctime()
         server.append(generated)
@@ -205,8 +205,8 @@ class TeddixBaseline:
         sysboard = xml.Element('sysboard')
         sysboard.attrib['manufacturer'] = dmi['system',0,'Manufacturer']
         sysboard.attrib['productname'] = dmi['system',0,'Product Name']
-        sysboard.attrib['identifyingnumber'] = dmi['system',0,'Serial Number']
-        sysboard.attrib['chassis'] = dmi['chassis',0,'Type']
+        sysboard.attrib['serialnumber'] = dmi['system',0,'Serial Number']
+        sysboard.attrib['boardtype'] = dmi['chassis',0,'Type']
         hardware.append(sysboard)
 
         processors = xml.Element('processors')
@@ -217,9 +217,9 @@ class TeddixBaseline:
         i = 0
         while i < count:
             processor = xml.Element('processor')
-            processor.attrib['id'] = str(i)
+            processor.attrib['procid'] = str(i)
             processor.attrib['family'] = dmi['processor',i,'Family']
-            processor.attrib['type'] = dmi['processor',i,'Type']
+            processor.attrib['proctype'] = dmi['processor',i,'Type']
             processor.attrib['speed'] = dmi['processor',i,'Max Speed']
             processor.attrib['version'] = dmi['processor',i,'Version']
             processor.attrib['cores'] = dmi['processor',i,'Core Count']
@@ -242,33 +242,35 @@ class TeddixBaseline:
         count = self.__getdmi_count(dmi,'memory','Size')
         i = 0
         while i < count:
-            memorybank = xml.Element('memorybank')
-            memorybank.attrib['location'] = dmi['memory',i,'Locator']
-            memorybank.attrib['bank'] = dmi['memory',i,'Bank Locator']
-            memorybank.attrib['size'] = dmi['memory',i,'Size']
-            memorybank.attrib['formfactor'] = dmi['memory',i,'Form Factor']
-            memorybank.attrib['manufacturer'] = dmi['memory',i,'Manufacturer']
-            memorybank.attrib['memorytype'] = dmi['memory',i,'Type']
-            memorybank.attrib['partnumber'] = dmi['memory',i,'Part Number']
-            memorybank.attrib['serialnumber'] = dmi['memory',i,'Serial Number']
-            memorybank.attrib['width'] = dmi['memory',i,'Data Width']
-            memory.append(memorybank)
+            memorymodule = xml.Element('memorymodule')
+            memorymodule.attrib['location'] = dmi['memory',i,'Locator']
+            memorymodule.attrib['bank'] = dmi['memory',i,'Bank Locator']
+            memorymodule.attrib['memorysize'] = dmi['memory',i,'Size']
+            memorymodule.attrib['formfactor'] = dmi['memory',i,'Form Factor']
+            memorymodule.attrib['manufacturer'] = dmi['memory',i,'Manufacturer']
+            memorymodule.attrib['memorytype'] = dmi['memory',i,'Type']
+            memorymodule.attrib['partnumber'] = dmi['memory',i,'Part Number']
+            memorymodule.attrib['serialnumber'] = dmi['memory',i,'Serial Number']
+            memorymodule.attrib['width'] = dmi['memory',i,'Data Width']
+            memory.append(memorymodule)
             i += 1
 
         bios = xml.Element('bios')
         bios.attrib['vendor'] = dmi['bios',0,'Vendor']
         bios.attrib['version'] = dmi['bios',0,'Version']
-        bios.attrib['date'] = dmi['bios',0,'Relase Date']
+        bios.attrib['releasedate'] = dmi['bios',0,'Relase Date']
         hardware.append(bios)
 
-        operatingsystem = xml.Element('operatingsystem')
+        operatingsystem = xml.Element('system')
         operatingsystem.attrib['name'] = platform.system() 
         operatingsystem.attrib['arch'] = platform.machine()
+        operatingsystem.attrib['serialnumber'] = 'TODO'
+        operatingsystem.attrib['manufacturer'] = 'TODO'
         distro = platform.linux_distribution()
         osx = platform.mac_ver()
         win = platform.win32_ver()
         ostype = distro[0] + distro[1] + distro[2] + osx[0] + win[0] 
-        operatingsystem.attrib['type'] = ostype
+        operatingsystem.attrib['detail'] = ostype
         operatingsystem.attrib['kernel'] = platform.release()
         server.append(operatingsystem)
 
@@ -277,10 +279,18 @@ class TeddixBaseline:
 
         # for every pkg do:
         for i in range(len(pkgs)):
-            application = xml.Element('application')
-            application.attrib['name'] = pkgs[i][0]
-            application.attrib['version'] = pkgs[i][-1]
-            software.append(application)
+            package = xml.Element('package')
+            package.attrib['name'] = pkgs[i][0]
+            package.attrib['version'] = pkgs[i][-1]
+            package.attrib['pkgsize'] = 'TODO'
+            package.attrib['installedsize'] = 'TODO'
+            package.attrib['section'] = 'TODO'
+            package.attrib['status'] = 'TODO'
+            package.attrib['description'] = 'TODO'
+            package.attrib['homepage'] = 'TODO'
+            package.attrib['signed'] = 'TODO'
+            package.attrib['files'] = 'TODO'
+            software.append(package)
 
         filesystems = xml.Element('filesystems')
         operatingsystem.append(filesystems)
@@ -289,11 +299,11 @@ class TeddixBaseline:
         for i in range(len(partitions)):
             filesystem = xml.Element('filesystem')
             filesystem.attrib['name'] = partitions[i][0]
-            filesystem.attrib['dev'] = partitions[i][1]
-            filesystem.attrib['size'] = partitions[i][2]
-            filesystem.attrib['used'] = partitions[i][3]
-            filesystem.attrib['free'] = partitions[i][4]
-            filesystem.attrib['filesystem'] = partitions[i][5]
+            filesystem.attrib['device'] = partitions[i][1]
+            filesystem.attrib['fssize'] = partitions[i][2]
+            filesystem.attrib['fsused'] = partitions[i][3]
+            filesystem.attrib['fsfree'] = partitions[i][4]
+            filesystem.attrib['fstype'] = partitions[i][5]
             filesystems.append(filesystem)
 
         swap = xml.Element('swap')
@@ -303,9 +313,11 @@ class TeddixBaseline:
         for swp in self.osbase.getswap(): 
             swaparea = xml.Element('swaparea')
             data = swp.split(' ')
-            swaparea.attrib['dev'] = data[0]
-            swaparea.attrib['type'] = data[1]
-            swaparea.attrib['size'] = data[2]
+            swaparea.attrib['device'] = data[0]
+            swaparea.attrib['swaptype'] = data[1]
+            swaparea.attrib['swapsize'] = data[2]
+            swaparea.attrib['swapused'] = 'TODO'
+            swaparea.attrib['swapfree'] = 'TODO'
             swap.append(swaparea)
 
 
@@ -315,27 +327,37 @@ class TeddixBaseline:
         # for every NIC do:
         #(a) =  nics.keys()
         #print a[0][0]
-        for nic in nics:
+        for n in nics:
             
-            adapter = xml.Element('adapter')
-            adapter.attrib['description'] = nic
-            adapter.attrib['macaddress'] = self.osbase.getmac(nic) 
+            adapter = xml.Element('nic')
+            adapter.attrib['name'] = n
+            adapter.attrib['description'] = 'TODO'
+            adapter.attrib['nictype'] = 'TODO'
+            adapter.attrib['status'] = 'TODO'
+            adapter.attrib['MTU'] = 'TODO'
+            adapter.attrib['RXpackets'] = 'TODO'
+            adapter.attrib['TXpackets'] = 'TODO'
+            adapter.attrib['RXbytes'] = 'TODO'
+            adapter.attrib['TXbytes'] = 'TODO'
+            adapter.attrib['macaddress'] = self.osbase.getmac(n) 
             network.append(adapter)
 
-            ips = self.osbase.getip(nic)
+            ips = self.osbase.getip(n)
             for ipv4 in ips:
-                ip = xml.Element('ip')
+                ip = xml.Element('ipv4')
                 data = ipv4.split('/')
                 ip.attrib['address'] = data[0]
-                ip.attrib['subnetmask'] = data[1]
+                ip.attrib['mask'] = data[1]
+                ip.attrib['broadcast'] = 'TODO' 
                 adapter.append(ip)
 
-            ips6 = self.osbase.getip6(nic)
+            ips6 = self.osbase.getip6(n)
             for ipv6 in ips6:
-                ip6 = xml.Element('ip6')
+                ip6 = xml.Element('ipv6')
                 data = ipv6.split('/')
                 ip6.attrib['address'] = data[0]
-                ip6.attrib['subnetmask'] = data[1]
+                ip6.attrib['mask'] = data[1]
+                ip6.attrib['broadcast'] = 'TODO' 
                 adapter.append(ip6)
 
         dnsservers = xml.Element('dnsservers')
@@ -359,7 +381,7 @@ class TeddixBaseline:
             data = rt.split('/')
             route.attrib['destination'] = data[0]
             route.attrib['mask'] = data[2]
-            route.attrib['nexthop'] = data[1]
+            route.attrib['gateway'] = data[1]
             route.attrib['flags'] = data[3]
             route.attrib['metric'] = data[4]
             route.attrib['interface'] = data[5]
@@ -374,7 +396,7 @@ class TeddixBaseline:
             data = rt.split('/')
             route6.attrib['destination'] = data[0]
             route6.attrib['mask'] = data[1]
-            route6.attrib['nexthop'] = data[2]
+            route6.attrib['gateway'] = data[2]
             route6.attrib['flags'] = data[3]
             route6.attrib['metric'] = data[4]
             route6.attrib['interface'] = data[5]
@@ -405,10 +427,15 @@ class TeddixBaseline:
         for usr in self.osbase.getusers(): 
             user = xml.Element('user')
             data = usr.split(':')
-            user.attrib['id'] = data[0]
-            user.attrib['name'] = data[1]
+            user.attrib['login'] = data[1]
+            user.attrib['uid'] = data[0]
+            user.attrib['gid'] = 'TODO'
             user.attrib['home'] = data[2]
             user.attrib['shell'] = data[3]
+            user.attrib['expire'] = 'TODO'
+            user.attrib['locked'] = 'TODO'
+            user.attrib['hashtype'] = 'TODO'
+            user.attrib['groups'] = 'TODO'
             users.append(user)
 
         regional = xml.Element('regional')
@@ -425,7 +452,13 @@ class TeddixBaseline:
             process = xml.Element('process')
             process.attrib['pid'] = 'TODO'
             process.attrib['owner'] = 'TODO'
-            process.attrib['name'] = proc
+            process.attrib['cputime'] = 'TODO'
+            process.attrib['pcpu'] = 'TODO'
+            process.attrib['pmemory'] = 'TODO'
+            process.attrib['virtsize'] = 'TODO'
+            process.attrib['sharedsize'] = 'TODO'
+            process.attrib['priority'] = 'TODO'
+            process.attrib['command'] = proc
             processes.append(process)
 
         services = xml.Element('services')
