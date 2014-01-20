@@ -154,13 +154,35 @@ class TeddixServer:
 #        outfile.write(html)
 #        outfile.close()
 
-    def save_into_database(self,database,host,cfg2html,ora2html,baseline):
+#    def save_into_database(self,database,host,cfg2html,ora2html,baseline):
+#        self.syslog.debug("%s: Save in database " % (host))
+
+        # Get server ID 
+#        sql = "SELECT id FROM server WHERE LOWER(name) = \"%s\" " % host 
+#        database.execute(sql)
+#        result = database.fetchall()
+#        for row in result:
+#            server_id = row[0] 
+        
+        #TODO: check if only one record is returned, rollback if req 
+#        if database.rowcount() > 1: 
+#            self.syslog.warn("SQL Duplicate IDs for server %s " % host)
+
+#        syslog.debug("SQL result: server %s have ID %s " % (host,row[0]))
+
+#        sql  = "INSERT INTO extra(server_id,created,cfg2html,ora2html,baseline) "
+#        sql += "VALUES(%s,CURDATE(),\"%s\",\"%s\",\"%s\")" 
+##        sql = sql % (server_id,cfg2html,ora2html,baseline)
+#        database.execute(sql)
+ 
+    def save_dbextra(self,database,host,cfg2html,ora2html):
         self.syslog.debug("%s: Save in database " % (host))
 
         # Get server ID 
         sql = "SELECT id FROM server WHERE LOWER(name) = \"%s\" " % host 
         database.execute(sql)
         result = database.fetchall()
+        server_id = '' 
         for row in result:
             server_id = row[0] 
         
@@ -168,13 +190,14 @@ class TeddixServer:
         if database.rowcount() > 1: 
             self.syslog.warn("SQL Duplicate IDs for server %s " % host)
 
-        syslog.debug("SQL result: server %s have ID %s " % (host,row[0]))
+        syslog.debug("SQL result: server %s have ID %s " % (host,server_id))
 
-        sql  = "INSERT INTO extra(server_id,created,cfg2html,ora2html,baseline) "
-        sql += "VALUES(%s,CURDATE(),\"%s\",\"%s\",\"%s\")" 
-        sql = sql % (server_id,cfg2html,ora2html,baseline)
+        sql  = "INSERT INTO extra(server_id,created,cfg2html,ora2html) "
+        sql += "VALUES(%s,CURDATE(),\"%s\",\"%s\")" 
+        sql = sql % (server_id,cfg2html,ora2html)
         database.execute(sql)
     
+   
     
     def worker_thread(self):
        
@@ -202,7 +225,6 @@ class TeddixServer:
 
             else: 
                 baseline = data.find('baseline')
-                # Put into DB 
 
             # 4.2 Insert cfg2html report to database
             data = self.parse_reply(host,cfg2html)
@@ -211,7 +233,6 @@ class TeddixServer:
 
             else: 
                 cfg2html = data.find('cfg2html')
-                # Put into DB 
 
             # 4.3 Insert ora2html report to database
             data = self.parse_reply(host,ora2html)
@@ -219,41 +240,20 @@ class TeddixServer:
                 self.syslog.warn("%s: Unable to parse reply" % host )
 
             else: 
-                ora2html = data.find('cfg2html')
-                # Put into DB 
-
-
-            # We have some results 
-            #if cfg2html == None: 
-            #    cfg2html = "Empty cfg2html message from agent"
-            #if ora2html == None: 
-            #    ora2html = "Empty ora2html message from agent"
-            #if baseline == None: 
-            #    baseline = "Empty baseline message from agent"
-            
-            # Parse MSG
-            # save result in db 
-            #   - cfg2html in b64 
-            #   - ora2html in b64
-            #   - baseline put in correct tables
+                ora2html = data.find('ora2html')
 
             # keep it in b64
-            #root = xml.fromstring(cfg2html)
-            #cfg2html = root.find('data')
-            #root = xml.fromstring(ora2html)
-            #ora2html = root.find('data').text
-            #root = xml.fromstring(baseline)
-            #baseline = root.find('data').text
-            #baseline = base64.b64encode(xml.tostring(root.find('baseline'), 'utf-8'))
+            if cfg2html != None and ora2html != None: 
+                cfg2html_b64 = cfg2html.text
+                ora2html_b64 = ora2html.text
 
-            # TODO: SQLi
+                # TODO: filter input (SQLi etc.)
+                database = TeddixDatabase.TeddixDatabase(syslog,cfg)
+                self.save_dbextra(database,host,cfg2html_b64,ora2html_b64)
+                database.commit()
+                database.disconnect()
 
-            database = TeddixDatabase.TeddixDatabase(syslog,cfg);
-            #self.save_into_database(database,host,cfg2html,ora2html,baseline)
-            #database.commit()
-            database.disconnect()
-
-        self.syslog.debug("%s: Stopping worker" % host )
+        self.syslog.debug("%s: Stopping worker" % host)
         self.queue.task_done()
 
 
@@ -285,7 +285,9 @@ class TeddixServer:
         # Connect to Database 
         database = TeddixDatabase.TeddixDatabase(syslog,cfg);
         database.execute("SELECT VERSION();")
-        
+ 
+       
+        f.seek(0)
         # keep hostlist in sync to DB
         self.syslog.info("main: Checking database integrity ")
         for host in f:
@@ -295,7 +297,9 @@ class TeddixServer:
                 sql = "SELECT id FROM server WHERE LOWER(name) = \"%s\" " % host 
                 database.execute(sql)
                 count = database.rowcount() 
-
+                
+                # TODO: Not working for some reason count == 0 
+                self.syslog.info("SQL count = (%s) " % count)
                 if count < 1:
                     self.syslog.info("SQL adding new host(%s) to database" % host)
                     sql = "INSERT INTO server(name,created) VALUES (\"%s\",NOW()); " % host 
