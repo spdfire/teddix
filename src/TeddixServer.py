@@ -154,26 +154,217 @@ class TeddixServer:
 #        outfile.write(html)
 #        outfile.close()
 
-#    def save_into_database(self,database,host,cfg2html,ora2html,baseline):
-#        self.syslog.debug("%s: Save in database " % (host))
+    def save_dbbaseline(self,database,host,baseline):
+        self.syslog.debug("%s: Save baseline " % (host))
 
         # Get server ID 
-#        sql = "SELECT id FROM server WHERE LOWER(name) = \"%s\" " % host 
-#        database.execute(sql)
-#        result = database.fetchall()
-#        for row in result:
-#            server_id = row[0] 
+        sql = "SELECT id FROM server WHERE LOWER(name) = \"%s\" " % host 
+        database.execute(sql)
+        result = database.fetchall()
+        server_id = '' 
+        for row in result:
+            server_id = row[0] 
         
         #TODO: check if only one record is returned, rollback if req 
-#        if database.rowcount() > 1: 
-#            self.syslog.warn("SQL Duplicate IDs for server %s " % host)
+        if database.rowcount() > 1: 
+            self.syslog.warn("SQL Duplicate IDs for server %s " % host)
 
-#        syslog.debug("SQL result: server %s have ID %s " % (host,row[0]))
+        syslog.debug("SQL result: server %s have ID %s " % (host,server_id))
 
-#        sql  = "INSERT INTO extra(server_id,created,cfg2html,ora2html,baseline) "
-#        sql += "VALUES(%s,CURDATE(),\"%s\",\"%s\",\"%s\")" 
-##        sql = sql % (server_id,cfg2html,ora2html,baseline)
-#        database.execute(sql)
+        # save baseline 
+        b_hostname = baseline.find('server').find('host').get('name')
+        b_program = baseline.find('server').find('generated').get('program')
+        b_scantime = baseline.find('server').find('generated').get('scantime')
+        b_version = baseline.find('server').find('generated').get('version')
+
+        sql  = "INSERT INTO baseline(server_id,hostname,program,scantime,version) "
+        sql += "VALUES(%s,\"%s\",\"%s\",\"%s\",\"%s\")" 
+        sql = sql % (server_id,b_hostname,b_program,b_scantime,b_version)
+        database.execute(sql)
+        baseline_id = database.insert_id()
+        database.commit()
+
+        # save HW info
+        hardware = baseline.find('server').find('hardware')
+
+        boardtype = hardware.find('sysboard').get('boardtype')
+        serialnumber = hardware.find('sysboard').get('serialnumber')
+        manufacturer = hardware.find('sysboard').get('manufacturer')
+        productname = hardware.find('sysboard').get('productname')
+
+        sql  = "INSERT INTO sysboard(server_id,baseline_id,boardtype,serialnumber,manufacturer,productname) "
+        sql += "VALUES(%s,%s,\"%s\",\"%s\",\"%s\",\"%s\")" 
+        sql = sql % (server_id,baseline_id,boardtype,serialnumber,manufacturer,productname)
+        database.execute(sql)
+        database.commit()
+
+        cores = hardware.find('processors').find('processor').get('cores')
+        extclock = hardware.find('processors').find('processor').get('extclock')
+        familly = hardware.find('processors').find('processor').get('familly')
+        htsystem = hardware.find('processors').find('processor').get('htsystem')
+        procid = hardware.find('processors').find('processor').get('procid')
+        partnumber = hardware.find('processors').find('processor').get('partnumber')
+        serialnumber = hardware.find('processors').find('processor').get('serialnumber')
+        clock = hardware.find('processors').find('processor').get('clock')
+        threads = hardware.find('processors').find('processor').get('threads')
+        proctype = hardware.find('processors').find('processor').get('proctype')
+        procversion = hardware.find('processors').find('processor').get('procversion')
+
+        sql  = "INSERT INTO processor(server_id,baseline_id,cores,extclock,familly,htsystem,procid,partnumber,serialnumber,clock,threads,proctype,procversion) "
+        sql += "VALUES(%s,%s,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\")" 
+        sql = sql % (server_id,baseline_id,cores,extclock,familly,htsystem,procid,partnumber,serialnumber,clock,threads,proctype,procversion)
+        database.execute(sql)
+        database.commit()
+
+
+        bank = hardware.find('memory').find('memorymodule').get('bank')
+        formfactor = hardware.find('memory').find('memorymodule').get('formfactor')
+        location = hardware.find('memory').find('memorymodule').get('location')
+        manufacturer = hardware.find('memory').find('memorymodule').get('manufacturer')
+        memorytype = hardware.find('memory').find('memorymodule').get('memorytype')
+        partnumber = hardware.find('memory').find('memorymodule').get('partnumber')
+        serialnumber = hardware.find('memory').find('memorymodule').get('serialnumber')
+        modulesize = hardware.find('memory').find('memorymodule').get('modulesize')
+        width = hardware.find('memory').find('memorymodule').get('width')
+
+        sql  = "INSERT INTO memorymodule(server_id,baseline_id,bank,formfactor,location,manufacturer,memorytype,partnumber,serialnumber,modulesize,width) "
+        sql += "VALUES(%s,%s,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\")" 
+        sql = sql % (server_id,baseline_id,bank,formfactor,location,manufacturer,memorytype,partnumber,serialnumber,modulesize,width)
+        database.execute(sql)
+        database.commit()
+
+
+        releasedate = hardware.find('bios').get('releasedate')
+        vendor = hardware.find('bios').get('vendor')
+        version = hardware.find('bios').get('version')
+        sql  = "INSERT INTO bios(server_id,baseline_id,releasedate,vendor,version) "
+        sql += "VALUES(%s,%s,\"%s\",\"%s\",\"%s\")" 
+        sql = sql % (server_id,baseline_id,releasedate,vendor,version)
+        database.execute(sql)
+        database.commit()
+
+        # save OS info
+        system = baseline.find('server').find('system')
+        arch = system.get('arch')
+        detail = system.get('detail')
+        kernel = system.get('kernel')
+        manufacturer = system.get('manufacturer')
+        name = system.get('name')
+        serialnumber = system.get('serialnumber')
+        sql  = "INSERT INTO system(server_id,baseline_id,arch,detail,kernel,manufacturer,name,serialnumber) "
+        sql += "VALUES(%s,%s,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\")" 
+        sql = sql % (server_id,baseline_id,arch,detail,kernel,manufacturer,name,serialnumber)
+        database.execute(sql)
+        system_id = database.insert_id()
+        database.commit()
+
+
+        description = system.find('software').find('package').get('description')
+        files = system.find('software').find('package').get('files')
+        homepage = system.find('software').find('package').get('homepage')
+        name = system.find('software').find('package').get('name')
+        pkgsize = system.find('software').find('package').get('pkgsize')
+        section = system.find('software').find('package').get('section')
+        signed = system.find('software').find('package').get('signed')
+        installedsize = system.find('software').find('package').get('installedsize')
+        status = system.find('software').find('package').get('status')
+        version = system.find('software').find('package').get('version')
+        sql  = "INSERT INTO package(server_id,baseline_id,system_id,description,files,homepage,name,pkgsize,section,signed,installedsize,status,version) "
+        sql += "VALUES(%s,%s,%s,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\")" 
+        sql = sql % (server_id,baseline_id,system_id,description,files,homepage,name,pkgsize,section,signed,installedsize,status,version)
+        database.execute(sql)
+        database.commit()
+
+        device = system.find('filesystems').find('filesystem').get('device')
+        fstype = system.find('filesystems').find('filesystem').get('fstype')
+        fsfree = system.find('filesystems').find('filesystem').get('fsfree')
+        name = system.find('filesystems').find('filesystem').get('name')
+        fssize = system.find('filesystems').find('filesystem').get('fssize')
+        fsused = system.find('filesystems').find('filesystem').get('fsused')
+        sql  = "INSERT INTO filesystem(server_id,baseline_id,system_id,device,fstype,fsfree,name,fssize,fsused) "
+        sql += "VALUES(%s,%s,%s,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\")" 
+        sql = sql % (server_id,baseline_id,system_id,device,fstype,fsfree,name,fssize,fsused)
+        database.execute(sql)
+        database.commit()
+
+
+        device = system.find('swap').find('swaparea').get('device')
+        swapfree = system.find('swap').find('swaparea').get('swapfree')
+        swapsize = system.find('swap').find('swaparea').get('swapsize')
+        swaptype = system.find('swap').find('swaparea').get('swaptype')
+        swapused = system.find('swap').find('swaparea').get('swapused')
+        sql  = "INSERT INTO swap(server_id,baseline_id,system_id,device,swapfree,swapsize,swaptype,swapused) "
+        sql += "VALUES(%s,%s,%s,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\")" 
+        sql = sql % (server_id,baseline_id,system_id,device,swapfree,swapsize,swaptype,swapused)
+        database.execute(sql)
+        database.commit()
+
+        # NETWORK STUFF
+
+        # groups 
+        name = system.find('groups').find('group').get('name')
+        sql  = "INSERT INTO sysgroup(server_id,baseline_id,system_id,name) "
+        sql += "VALUES(%s,%s,%s,\"%s\")" 
+        sql = sql % (server_id,baseline_id,system_id,name)
+        database.execute(sql)
+        database.commit()
+
+        # users
+        expire = system.find('users').find('user').get('expire')
+        destination = system.find('users').find('user').get('destination')
+        gid = system.find('users').find('user').get('gid')
+        groups = system.find('users').find('user').get('groups')
+        hashtype = system.find('users').find('user').get('hashtype')
+        home = system.find('users').find('user').get('home')
+        locked = system.find('users').find('user').get('locked')
+        login = system.find('users').find('user').get('login')
+        shell = system.find('users').find('user').get('shell')
+        uid = system.find('users').find('user').get('uid')
+        sql  = "INSERT INTO sysuser(server_id,baseline_id,system_id,expire,destination,gid,groups,hashtype,home,locked,login,shell,uid) "
+        sql += "VALUES(%s,%s,%s,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\")" 
+        sql = sql % (server_id,baseline_id,system_id,expire,destination,gid,groups,hashtype,home,locked,login,shell,uid)
+        database.execute(sql)
+        database.commit()
+
+        # language 
+        timezone = system.find('regional').get('timezone')
+        charset = system.find('regional').get('charset')
+        sql  = "INSERT INTO regional(server_id,baseline_id,system_id,timezone,charset) "
+        sql += "VALUES(%s,%s,%s,\"%s\",\"%s\")" 
+        sql = sql % (server_id,baseline_id,system_id,timezone,charset)
+        database.execute(sql)
+        database.commit()
+
+        # process list
+        command = system.find('processes').find('process').get('command')
+        cputime = system.find('processes').find('process').get('cputime')
+        owner = system.find('processes').find('process').get('owner')
+        pcpu = system.find('processes').find('process').get('pcpu')
+        pid = system.find('processes').find('process').get('pid')
+        pmemory = system.find('processes').find('process').get('pmemory')
+        priority = system.find('processes').find('process').get('priority')
+        sharedsize = system.find('processes').find('process').get('sharedsize')
+        virtsize = system.find('processes').find('process').get('virtsize')
+        sql  = "INSERT INTO process(server_id,baseline_id,system_id,command,cputime,owner,pcpu,pid,pmemory,priority,sharedsize,virtsize) "
+        sql += "VALUES(%s,%s,%s,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\")" 
+        sql = sql % (server_id,baseline_id,system_id,command,cputime,owner,pcpu,pid,pmemory,priority,sharedsize,virtsize)
+        database.execute(sql)
+        database.commit()
+
+        # services 
+        autostart = system.find('services').find('service').get('autostart')
+        name = system.find('services').find('service').get('name')
+        running = system.find('services').find('service').get('running')
+        sql  = "INSERT INTO service(server_id,baseline_id,system_id,autostart,name,running) "
+        sql += "VALUES(%s,%s,%s,\"%s\",\"%s\",\"%s\")" 
+        sql = sql % (server_id,baseline_id,system_id,autostart,name,running)
+        database.execute(sql)
+        database.commit()
+
+
+
+
+
  
     def save_dbextra(self,database,host,cfg2html,ora2html):
         self.syslog.debug("%s: Save in database " % (host))
@@ -196,7 +387,7 @@ class TeddixServer:
         sql += "VALUES(%s,CURDATE(),\"%s\",\"%s\")" 
         sql = sql % (server_id,cfg2html,ora2html)
         database.execute(sql)
-    
+       
    
     
     def worker_thread(self):
@@ -250,6 +441,7 @@ class TeddixServer:
                 # TODO: filter input (SQLi etc.)
                 database = TeddixDatabase.TeddixDatabase(syslog,cfg)
                 self.save_dbextra(database,host,cfg2html_b64,ora2html_b64)
+                self.save_dbbaseline(database,host,baseline)
                 database.commit()
                 database.disconnect()
 
