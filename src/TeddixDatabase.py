@@ -50,7 +50,7 @@ class TeddixDatabase:
 
     def execute(self,sql):
         # Try to run the query and catch any exception
-        self.syslog.debug("SQL execute(): %s " % sql[:100] )
+        self.syslog.debug("SQL execute(): %s " % sql[:250] )
         try:
             self.cursor.execute(sql)
         except Exception, e:
@@ -77,6 +77,17 @@ class TeddixDatabase:
             return 
 
         return result
+
+    def insert_id(self):
+        try:
+            result = self.db.insert_id()
+            self.syslog.debug("SQL insert_id(): %s" % result)
+        except Exception, e:
+            self.syslog.warn("Error in SQL insert_id(): %s" % e)
+            return 
+
+        return result
+
 
     def commit(self):
         self.syslog.debug("SQL commit()")
