@@ -129,6 +129,7 @@ CREATE TABLE package (
 	server_id INT NOT NULL,
 	baseline_id INT NOT NULL,
 	system_id INT NOT NULL,
+	arch VARCHAR(50), 
 	description VARCHAR(250), 
 	files VARCHAR(50), 
 	homepage VARCHAR(250), 
