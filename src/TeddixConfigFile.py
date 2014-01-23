@@ -4,6 +4,9 @@ import os
 import platform
 import ConfigParser
 
+# teddix parser 
+import TeddixParser
+
 class TeddixConfigFile ():
     global_hostname    = platform.node()
     global_logging     = "syslog"
@@ -131,6 +134,79 @@ class TeddixConfigFile ():
         if self.global_hostname != None and self.global_hostname.lower() == 'localhost':
             print "Error parsing %s: hostname should be fqdn!" % config
             raise
+
+
+class TeddixServerFile ():
+
+
+    def __init__ (self,syslog,serverlist=None):
+        self.syslog = syslog 
+
+        # default path
+        if serverlist is None:
+            serverlist = "/etc/teddix/serverlist"
+
+        # file exist 
+        if not os.path.exists(serverlist):
+            self.syslog.error("Unable to open: %s " % serverlist)
+            self.syslog.error("No servers to check... Nothing to do... " )
+        # we can read file 
+        if not os.access(serverlist, os.R_OK):
+            self.syslog.error("File: %s needs to be readable" % serverlist)
+            self.syslog.error("No servers to check... Nothing to do..." )
+
+        # open file
+        self.f = None
+        try: 
+            self.f = open(serverlist, 'r')
+        except Exception, e:
+            self.syslog.error("Unable to open file: %s for reading" % serverlist)
+            self.syslog.error("No servers to check... Nothing to do..." )
+
+        # find duplicates
+        seen = set()
+        line_number = 0
+        for line in self.f:
+            line_number += 1  
+            line = line.strip()
+            line = line.lower()
+            if line in seen:
+                self.syslog.error("duplicate entry: %s on line: %d " % (line,line_number))
+                self.syslog.error("ignoring file  %s " %  serverlist)
+                self.syslog.error("No servers to check... Nothing to do... " )
+                self.handle.close()
+                return None
+            else:
+                seen.add(line)
+
+        # find broken lines 
+        self.f.seek(0)
+        line_number = 0
+        parser = TeddixParser.TeddixStringParser()
+        for line in self.f:
+            line_number += 1
+            if not parser.ishostname(line):
+                self.syslog.error("unexpected characters line: %d " % line_number)
+                self.syslog.error("XXX  %s " % line )
+                self.syslog.error("ignoring file  %s " % serverlist )
+                self.syslog.error("No servers to check... Nothing to do... " )
+                return None
+
+    
+    def getlist(self):
+        # read file  
+        self.f.seek(0)
+        servers = []
+        parser = TeddixParser.TeddixStringParser()
+        for line in self.f:
+            servers.append(parser.str2hostname(line))
+
+        return servers
+
+    def close(self):
+        self.f.close()
+        
+
 
 
 
