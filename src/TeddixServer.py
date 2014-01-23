@@ -51,6 +51,8 @@ import TeddixInventory
 # SQL Database
 import TeddixDatabase
 
+# Parser
+import TeddixParser
 
 
 class TeddixServer:
@@ -128,13 +130,48 @@ class TeddixServer:
         data = reply.find('data')
         return data
         
+    def check_dbintegrity(self,database,agents):
+        
+        self.syslog.info("main: Checking database integrity ")
+        database.execute("SELECT VERSION();")
+        database.commit()
+ 
+       
+        # keep agent list in sync to DB
+        for host in agents:
+            host = host.strip()
+            host = host.lower()
+            sql = "SELECT id FROM server WHERE LOWER(name) = %s "
+            database.execute(sql,host)
+            count = database.rowcount() 
+ 
+            if count < 1:
+                self.syslog.info("SQL adding new host(%s) to database" % host)
+                sql = "INSERT INTO server(name,created) VALUES (%s,NOW()); " 
+                database.execute(sql,host)
+                database.commit()
 
+            if count > 1: 
+                self.syslog.warn("SQL Cleaning duplicate server names: %s " % host)
+                result = database.fetchall()
+                for row in result:
+                    # TODO delete cascade 
+                    server_id = row[0]
+                    sql = "DELETE FROM server WHERE id = %s " 
+                    database.execute(sql,server_id)
+
+                    sql = "INSERT INTO server(name,created) "
+                    sql += "VALUES (%s,NOW()); " 
+                    database.execute(sql,host)
+                    database.commit()
+
+ 
     def save_dbbaseline(self,database,host,baseline):
         self.syslog.debug("%s: Save baseline " % (host))
 
         # Get server ID 
-        sql = "SELECT id FROM server WHERE LOWER(name) = \"%s\" " % host 
-        database.execute(sql)
+        sql = "SELECT id FROM server WHERE LOWER(name) = %s "  
+        database.execute(sql,(host))
         result = database.fetchall()
         server_id = '' 
         for row in result:
@@ -433,6 +470,8 @@ class TeddixServer:
             sql = sql % (server_id,baseline_id,system_id,autostart,name,running)
             database.execute(sql)
 
+        return True
+
 
 
 
@@ -440,24 +479,30 @@ class TeddixServer:
     def save_dbextra(self,database,host,cfg2html,ora2html):
         self.syslog.debug("%s: Save in database " % (host))
 
+        parser = TeddixParser.TeddixStringParser()
+        if not parser.ishostname(host):
+            self.syslog.debug("Not string %s " % (host))
+            return False
+
         # Get server ID 
-        sql = "SELECT id FROM server WHERE LOWER(name) = \"%s\" " % host 
-        database.execute(sql)
+        sql = "SELECT id FROM server WHERE LOWER(name) = %s " 
+        database.execute(sql,host)
         result = database.fetchall()
-        server_id = '' 
+        server_id = -1 
         for row in result:
             server_id = row[0] 
         
-        #TODO: check if only one record is returned, rollback if req 
-        if database.rowcount() > 1: 
-            self.syslog.warn("SQL Duplicate IDs for server %s " % host)
-
-        syslog.debug("SQL result: server %s have ID %s " % (host,server_id))
+        if not parser.isb64(cfg2html):
+            self.syslog.debug("%s: cfg2html not encoded in base64 " % (host))
+            return False
+        if not parser.isb64(ora2html):
+            self.syslog.debug("%s: ora2html not encoded in base64 " % (host))
+            return False
 
         sql  = "INSERT INTO extra(server_id,created,cfg2html,ora2html) "
-        sql += "VALUES(%s,CURDATE(),\"%s\",\"%s\")" 
-        sql = sql % (server_id,cfg2html,ora2html)
-        database.execute(sql)
+        sql += "VALUES(%s,CURDATE(),%s,%s)"  
+        database.execute(sql,(server_id,cfg2html,ora2html))
+        return True
        
    
     
@@ -467,20 +512,20 @@ class TeddixServer:
         host = self.queue.get()
         self.syslog.debug("%s: Starting worker " % host )
 
-        # 1. GET /cfg2html 
+        # 1. GET /baseline 
+        baseline = self.make_request(host,'/baseline')
+
+        # 2. GET /cfg2html 
         cfg2html = self.make_request(host,'/cfg2html')
 
-        # 2. GET /ora2html
+        # 3. GET /ora2html
         ora2html = self.make_request(host,'/ora2html')
-
-        # 3. GET /baseline 
-        baseline = self.make_request(host,'/baseline')
 
         # 4. Insert report to Database
         if cfg2html == None and ora2html == None and baseline == None:
             self.syslog.debug("%s: Agent is not responding" % host )
         else:
-            # 4.1 Insert baseline report to database
+            # 4.1 Get baseline report
             data = self.parse_reply(host,baseline)
             if data == None: 
                 self.syslog.warn("%s: Unable to parse reply" % host )
@@ -488,7 +533,7 @@ class TeddixServer:
             else: 
                 baseline = data.find('baseline')
 
-            # 4.2 Insert cfg2html report to database
+            # 4.2 Get cfg2html report
             data = self.parse_reply(host,cfg2html)
             if data == None: 
                 self.syslog.warn("%s: Unable to parse reply" % host )
@@ -496,7 +541,7 @@ class TeddixServer:
             else: 
                 cfg2html = data.find('cfg2html')
 
-            # 4.3 Insert ora2html report to database
+            # 4.3 Get ora2html report
             data = self.parse_reply(host,ora2html)
             if data == None: 
                 self.syslog.warn("%s: Unable to parse reply" % host )
@@ -504,90 +549,55 @@ class TeddixServer:
             else: 
                 ora2html = data.find('ora2html')
 
-            # keep it in b64
+            # 5. Save cfg2html and ora2html 
+            database = TeddixDatabase.TeddixDatabase(syslog,cfg)
+            
             if cfg2html != None and ora2html != None: 
                 cfg2html_b64 = cfg2html.text
                 ora2html_b64 = ora2html.text
 
-                # TODO: filter input (SQLi etc.)
-                database = TeddixDatabase.TeddixDatabase(syslog,cfg)
-                self.save_dbextra(database,host,cfg2html_b64,ora2html_b64)
-                self.save_dbbaseline(database,host,baseline)
-                database.commit()
-                database.disconnect()
+                if not self.save_dbextra(database,host,cfg2html_b64,ora2html_b64):
+                    database.rollback()
+                    self.syslog.warn("%s: Unable to commit extra " % host )
+                    self.syslog.debug("%s: Stopping worker" % host)
+                    self.queue.task_done()
+                    return False
+                else:
+                    database.commit()
+
+
+            # 6. Save baseline
+            if baseline != None:
+                if not self.save_dbbaseline(database,host,baseline):
+                    database.rollback()
+                    self.syslog.warn("%s: Unable to commit baseline " % host )
+                    self.syslog.debug("%s: Stopping worker" % host)
+                    self.queue.task_done()
+                    return False
+                else:
+                    database.commit()
+
+            database.disconnect()
 
         self.syslog.debug("%s: Stopping worker" % host)
         self.queue.task_done()
+        return True
 
 
     def create_server(self,syslog,cfg):
         
         self.terminate = False 
         self.queue = Queue.Queue()
-             
-        try: 
-            f = open(cfg.server_serverlist, 'r')
-        except Exception, e:
-            self.syslog.error("main: Unable to open: %s " % cfg.server_serverlist)
-            self.syslog.exception('create_server(): %s' % e )
-            exit(20)
+        
+        conf = TeddixConfigFile.TeddixServerFile(syslog,cfg.server_serverlist) 
+        agents = conf.getlist()
+        conf.close()
 
-        # find duplicates in server_list 
-        seen = set()
-        line_number = 0
-        for line in f:
-            line_number += 1  
-            line = line.strip()
-            line = line.lower()
-            if line in seen:
-                self.syslog.error("main: duplicate entry: %s on line: %d " % (line,line_number))
-                exit(21)
-            else:
-                seen.add(line)
-
-        # Connect to Database 
+        # check DB 
         database = TeddixDatabase.TeddixDatabase(syslog,cfg);
-        database.execute("SELECT VERSION();")
- 
-       
-        f.seek(0)
-        # keep hostlist in sync to DB
-        self.syslog.info("main: Checking database integrity ")
-        for host in f:
-            if not self.terminate: 
-                host = host.strip()
-                host = host.lower()
-                sql = "SELECT id FROM server WHERE LOWER(name) = \"%s\" " % host 
-                database.execute(sql)
-                count = database.rowcount() 
-                
-                # TODO: Not working for some reason count == 0 
-                self.syslog.info("SQL count = (%s) " % count)
-                if count < 1:
-                    self.syslog.info("SQL adding new host(%s) to database" % host)
-                    sql = "INSERT INTO server(name,created) VALUES (\"%s\",NOW()); " % host 
-                    database.execute(sql)
-                    database.commit()
-
-                if count > 1: 
-                    self.syslog.warn("SQL Cleaning duplicate server names %s " % host)
-                    result = database.fetchall()
-                    for row in result:
-                        server_id = row[0]
-                        sql = "DELETE FROM extra WHERE server_id = %s " % server_id 
-                        database.execute(sql)
-                        sql = "DELETE FROM baseline WHERE server_id = %s " % server_id 
-                        database.execute(sql)
-                        sql = "DELETE FROM server WHERE id = \"%s\" " % server_id
-                        database.execute(sql)
-
-                    sql = "INSERT INTO server(name,created) VALUES (\"%s\",NOW()); " % host 
-                    database.execute(sql)
-                    database.commit()
-
+        self.check_dbintegrity(database,agents)
         database.disconnect()
-        f.close()
-    
+   
         syslog.info("main: Entering Server loop" )
         while not self.terminate:
             # start scheduler
@@ -597,14 +607,7 @@ class TeddixServer:
             #populate queue with data
             syslog.info("main: Started queue run" )
 
-            try: 
-                f = open(cfg.server_serverlist, 'r')
-            except Exception, e:
-                syslog.error("main: Unable to open: %s " % cfg.server_serverlist)
-                syslog.exception('create_server(): %s' % e )
-                exit(20)
-
-            for host in f:
+            for host in agents:
                 if (threading.active_count() > cfg.server_workers) and (not self.terminate): 
                     syslog.debug('main: Reached max active workers count (%d): sleeping ...' % (threading.active_count() -1) )
                 while (threading.active_count() > cfg.server_workers) and (not self.terminate): 
@@ -619,7 +622,6 @@ class TeddixServer:
                     host = host.lower()
                     self.queue.put(host)
 
-            f.close()
             syslog.info("main: Finished queue run" )
 
             # wait for all workers to finish their job 

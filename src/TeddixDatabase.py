@@ -48,11 +48,11 @@ class TeddixDatabase:
         self.cursor.close()
         self.db.close()
 
-    def execute(self,sql):
+    def execute(self,sql,*opts):
         # Try to run the query and catch any exception
         self.syslog.debug("SQL execute(): %s " % sql[:250] )
         try:
-            self.cursor.execute(sql)
+            self.cursor.execute(sql,opts)
         except Exception, e:
             self.syslog.error("SQL error: %s" % e)
             self.syslog.warn("Starting rollback")
