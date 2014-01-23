@@ -327,6 +327,8 @@ class TeddixBaseline:
         # for every NIC do:
         #(a) =  nics.keys()
         #print a[0][0]
+        adapters = xml.Element('nics')
+        network.append(adapters)
         for n in nics:
             
             adapter = xml.Element('nic')
@@ -339,8 +341,10 @@ class TeddixBaseline:
             adapter.attrib['TXpackets'] = 'TODO'
             adapter.attrib['RXbytes'] = 'TODO'
             adapter.attrib['TXbytes'] = 'TODO'
+            adapter.attrib['driver'] = 'TODO'
+            adapter.attrib['kernmodule'] = 'TODO'
             adapter.attrib['macaddress'] = self.osbase.getmac(n) 
-            network.append(adapter)
+            adapters.append(adapter)
 
             ips = self.osbase.getip(n)
             for ipv4 in ips:
