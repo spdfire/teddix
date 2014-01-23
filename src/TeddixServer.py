@@ -278,9 +278,96 @@ class TeddixServer:
             sql = sql % (server_id,baseline_id,system_id,device,swapfree,swapsize,swaptype,swapused)
             database.execute(sql)
 
-        # XXX
-        # NETWORK STUFF
-        # XXX
+        # NIC 
+        root = system.find('network').find('nics')
+        for child in root:
+            MTU = child.get('MTU')
+            RXbytes = child.get('RXbytes')
+            RXpackets = child.get('RXpackets')
+            TXbytes = child.get('TXbytes')
+            TXpackets = child.get('TXpackets')
+            description = child.get('description')
+            driver = child.get('driver')
+            kernmodule = child.get('kernmodule')
+            macaddress = child.get('macaddress')
+            name = child.get('name')
+            nictype = child.get('nictype')
+            status = child.get('status')
+            sql  = "INSERT INTO nic(server_id,baseline_id,system_id,MTU,RXbytes,RXpackets,TXbytes,TXpackets,description,macaddress,name,nictype,status,driver,kernmodule) "
+            sql += "VALUES(%s,%s,%s,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\")" 
+            sql = sql % (server_id,baseline_id,system_id,MTU,RXbytes,RXpackets,TXbytes,TXpackets,description,macaddress,name,nictype,status,driver,kernmodule)
+            database.execute(sql)
+            nic_id = database.insert_id()
+           
+            for child_ipv4 in child.findall('ipv4'):
+                address = child_ipv4.get('address')
+                broadcast = child_ipv4.get('broadcast')
+                mask = child_ipv4.get('mask')
+                sql  = "INSERT INTO ipv4(server_id,baseline_id,system_id,nic_id,address,broadcast,mask) "
+                sql += "VALUES(%s,%s,%s,%s,\"%s\",\"%s\",\"%s\")" 
+                sql = sql % (server_id,baseline_id,system_id,nic_id,address,broadcast,mask)
+                database.execute(sql)
+
+            for child_ipv6 in child.findall('ipv6'):
+                address = child_ipv6.get('address')
+                broadcast = child_ipv6.get('broadcast')
+                mask = child_ipv6.get('mask')
+                sql  = "INSERT INTO ipv6(server_id,baseline_id,system_id,nic_id,address,broadcast,mask) "
+                sql += "VALUES(%s,%s,%s,%s,\"%s\",\"%s\",\"%s\")" 
+                sql = sql % (server_id,baseline_id,system_id,nic_id,address,broadcast,mask)
+                database.execute(sql)
+
+
+        # DNS
+        root = system.find('network').find('dnsservers')
+        for child in root.findall('domain'):
+            name = child.get('name')
+            sql  = "INSERT INTO domain(server_id,baseline_id,system_id,name) "
+            sql += "VALUES(%s,%s,%s,\"%s\")" 
+            sql = sql % (server_id,baseline_id,system_id,name)
+            database.execute(sql)
+
+        for child in root.findall('search'):
+            name = child.get('name')
+            sql  = "INSERT INTO dnssearch(server_id,baseline_id,system_id,name) "
+            sql += "VALUES(%s,%s,%s,\"%s\")" 
+            sql = sql % (server_id,baseline_id,system_id,name)
+            database.execute(sql)
+
+        for child in root.findall('nameserver'):
+            address = child.get('address')
+            sql  = "INSERT INTO nameserver(server_id,baseline_id,system_id,address) "
+            sql += "VALUES(%s,%s,%s,\"%s\")" 
+            sql = sql % (server_id,baseline_id,system_id,address)
+            database.execute(sql)
+           
+        # routing
+        root = system.find('network').find('routing').find('ipv4')
+        for child in root.findall('route'):
+            destination = child.get('destination')
+            flags = child.get('flags')
+            gateway = child.get('gateway')
+            interface = child.get('interface')
+            mask = child.get('mask')
+            metric = child.get('metric')
+            sql  = "INSERT INTO route4(server_id,baseline_id,system_id,destination,flags,gateway,interface,mask,metric) "
+            sql += "VALUES(%s,%s,%s,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\")" 
+            sql = sql % (server_id,baseline_id,system_id,destination,flags,gateway,interface,mask,metric)
+            database.execute(sql)
+
+        root = system.find('network').find('routing').find('ipv6')
+        for child in root.findall('route'):
+            destination = child.get('destination')
+            flags = child.get('flags')
+            gateway = child.get('gateway')
+            interface = child.get('interface')
+            mask = child.get('mask')
+            metric = child.get('metric')
+            sql  = "INSERT INTO route6(server_id,baseline_id,system_id,destination,flags,gateway,interface,mask,metric) "
+            sql += "VALUES(%s,%s,%s,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\")" 
+            sql = sql % (server_id,baseline_id,system_id,destination,flags,gateway,interface,mask,metric)
+            database.execute(sql)
+
 
         # groups 
         root = system.find('groups')
