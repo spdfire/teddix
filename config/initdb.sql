@@ -1,32 +1,8 @@
 
+DROP DATABASE teddix;
+CREATE DATABASE teddix;
+
 USE teddix; 
-
-DROP TABLE IF EXISTS service; 
-DROP TABLE IF EXISTS process; 
-DROP TABLE IF EXISTS regional; 
-DROP TABLE IF EXISTS sysuser; 
-DROP TABLE IF EXISTS sysgroup; 
-DROP TABLE IF EXISTS route6; 
-DROP TABLE IF EXISTS route4; 
-DROP TABLE IF EXISTS nameserver;  
-DROP TABLE IF EXISTS domain; 
-DROP TABLE IF EXISTS ipv4; 
-DROP TABLE IF EXISTS ipv6; 
-DROP TABLE IF EXISTS nic; 
-DROP TABLE IF EXISTS swap ; 
-DROP TABLE IF EXISTS filesystems; 
-DROP TABLE IF EXISTS package; 
-DROP TABLE IF EXISTS system; 
-DROP TABLE IF EXISTS bios; 
-DROP TABLE IF EXISTS memorymodule;  
-DROP TABLE IF EXISTS processor ; 
-DROP TABLE IF EXISTS sysboard; 
-DROP TABLE IF EXISTS baseline; 
-
-DROP TABLE IF EXISTS extra; 
-
-DROP TABLE IF EXISTS server; 
-
 
 
 CREATE TABLE server ( 
@@ -211,16 +187,18 @@ CREATE TABLE nic (
 	server_id INT NOT NULL,
 	baseline_id INT NOT NULL,
 	system_id INT NOT NULL,
-	MTU INT, 
-	RXbytes INT, 
-	RXpackets INT, 
-	TXbytes INT, 
-	TXpackets INT, 
+	MTU VARCHAR(25), 
+	RXbytes VARCHAR(25), 
+	RXpackets VARCHAR(25), 
+	TXbytes VARCHAR(25), 
+	TXpackets VARCHAR(25), 
 	description VARCHAR(50), 
 	macaddress VARCHAR(50), 
 	name VARCHAR(50), 
 	nictype VARCHAR(50), 
 	status VARCHAR(50), 
+	driver VARCHAR(50), 
+	kernmodule VARCHAR(50), 
 
 	PRIMARY KEY (id),
 	FOREIGN KEY (server_id) REFERENCES server(id),
@@ -268,13 +246,27 @@ CREATE TABLE domain (
 	server_id INT NOT NULL,
 	baseline_id INT NOT NULL,
 	system_id INT NOT NULL,
-	address VARCHAR(25), 
+	name VARCHAR(50), 
 
 	PRIMARY KEY (id),
 	FOREIGN KEY (server_id) REFERENCES server(id),
 	FOREIGN KEY (baseline_id) REFERENCES baseline(id),
 	FOREIGN KEY (system_id) REFERENCES system(id)
 );
+
+CREATE TABLE dnssearch ( 
+	id INT NOT NULL AUTO_INCREMENT,
+	server_id INT NOT NULL,
+	baseline_id INT NOT NULL,
+	system_id INT NOT NULL,
+	name VARCHAR(50), 
+
+	PRIMARY KEY (id),
+	FOREIGN KEY (server_id) REFERENCES server(id),
+	FOREIGN KEY (baseline_id) REFERENCES baseline(id),
+	FOREIGN KEY (system_id) REFERENCES system(id)
+);
+
 
 CREATE TABLE nameserver ( 
 	id INT NOT NULL AUTO_INCREMENT,
