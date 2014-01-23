@@ -236,6 +236,7 @@ class TeddixServer:
         # packages 
         root = system.find('software')
         for child in root:
+            arch = child.get('arch')
             description = child.get('description')
             files = child.get('files')
             homepage = child.get('homepage')
@@ -246,9 +247,9 @@ class TeddixServer:
             installedsize = child.get('installedsize')
             status = child.get('status')
             version = child.get('version')
-            sql  = "INSERT INTO package(server_id,baseline_id,system_id,description,files,homepage,name,pkgsize,section,signed,installedsize,status,version) "
-            sql += "VALUES(%s,%s,%s,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\")" 
-            sql = sql % (server_id,baseline_id,system_id,description,files,homepage,name,pkgsize,section,signed,installedsize,status,version)
+            sql  = "INSERT INTO package(server_id,baseline_id,system_id,arch,description,files,homepage,name,pkgsize,section,signed,installedsize,status,version) "
+            sql += "VALUES(%s,%s,%s,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\")" 
+            sql = sql % (server_id,baseline_id,system_id,arch,description,files,homepage,name,pkgsize,section,signed,installedsize,status,version)
             database.execute(sql)
 
         # filesystems 

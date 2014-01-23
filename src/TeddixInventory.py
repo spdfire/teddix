@@ -278,18 +278,21 @@ class TeddixBaseline:
         operatingsystem.append(software)
 
         # for every pkg do:
+        # [name][ver][pkgsize][instsize][section][status][info][homepage][signed][files][arch]
         for i in range(len(pkgs)):
             package = xml.Element('package')
             package.attrib['name'] = pkgs[i][0]
-            package.attrib['version'] = pkgs[i][-1]
-            package.attrib['pkgsize'] = 'TODO'
-            package.attrib['installedsize'] = 'TODO'
-            package.attrib['section'] = 'TODO'
-            package.attrib['status'] = 'TODO'
+            package.attrib['version'] = pkgs[i][1]
+            package.attrib['pkgsize'] = pkgs[i][2]
+            package.attrib['installedsize'] = pkgs[i][3]
+            package.attrib['section'] = pkgs[i][4]
+            package.attrib['status'] = pkgs[i][5]
+            #package.attrib['description'] = pkgs[i][6]#can't decode byte 0xe2
             package.attrib['description'] = 'TODO'
-            package.attrib['homepage'] = 'TODO'
-            package.attrib['signed'] = 'TODO'
-            package.attrib['files'] = 'TODO'
+            package.attrib['homepage'] = pkgs[i][7]
+            package.attrib['signed'] = pkgs[i][8]
+            package.attrib['files'] = pkgs[i][9]
+            package.attrib['arch'] = pkgs[i][10]
             software.append(package)
 
         filesystems = xml.Element('filesystems')
@@ -554,8 +557,12 @@ if __name__ == "__main__":
         syslog.error("workdir %s needs to be executable" % cfg.global_workdir + '/agent')
 
     baseline = TeddixBaseline(syslog,cfg)
-    xml = baseline.create_xml()
-    print xml
+    raw_xml = baseline.create_xml()
+    # make xml pretty ;)
+    reparsed_xml = minidom.parseString(raw_xml)
+    pretty_xml = reparsed_xml.toprettyxml(indent="  ")
+
+    print pretty_xml
     #cfg2html = TeddixCfg2Html(syslog,cfg)
     #cfg2html.run()
     #ora2html = TeddixOra2Html(syslog,cfg)

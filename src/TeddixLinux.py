@@ -33,6 +33,7 @@ class TeddixLinux:
 
         t_rpm = "test -x /bin/rpm"
         t_dpkg = "test -x /usr/bin/dpkg-query"
+        # [name][ver][pkgsize][instsize][section][status][info][homepage][signed][files][arch]
         if subprocess.call(t_rpm,shell=True) == 0:
             self.syslog.debug("Distro %s is RPM based " % self.dist[0])
             cmd = "/bin/rpm -qa --queryformat '%{NAME}:%{VERSION}-%{RELEASE}\n'"
@@ -49,16 +50,16 @@ class TeddixLinux:
 
         elif subprocess.call(t_dpkg,shell=True) == 0:
             self.syslog.debug("Distro %s is DEB based " % self.dist[0])
-            cmd = "/usr/bin/dpkg-query --show --showformat='${binary:Package} ${Version}\n'"
+            cmd = "/usr/bin/dpkg-query --show --showformat='[${Package}][${Version}][unknown][${Installed-Size}][${Section}][${Status}][${binary:Summary}][${Homepage}][unknown][unknown][${Architecture}]\n'"
             proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             lines = sorted(proc.stdout.read().split('\n'))
 
             i = 0
             packages = { }
             for line in lines:
-                columns = line.split(" ")
-                if columns[0]: 
-                    packages[i] = columns
+                match = re.search(r'\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]',line)
+                if match:
+                    packages[i] = [match.group(1),match.group(2),match.group(3),match.group(4),match.group(5),match.group(6),match.group(7),match.group(8),match.group(9),match.group(10),match.group(11)]
                     i += 1
 
         else:
