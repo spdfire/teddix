@@ -48,7 +48,7 @@ class TeddixDatabase:
         self.cursor.close()
         self.db.close()
 
-    def execute(self,sql,*opts):
+    def execute(self,sql,opts=None):
         # Try to run the query and catch any exception
         self.syslog.debug("SQL execute(): %s " % sql[:250] )
         try:

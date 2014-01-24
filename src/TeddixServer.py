@@ -171,15 +171,11 @@ class TeddixServer:
 
         # Get server ID 
         sql = "SELECT id FROM server WHERE LOWER(name) = %s "  
-        database.execute(sql,(host))
+        database.execute(sql,host)
         result = database.fetchall()
-        server_id = '' 
+        server_id = -1 
         for row in result:
             server_id = row[0] 
-        
-        #TODO: check if only one record is returned, rollback if req 
-        if database.rowcount() > 1: 
-            self.syslog.warn("SQL Duplicate IDs for server %s " % host)
 
         syslog.debug("SQL result: server %s have ID %s " % (host,server_id))
 
@@ -190,9 +186,8 @@ class TeddixServer:
         b_version = baseline.find('server').find('generated').get('version')
 
         sql  = "INSERT INTO baseline(server_id,hostname,program,scantime,version) "
-        sql += "VALUES(%s,\"%s\",\"%s\",\"%s\",\"%s\")" 
-        sql = sql % (server_id,b_hostname,b_program,b_scantime,b_version)
-        database.execute(sql)
+        sql += "VALUES(%s,%s,%s,%s,%s)" 
+        database.execute(sql,(server_id,b_hostname,b_program,b_scantime,b_version))
         baseline_id = database.insert_id()
 
         # save HW info
@@ -204,9 +199,8 @@ class TeddixServer:
         productname = hardware.find('sysboard').get('productname')
 
         sql  = "INSERT INTO sysboard(server_id,baseline_id,boardtype,serialnumber,manufacturer,productname) "
-        sql += "VALUES(%s,%s,\"%s\",\"%s\",\"%s\",\"%s\")" 
-        sql = sql % (server_id,baseline_id,boardtype,serialnumber,manufacturer,productname)
-        database.execute(sql)
+        sql += "VALUES(%s,%s,%s,%s,%s,%s)" 
+        database.execute(sql,(server_id,baseline_id,boardtype,serialnumber,manufacturer,productname))
 
         # Processors 
         root = hardware.find('processors')
@@ -223,9 +217,8 @@ class TeddixServer:
             proctype = child.get('proctype')
             procversion = child.get('procversion')
             sql  = "INSERT INTO processor(server_id,baseline_id,cores,extclock,familly,htsystem,procid,partnumber,serialnumber,clock,threads,proctype,procversion) "
-            sql += "VALUES(%s,%s,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\")" 
-            sql = sql % (server_id,baseline_id,cores,extclock,familly,htsystem,procid,partnumber,serialnumber,clock,threads,proctype,procversion)
-            database.execute(sql)
+            sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,cores,extclock,familly,htsystem,procid,partnumber,serialnumber,clock,threads,proctype,procversion))
 
 
         # RAM modules 
@@ -241,9 +234,8 @@ class TeddixServer:
             modulesize = child.get('modulesize')
             width = child.get('width')
             sql  = "INSERT INTO memorymodule(server_id,baseline_id,bank,formfactor,location,manufacturer,memorytype,partnumber,serialnumber,modulesize,width) "
-            sql += "VALUES(%s,%s,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\")" 
-            sql = sql % (server_id,baseline_id,bank,formfactor,location,manufacturer,memorytype,partnumber,serialnumber,modulesize,width)
-            database.execute(sql)
+            sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,bank,formfactor,location,manufacturer,memorytype,partnumber,serialnumber,modulesize,width))
 
 
         # firmware  
@@ -251,9 +243,8 @@ class TeddixServer:
         vendor = hardware.find('bios').get('vendor')
         version = hardware.find('bios').get('version')
         sql  = "INSERT INTO bios(server_id,baseline_id,releasedate,vendor,version) "
-        sql += "VALUES(%s,%s,\"%s\",\"%s\",\"%s\")" 
-        sql = sql % (server_id,baseline_id,releasedate,vendor,version)
-        database.execute(sql)
+        sql += "VALUES(%s,%s,%s,%s,%s)" 
+        database.execute(sql,(server_id,baseline_id,releasedate,vendor,version))
 
         # save OS info
         system = baseline.find('server').find('system')
@@ -264,9 +255,8 @@ class TeddixServer:
         name = system.get('name')
         serialnumber = system.get('serialnumber')
         sql  = "INSERT INTO system(server_id,baseline_id,arch,detail,kernel,manufacturer,name,serialnumber) "
-        sql += "VALUES(%s,%s,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\")" 
-        sql = sql % (server_id,baseline_id,arch,detail,kernel,manufacturer,name,serialnumber)
-        database.execute(sql)
+        sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s)" 
+        database.execute(sql,(server_id,baseline_id,arch,detail,kernel,manufacturer,name,serialnumber))
         system_id = database.insert_id()
 
 
@@ -285,9 +275,8 @@ class TeddixServer:
             status = child.get('status')
             version = child.get('version')
             sql  = "INSERT INTO package(server_id,baseline_id,system_id,arch,description,files,homepage,name,pkgsize,section,signed,installedsize,status,version) "
-            sql += "VALUES(%s,%s,%s,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\")" 
-            sql = sql % (server_id,baseline_id,system_id,arch,description,files,homepage,name,pkgsize,section,signed,installedsize,status,version)
-            database.execute(sql)
+            sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,system_id,arch,description,files,homepage,name,pkgsize,section,signed,installedsize,status,version))
 
         # filesystems 
         root = system.find('filesystems')
@@ -299,9 +288,8 @@ class TeddixServer:
             fssize = child.get('fssize')
             fsused = child.get('fsused')
             sql  = "INSERT INTO filesystem(server_id,baseline_id,system_id,device,fstype,fsfree,name,fssize,fsused) "
-            sql += "VALUES(%s,%s,%s,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\")" 
-            sql = sql % (server_id,baseline_id,system_id,device,fstype,fsfree,name,fssize,fsused)
-            database.execute(sql)
+            sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,system_id,device,fstype,fsfree,name,fssize,fsused))
 
         # swap devices 
         root = system.find('swap')
@@ -312,9 +300,8 @@ class TeddixServer:
             swaptype = child.get('swaptype')
             swapused = child.get('swapused')
             sql  = "INSERT INTO swap(server_id,baseline_id,system_id,device,swapfree,swapsize,swaptype,swapused) "
-            sql += "VALUES(%s,%s,%s,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\")" 
-            sql = sql % (server_id,baseline_id,system_id,device,swapfree,swapsize,swaptype,swapused)
-            database.execute(sql)
+            sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,system_id,device,swapfree,swapsize,swaptype,swapused))
 
         # NIC 
         root = system.find('network').find('nics')
@@ -332,9 +319,8 @@ class TeddixServer:
             nictype = child.get('nictype')
             status = child.get('status')
             sql  = "INSERT INTO nic(server_id,baseline_id,system_id,MTU,RXbytes,RXpackets,TXbytes,TXpackets,description,macaddress,name,nictype,status,driver,kernmodule) "
-            sql += "VALUES(%s,%s,%s,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\")" 
-            sql = sql % (server_id,baseline_id,system_id,MTU,RXbytes,RXpackets,TXbytes,TXpackets,description,macaddress,name,nictype,status,driver,kernmodule)
-            database.execute(sql)
+            sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,system_id,MTU,RXbytes,RXpackets,TXbytes,TXpackets,description,macaddress,name,nictype,status,driver,kernmodule))
             nic_id = database.insert_id()
            
             for child_ipv4 in child.findall('ipv4'):
@@ -342,18 +328,16 @@ class TeddixServer:
                 broadcast = child_ipv4.get('broadcast')
                 mask = child_ipv4.get('mask')
                 sql  = "INSERT INTO ipv4(server_id,baseline_id,system_id,nic_id,address,broadcast,mask) "
-                sql += "VALUES(%s,%s,%s,%s,\"%s\",\"%s\",\"%s\")" 
-                sql = sql % (server_id,baseline_id,system_id,nic_id,address,broadcast,mask)
-                database.execute(sql)
+                sql += "VALUES(%s,%s,%s,%s,%s,%s,%s)" 
+                database.execute(sql,(server_id,baseline_id,system_id,nic_id,address,broadcast,mask))
 
             for child_ipv6 in child.findall('ipv6'):
                 address = child_ipv6.get('address')
                 broadcast = child_ipv6.get('broadcast')
                 mask = child_ipv6.get('mask')
                 sql  = "INSERT INTO ipv6(server_id,baseline_id,system_id,nic_id,address,broadcast,mask) "
-                sql += "VALUES(%s,%s,%s,%s,\"%s\",\"%s\",\"%s\")" 
-                sql = sql % (server_id,baseline_id,system_id,nic_id,address,broadcast,mask)
-                database.execute(sql)
+                sql += "VALUES(%s,%s,%s,%s,%s,%s,%s)" 
+                database.execute(sql,(server_id,baseline_id,system_id,nic_id,address,broadcast,mask))
 
 
         # DNS
@@ -361,23 +345,20 @@ class TeddixServer:
         for child in root.findall('domain'):
             name = child.get('name')
             sql  = "INSERT INTO domain(server_id,baseline_id,system_id,name) "
-            sql += "VALUES(%s,%s,%s,\"%s\")" 
-            sql = sql % (server_id,baseline_id,system_id,name)
-            database.execute(sql)
+            sql += "VALUES(%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,system_id,name))
 
         for child in root.findall('search'):
             name = child.get('name')
             sql  = "INSERT INTO dnssearch(server_id,baseline_id,system_id,name) "
-            sql += "VALUES(%s,%s,%s,\"%s\")" 
-            sql = sql % (server_id,baseline_id,system_id,name)
-            database.execute(sql)
+            sql += "VALUES(%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,system_id,name))
 
         for child in root.findall('nameserver'):
             address = child.get('address')
             sql  = "INSERT INTO nameserver(server_id,baseline_id,system_id,address) "
-            sql += "VALUES(%s,%s,%s,\"%s\")" 
-            sql = sql % (server_id,baseline_id,system_id,address)
-            database.execute(sql)
+            sql += "VALUES(%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,system_id,address))
            
         # routing
         root = system.find('network').find('routing').find('ipv4')
@@ -389,9 +370,8 @@ class TeddixServer:
             mask = child.get('mask')
             metric = child.get('metric')
             sql  = "INSERT INTO route4(server_id,baseline_id,system_id,destination,flags,gateway,interface,mask,metric) "
-            sql += "VALUES(%s,%s,%s,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\")" 
-            sql = sql % (server_id,baseline_id,system_id,destination,flags,gateway,interface,mask,metric)
-            database.execute(sql)
+            sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,system_id,destination,flags,gateway,interface,mask,metric))
 
         root = system.find('network').find('routing').find('ipv6')
         for child in root.findall('route'):
@@ -402,9 +382,8 @@ class TeddixServer:
             mask = child.get('mask')
             metric = child.get('metric')
             sql  = "INSERT INTO route6(server_id,baseline_id,system_id,destination,flags,gateway,interface,mask,metric) "
-            sql += "VALUES(%s,%s,%s,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\")" 
-            sql = sql % (server_id,baseline_id,system_id,destination,flags,gateway,interface,mask,metric)
-            database.execute(sql)
+            sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,system_id,destination,flags,gateway,interface,mask,metric))
 
 
         # groups 
@@ -412,9 +391,8 @@ class TeddixServer:
         for child in root:
             name = child.get('name')
             sql  = "INSERT INTO sysgroup(server_id,baseline_id,system_id,name) "
-            sql += "VALUES(%s,%s,%s,\"%s\")" 
-            sql = sql % (server_id,baseline_id,system_id,name)
-            database.execute(sql)
+            sql += "VALUES(%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,system_id,name))
 
         # users
         root = system.find('users')
@@ -430,17 +408,15 @@ class TeddixServer:
             shell = child.get('shell')
             uid = child.get('uid')
             sql  = "INSERT INTO sysuser(server_id,baseline_id,system_id,expire,destination,gid,groups,hashtype,home,locked,login,shell,uid) "
-            sql += "VALUES(%s,%s,%s,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\")" 
-            sql = sql % (server_id,baseline_id,system_id,expire,destination,gid,groups,hashtype,home,locked,login,shell,uid)
-            database.execute(sql)
+            sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,system_id,expire,destination,gid,groups,hashtype,home,locked,login,shell,uid))
 
         # language 
         timezone = system.find('regional').get('timezone')
         charset = system.find('regional').get('charset')
         sql  = "INSERT INTO regional(server_id,baseline_id,system_id,timezone,charset) "
-        sql += "VALUES(%s,%s,%s,\"%s\",\"%s\")" 
-        sql = sql % (server_id,baseline_id,system_id,timezone,charset)
-        database.execute(sql)
+        sql += "VALUES(%s,%s,%s,%s,%s)" 
+        database.execute(sql,(server_id,baseline_id,system_id,timezone,charset))
 
         # process list
         root = system.find('processes')
@@ -455,9 +431,8 @@ class TeddixServer:
             sharedsize = child.get('sharedsize')
             virtsize = child.get('virtsize')
             sql  = "INSERT INTO process(server_id,baseline_id,system_id,command,cputime,owner,pcpu,pid,pmemory,priority,sharedsize,virtsize) "
-            sql += "VALUES(%s,%s,%s,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\")" 
-            sql = sql % (server_id,baseline_id,system_id,command,cputime,owner,pcpu,pid,pmemory,priority,sharedsize,virtsize)
-            database.execute(sql)
+            sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,system_id,command,cputime,owner,pcpu,pid,pmemory,priority,sharedsize,virtsize))
 
         # services
         root = system.find('services')
@@ -466,9 +441,8 @@ class TeddixServer:
             name = child.get('name')
             running = child.get('running')
             sql  = "INSERT INTO service(server_id,baseline_id,system_id,autostart,name,running) "
-            sql += "VALUES(%s,%s,%s,\"%s\",\"%s\",\"%s\")" 
-            sql = sql % (server_id,baseline_id,system_id,autostart,name,running)
-            database.execute(sql)
+            sql += "VALUES(%s,%s,%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,system_id,autostart,name,running))
 
         return True
 
@@ -588,7 +562,8 @@ class TeddixServer:
         
         self.terminate = False 
         self.queue = Queue.Queue()
-        
+       
+        # get agents
         conf = TeddixConfigFile.TeddixServerFile(syslog,cfg.server_serverlist) 
         agents = conf.getlist()
         conf.close()
