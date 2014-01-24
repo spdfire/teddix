@@ -187,6 +187,7 @@ class TeddixBaseline:
         
         pkgs = self.osbase.getpkgs()
         partitions = self.osbase.getpartitions()
+        swaps = self.osbase.getswap() 
         nics = self.osbase.getnics()
         
         server = xml.Element('server')
@@ -317,14 +318,14 @@ class TeddixBaseline:
         operatingsystem.append(swap)
 
         # for every swap do:
-        for swp in self.osbase.getswap(): 
+        # swaps[i] = [dev,type,total,used,free]
+        for i in range(len(swaps)): 
             swaparea = xml.Element('swaparea')
-            data = swp.split(' ')
-            swaparea.attrib['device'] = data[0]
-            swaparea.attrib['swaptype'] = data[1]
-            swaparea.attrib['swapsize'] = data[2]
-            swaparea.attrib['swapused'] = 'TODO'
-            swaparea.attrib['swapfree'] = 'TODO'
+            swaparea.attrib['device']   = swaps[i][0]
+            swaparea.attrib['swaptype'] = swaps[i][1]
+            swaparea.attrib['swapsize'] = swaps[i][2]
+            swaparea.attrib['swapused'] = swaps[i][3]
+            swaparea.attrib['swapfree'] = swaps[i][4]
             swap.append(swaparea)
 
 

@@ -189,21 +189,45 @@ class TeddixLinux:
     # Get swap 
     def getswap(self):
         self.syslog.debug("Reading swap filesystems")
+        parser = TeddixParser.TeddixStringParser() 
 
         fd = open('/proc/swaps')
         f = fd.read()
         lines = f.split('\n')
             
-        swaps = []
+        i = 0 
+        swaps = { }
         for line in lines:
-            dev = re.findall(r'^([^ ]+)[ ]+\w+\W+\d+',line)
-            typ = re.findall(r'^[^ ]+[ ]+(\w+)\W+\d+',line)
-            free = re.findall(r'^[^ ]+[ ]+\w+\W+(\d+)',line)
-            if dev:
-                swaps.append(dev[0] + ' ' + typ[0] + ' ' + free[0])
-
-
+                match = re.search(r'^([^ ]+)[ ]+(\w+)\W+(\d+)\W+(\d+)',line)
+                if match:
+                    val = { }
+                    if not parser.isstr(match.group(1)):
+                        dev = 'N/A'
+                    else:
+                        dev = parser.str2uni(match.group(1))
+                    if not parser.isstr(match.group(2)):
+                        swaptype = 'N/A'
+                    else:
+                        swaptype = parser.str2uni(match.group(2))
+                    if not parser.isstr(match.group(3)):
+                        total = 'N/A'
+                    else:
+                        total = parser.str2uni(match.group(3))
+                    if not parser.isstr(match.group(4)):
+                        used = 'N/A'
+                    else:
+                        used = parser.str2uni(match.group(4))
+                    if not (parser.isint(match.group(3)) or parser.isint(match.group(4))): 
+                        free = 'N/A'
+                    else:
+                        free = parser.str2int(match.group(3)) - parser.str2int(match.group(4))
+                        free = str(free)
+                  
+                    swaps[i] = [dev,swaptype,total,used,free]
+                    i += 1
+                  
         fd.close()
+
         return swaps
 
 
