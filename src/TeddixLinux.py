@@ -14,7 +14,7 @@ import TeddixLogger
 
 # Config parser
 import TeddixConfigFile
-
+import TeddixParser 
 
 class TeddixLinux:
 
@@ -30,75 +30,161 @@ class TeddixLinux:
 
     # Get installed packages
     def getpkgs(self):
+        parser = TeddixParser.TeddixStringParser() 
 
+        # generate pkglist
+        # [name][ver][pkgsize][instsize][section][status][info][homepage][signed][files][arch]
         t_rpm = "test -x /bin/rpm"
         t_dpkg = "test -x /usr/bin/dpkg-query"
-        # [name][ver][pkgsize][instsize][section][status][info][homepage][signed][files][arch]
+        lines = None
         if subprocess.call(t_rpm,shell=True) == 0:
             self.syslog.debug("Distro %s is RPM based " % self.dist[0])
-            cmd = "/bin/rpm -qa --queryformat '%{NAME}:%{VERSION}-%{RELEASE}\n'"
+            #cmd = "/bin/rpm -qa --queryformat '%{NAME}:%{VERSION}-%{RELEASE}\n'"
+            cmd = "/bin/rpm -qa --queryformat '\[%{NAME}\]\[%{VERSION}-%{RELEASE}\]\[%{ARCHIVESIZE}\]\[%{SIZE}\]\[%{GROUP}\]\[installed\]\[%{SUMMARY}\]\[%{URL}\]\[\]\[\]\[%{ARCH}\]\n'"
             proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             lines = sorted(proc.stdout.read().split('\n'))
-
-            i = 0
-            packages = { }
-            for line in lines:
-                columns = line.split(":")
-                if columns[0]: 
-                    packages[i] = columns
-                    i += 1
 
         elif subprocess.call(t_dpkg,shell=True) == 0:
             self.syslog.debug("Distro %s is DEB based " % self.dist[0])
-            cmd = "/usr/bin/dpkg-query --show --showformat='[${Package}][${Version}][unknown][${Installed-Size}][${Section}][${Status}][${binary:Summary}][${Homepage}][unknown][unknown][${Architecture}]\n'"
+            cmd = "/usr/bin/dpkg-query --show --showformat='[${Package}][${Version}][][${Installed-Size}][${Section}][${Status}][${binary:Summary}][${Homepage}][][][${Architecture}]\n'"
             proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             lines = sorted(proc.stdout.read().split('\n'))
 
+        else:
+            self.syslog.warn("Unknown pkg system for %s " % self.dist[0])
+
+        # parse pkglist
+        packages = { }
+        if lines: 
             i = 0
-            packages = { }
             for line in lines:
                 match = re.search(r'\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]',line)
                 if match:
-                    packages[i] = [match.group(1),match.group(2),match.group(3),match.group(4),match.group(5),match.group(6),match.group(7),match.group(8),match.group(9),match.group(10),match.group(11)]
+                    val = { }
+                    if not parser.isstr(match.group(1)):
+                        val[0] = 'N/A'
+                    else:
+                        val[0] = parser.str2uni(match.group(1))
+                    
+                    if not parser.isstr(match.group(2)):
+                        val[1] = 'N/A'
+                    else:
+                        val[1] = parser.str2uni(match.group(2))
+                    
+                    if not parser.isstr(match.group(3)):
+                        val[2] = 'N/A'
+                    else:
+                        val[2] = parser.str2uni(match.group(3))
+                    
+                    if not parser.isstr(match.group(4)):
+                        val[3] = 'N/A'
+                    else:
+                        val[3] = parser.str2uni(match.group(4))
+                    
+                    if not parser.isstr(match.group(5)):
+                        val[4] = 'N/A'
+                    else:
+                        val[4] = parser.str2uni(match.group(5))
+                    
+                    if not parser.isstr(match.group(6)):
+                        val[5] = 'N/A'
+                    else:
+                        tmp = match.group(6).split(' ')
+                        if tmp[2]:
+                            val[5] = parser.str2uni(tmp[2])
+                        else:
+                            val[5] = 'N/A'
+                    
+                    if not parser.isstr(match.group(7)):
+                        val[6] = 'N/A'
+                    else:
+                        val[6] = parser.str2uni(match.group(7))
+                    
+                    if not parser.isstr(match.group(8)):
+                        val[7] = 'N/A'
+                    else:
+                        val[7] = parser.str2uni(match.group(8))
+                    
+                    if not parser.isstr(match.group(9)):
+                        val[8] = 'N/A'
+                    else:
+                        val[8] = parser.str2uni(match.group(9))
+                    
+                    if not parser.isstr(match.group(10)):
+                        val[9] = 'N/A'
+                    else:
+                        val[9] = parser.str2uni(match.group(10))
+                    
+                    if not parser.isstr(match.group(11)):
+                        val[10] = 'N/A'
+                    else:
+                        val[10] = parser.str2uni(match.group(11))
+                        
+                    packages[i] = [val[0],val[1],val[2],val[3],val[4],val[5],val[6],val[7],val[8],val[9],val[10]]
                     i += 1
-
-        else:
-            self.syslog.warn("Unknown pkg system for %s " % self.dist[0])
-            packages = { }
 
         return packages
 
     # Get partitions
     def getpartitions(self):
+        parser = TeddixParser.TeddixStringParser() 
         self.syslog.debug("Getting filesystem list ")
 
-        df_cmd = "df -hP"
-        df_proc = subprocess.Popen(df_cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        df_lines = df_proc.stdout.read().split('\n')
-        mount_cmd = "mount"
-        mount_proc = subprocess.Popen(mount_cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        mount_lines = mount_proc.stdout.read().split('\n')
-
-        disks = { }
-        fs = { }
         i = 0
-        for df_line in df_lines:
-            if df_line.find ("/dev/") != -1 and not df_line.find ("tmpfs") != -1:
-                columns = re.findall(r'([^ ]+)',df_line)
-                fsname = columns[5]
-                fsdev = columns[0]
-                fssize = columns[1]
-                fsused = columns[2]
-                fsfree = columns[3]
-                # get fstype for device
-                for mount_line in mount_lines:
-                    if mount_line.find (fsname + ' ') != -1:
-                        columns2 = re.findall(r'([^ ]+) ',mount_line)
-                        fstype = columns2[4]
-                        disks[i] = [fsname,fsdev,fssize,fsused,fsfree,fstype]
-                i += 1
+        disks = { }
+        mounts = psutil.disk_partitions() 
+        for part in psutil.disk_partitions():
+            
+            # get addtional info 
+            if part.mountpoint:
+                usage = psutil.disk_usage(part.mountpoint)
+
+                if not parser.isstr(usage.total):
+                    fstotal = 'N/A'
+                else:
+                    fstotal = parser.str2uni(usage.total)
+
+                if not parser.isstr(usage.used):
+                    fsused = 'N/A'
+                else:
+                    fsused = parser.str2uni(usage.used)
+
+                if not parser.isstr(usage.free):
+                    fsfree = 'N/A'
+                else:
+                    fsfree = parser.str2uni(usage.free)
+
+                if not parser.isstr(usage.percent):
+                    fspercent = 'N/A'
+                else:
+                    fspercent = parser.str2uni(usage.percent)
+
+    
+            if not parser.isstr(part.device):
+                fsdev = 'N/A'
+            else:
+                fsdev = parser.str2uni(part.device)
+            
+            if not parser.isstr(part.mountpoint):
+                fsmount = 'N/A'
+            else:
+                fsmount = parser.str2uni(part.mountpoint)
+
+            if not parser.isstr(part.fstype):
+                fstype = 'N/A'
+            else:
+                fstype = parser.str2uni(part.fstype)
+
+            if not parser.isstr(part.opts):
+                fsopts = 'N/A'
+            else:
+                fsopts = parser.str2uni(part.opts)
+
+            disks[i] = [fsdev,fsmount,fstype,fsopts,fstotal,fsused,fsfree,fspercent]
+            i += 1
 
         return disks
+
 
     # Get swap 
     def getswap(self):
