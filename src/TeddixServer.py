@@ -308,21 +308,22 @@ class TeddixServer:
         # NIC 
         root = system.find('network').find('nics')
         for child in root:
-            MTU = child.get('MTU')
             RXbytes = child.get('RXbytes')
             RXpackets = child.get('RXpackets')
             TXbytes = child.get('TXbytes')
             TXpackets = child.get('TXpackets')
             description = child.get('description')
             driver = child.get('driver')
+            drvver = child.get('drvver')
+            firmware = child.get('firmware')
             kernmodule = child.get('kernmodule')
             macaddress = child.get('macaddress')
             name = child.get('name')
             nictype = child.get('nictype')
             status = child.get('status')
-            sql  = "INSERT INTO nic(server_id,baseline_id,system_id,MTU,RXbytes,RXpackets,TXbytes,TXpackets,description,macaddress,name,nictype,status,driver,kernmodule) "
-            sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
-            database.execute(sql,(server_id,baseline_id,system_id,MTU,RXbytes,RXpackets,TXbytes,TXpackets,description,macaddress,name,nictype,status,driver,kernmodule))
+            sql  = "INSERT INTO nic(server_id,baseline_id,system_id,name,description,nictype,status,RXpackets,TXpackets,RXbytes,TXbytes,driver,drvver,firmware,kernmodule,macaddress) "
+            sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,system_id,name,description,nictype,status,RXpackets,TXpackets,RXbytes,TXbytes,driver,drvver,firmware,kernmodule,macaddress))
             nic_id = database.insert_id()
            
             for child_ipv4 in child.findall('ipv4'):

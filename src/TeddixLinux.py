@@ -7,6 +7,7 @@ import sys
 import time
 import psutil
 import platform
+import netifaces
 import subprocess
 
 # Syslog handler
@@ -234,41 +235,130 @@ class TeddixLinux:
     # Get network interfaces
     def getnics(self):
         self.syslog.debug("Looking for available network interfaces ")
+        parser = TeddixParser.TeddixStringParser() 
 
-        cmd = "ifconfig -a"
-        proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        ifaces = proc.stdout.read().split('\n\n')
-
-        lines = { }
-        nics = []
+        names = netifaces.interfaces() 
+        
+        nics = {}
         i = 0
-        for iface in ifaces:
-            lines = iface.split('\n')
-            j = 0
-            k = 0
-            for line in lines:
-                ifname = re.findall(r'^([\w\-]+)[: ]+',line)
-                if ifname:
-                    nics.append(ifname[0])
-            i += 1 
+        for name in names: 
+            driver = 'N/A' 
+            drvver = 'N/A' 
+            kernmodule = 'N/A' 
+            firmware = 'N/A'
+            description = 'N/A'
+            nictype = 'N/A'
+            status = 'N/A'
+            rx_packets = 'N/A'
+            rx_bytes = 'N/A'
+            tx_packets = 'N/A'
+            tx_bytes = 'N/A'
+            macaddr = 'N/A'
 
+
+            t_ethtool = "test -x /sbin/ethtool"
+            lines = None
+            if subprocess.call(t_ethtool,shell=True) == 0:
+                
+                # driver
+                cmd = "/sbin/ethtool -i %s " % name 
+                proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                lines = proc.stdout.read().split('\n')
+                for line in lines:
+                    match = re.search(r'^driver: (\w+)',line)
+                    if match:
+                        if not parser.isstr(match.group(1)):
+                            driver = 'N/A'
+                        else:
+                            driver = parser.str2uni(match.group(1))
+                            kernmodule = driver 
+
+                for line in lines:
+                    match = re.search(r'^firmware-version: (.+)',line)
+                    if match:
+                        if not parser.isstr(match.group(1)):
+                            firmware = 'N/A'
+                        else:
+                            firmware = parser.str2uni(match.group(1))
+
+                # MAC address 
+                cmd = "/sbin/ethtool -P %s " % name 
+                proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                lines = proc.stdout.read().split('\n')
+                for line in lines:
+                    match = re.search(r'^Permanent address: ([\w:.-]+)',line)
+                    if match:
+                        if not parser.isstr(match.group(1)):
+                            macaddr = 'N/A'
+                        else:
+                            macaddr = parser.str2uni(match.group(1))
+
+
+                # statistics
+                cmd = "/sbin/ethtool -S %s " % name 
+                proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                lines = proc.stdout.read().split('\n')
+                for line in lines:
+                    match = re.search(r'rx_packets: (\d+)',line)
+                    if match:
+                        if not parser.isstr(match.group(1)):
+                            rx_packets = 'N/A'
+                        else:
+                            rx_packets = parser.str2uni(match.group(1))
+
+                for line in lines:
+                    match = re.search(r'rx_bytes: (\d+)',line)
+                    if match:
+                        if not parser.isstr(match.group(1)):
+                            rx_bytes = 'N/A'
+                        else:
+                            rx_bytes = parser.str2uni(match.group(1))
+
+                for line in lines:
+                    match = re.search(r'tx_packets: (\d+)',line)
+                    if match:
+                        if not parser.isstr(match.group(1)):
+                            tx_packets = 'N/A'
+                        else:
+                            tx_packets = parser.str2uni(match.group(1))
+
+                for line in lines:
+                    match = re.search(r'tx_bytes: (\d+)',line)
+                    if match:
+                        if not parser.isstr(match.group(1)):
+                            tx_bytes = 'N/A'
+                        else:
+                            tx_bytes = parser.str2uni(match.group(1))
+
+
+            t_modinfo = "test -x /sbin/modinfo"
+            lines = None
+            if subprocess.call(t_ethtool,shell=True) == 0:
+ 
+                # driverinfo
+                cmd = "/sbin/modinfo %s " % driver
+                proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                lines = proc.stdout.read().split('\n')
+                for line in lines:
+                    match = re.search(r'^description:\W+(.+)',line)
+                    if match:
+                        if not parser.isstr(match.group(1)):
+                            description = 'N/A'
+                        else:
+                            description = parser.str2uni(match.group(1))
+                for line in lines:
+                    match = re.search(r'^version:\W*(.+)',line)
+                    if match:
+                        if not parser.isstr(match.group(1)):
+                            drvver = 'N/A'
+                        else:
+                            drvver = parser.str2uni(match.group(1))
+
+            nics[i] = [name,description,nictype,status,rx_packets,tx_packets,rx_bytes,tx_bytes,driver,drvver,firmware,kernmodule,macaddr]
+            i += 1
+        
         return nics
-
-    # Get mac address
-    def getmac(self,nic):
-        self.syslog.debug("Reading %s MAC address" % nic)
-
-        cmd = "ifconfig " + nic
-        proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        lines = proc.stdout.read().split('\n')
-
-        for line in lines:
-            mac = re.findall(r'.+ ether|HWaddr ([\w\d:]+) .+',line)
-            if mac: 
-                return mac[0]
-
-        return ''
-
+            
     # Get ipv address  
     def getip(self,nic):
         self.syslog.debug("Reading %s IPv4 configuraion" % nic)

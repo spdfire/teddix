@@ -337,24 +337,25 @@ class TeddixBaseline:
         #print a[0][0]
         adapters = xml.Element('nics')
         network.append(adapters)
-        for n in nics:
-            
+        #[name,description,nictype,status,rx_packets,tx_packets,rx_bytes,tx_bytes,driver,drvver,firmware,kernmodule,macaddr]
+        for i in range(len(nics)):
             adapter = xml.Element('nic')
-            adapter.attrib['name'] = n
-            adapter.attrib['description'] = 'TODO'
-            adapter.attrib['nictype'] = 'TODO'
-            adapter.attrib['status'] = 'TODO'
-            adapter.attrib['MTU'] = 'TODO'
-            adapter.attrib['RXpackets'] = 'TODO'
-            adapter.attrib['TXpackets'] = 'TODO'
-            adapter.attrib['RXbytes'] = 'TODO'
-            adapter.attrib['TXbytes'] = 'TODO'
-            adapter.attrib['driver'] = 'TODO'
-            adapter.attrib['kernmodule'] = 'TODO'
-            adapter.attrib['macaddress'] = self.osbase.getmac(n) 
+            adapter.attrib['name']        = nics[i][0]
+            adapter.attrib['description'] = nics[i][1]
+            adapter.attrib['nictype']     = nics[i][2]
+            adapter.attrib['status']      = nics[i][3]
+            adapter.attrib['RXpackets']   = nics[i][4]
+            adapter.attrib['TXpackets']   = nics[i][5]
+            adapter.attrib['RXbytes']     = nics[i][6]
+            adapter.attrib['TXbytes']     = nics[i][7]
+            adapter.attrib['driver']      = nics[i][8]
+            adapter.attrib['drvver']      = nics[i][9]
+            adapter.attrib['firmware']    = nics[i][10]
+            adapter.attrib['kernmodule']  = nics[i][11]
+            adapter.attrib['macaddress']  = nics[i][12]
             adapters.append(adapter)
 
-            ips = self.osbase.getip(n)
+            ips = self.osbase.getip(nics[i][0])
             for ipv4 in ips:
                 ip = xml.Element('ipv4')
                 data = ipv4.split('/')
@@ -363,7 +364,7 @@ class TeddixBaseline:
                 ip.attrib['broadcast'] = 'TODO' 
                 adapter.append(ip)
 
-            ips6 = self.osbase.getip6(n)
+            ips6 = self.osbase.getip6(nics[i][0])
             for ipv6 in ips6:
                 ip6 = xml.Element('ipv6')
                 data = ipv6.split('/')
