@@ -281,15 +281,17 @@ class TeddixServer:
         # filesystems 
         root = system.find('filesystems')
         for child in root:
-            device = child.get('device')
+            fsdevice = child.get('fsdevice')
+            fsname = child.get('fsname')
             fstype = child.get('fstype')
-            fsfree = child.get('fsfree')
-            name = child.get('name')
-            fssize = child.get('fssize')
+            fsopts = child.get('fsopts')
+            fstotal = child.get('fstotal')
             fsused = child.get('fsused')
-            sql  = "INSERT INTO filesystem(server_id,baseline_id,system_id,device,fstype,fsfree,name,fssize,fsused) "
-            sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
-            database.execute(sql,(server_id,baseline_id,system_id,device,fstype,fsfree,name,fssize,fsused))
+            fsfree = child.get('fsfree')
+            fspercent = child.get('fspercent')
+            sql  = "INSERT INTO filesystem(server_id,baseline_id,system_id,fsdevice,fsname,fstype,fsopts,fstotal,fsused,fsfree,fspercent) "
+            sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,system_id,fsdevice,fsname,fstype,fsopts,fstotal,fsused,fsfree,fspercent))
 
         # swap devices 
         root = system.find('swap')
@@ -417,6 +419,7 @@ class TeddixServer:
         sql  = "INSERT INTO regional(server_id,baseline_id,system_id,timezone,charset) "
         sql += "VALUES(%s,%s,%s,%s,%s)" 
         database.execute(sql,(server_id,baseline_id,system_id,timezone,charset))
+
 
         # process list
         root = system.find('processes')

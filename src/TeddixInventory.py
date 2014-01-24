@@ -303,11 +303,11 @@ class TeddixBaseline:
         # disks[i] = [fsdev,fsmount,fstype,fsopts,fstotal,fsused,fsfree,fspercent]
         for i in range(len(partitions)):
             filesystem = xml.Element('filesystem')
-            filesystem.attrib['device']    = partitions[i][0]
-            filesystem.attrib['name']      = partitions[i][1]
+            filesystem.attrib['fsdevice']  = partitions[i][0]
+            filesystem.attrib['fsname']    = partitions[i][1]
             filesystem.attrib['fstype']    = partitions[i][2]
             filesystem.attrib['fsopts']    = partitions[i][3]
-            filesystem.attrib['fssize']    = partitions[i][4]
+            filesystem.attrib['fstotal']   = partitions[i][4]
             filesystem.attrib['fsused']    = partitions[i][5]
             filesystem.attrib['fsfree']    = partitions[i][6]
             filesystem.attrib['fspercent'] = partitions[i][7]
