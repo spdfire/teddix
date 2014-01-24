@@ -25,11 +25,27 @@ class TeddixStringParser:
             return False 
 
     def isstr(self,value):
-        try:
-            str(value)
-            return True
-        except ValueError:
-            return False 
+        if value is None:
+            return False
+        else:
+            try:
+                tmp = str(value)
+                if len(tmp) == 0:
+                    return False
+                else:
+                    return True
+            except ValueError:
+                return False 
+
+    def isunicode(self,value):
+        if not self.isstr(value):
+            return False
+        else:
+            try:
+                unicode(value, errors='strict') 
+                return True
+            except ValueError:
+                return False 
 
     def ishostname(self,value):
         if not self.isstr(value):
@@ -94,4 +110,12 @@ class TeddixStringParser:
                 host = host.strip()
                 host = host.lower()
                 return host
+
+    def str2uni(self,value):
+        if not self.isstr(value):
+            return None
+        else:
+            data = str(value)
+            parsed = unicode(data, errors='ignore') 
+            return parsed
 
