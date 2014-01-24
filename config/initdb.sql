@@ -22,7 +22,7 @@ CREATE TABLE extra (
 	ora2html MEDIUMTEXT, 
 
 	PRIMARY KEY (id),
-	FOREIGN KEY (server_id) REFERENCES server(id) 
+	FOREIGN KEY (server_id) REFERENCES server(id) ON DELETE CASCADE ON UPDATE CASCADE 
 );
 
 -- Baseline 
@@ -35,7 +35,7 @@ CREATE TABLE baseline (
 	version VARCHAR(25), 
 
 	PRIMARY KEY (id),
-	FOREIGN KEY (server_id) REFERENCES server(id)
+	FOREIGN KEY (server_id) REFERENCES server(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- Hardware Informations 
@@ -49,8 +49,8 @@ CREATE TABLE sysboard (
 	productname VARCHAR(50), 
 
 	PRIMARY KEY (id),
-	FOREIGN KEY (server_id) REFERENCES server(id),
-	FOREIGN KEY (baseline_id) REFERENCES baseline(id)
+	FOREIGN KEY (server_id) REFERENCES server(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (baseline_id) REFERENCES baseline(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE processor ( 
@@ -70,8 +70,8 @@ CREATE TABLE processor (
 	procversion VARCHAR(50),
 
 	PRIMARY KEY (id),
-	FOREIGN KEY (server_id) REFERENCES server(id),
-	FOREIGN KEY (baseline_id) REFERENCES baseline(id)
+	FOREIGN KEY (server_id) REFERENCES server(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (baseline_id) REFERENCES baseline(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE memorymodule ( 
@@ -89,8 +89,8 @@ CREATE TABLE memorymodule (
 	width VARCHAR(25), 
 
 	PRIMARY KEY (id),
-	FOREIGN KEY (server_id) REFERENCES server(id),
-	FOREIGN KEY (baseline_id) REFERENCES baseline(id)
+	FOREIGN KEY (server_id) REFERENCES server(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (baseline_id) REFERENCES baseline(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE bios ( 
@@ -102,8 +102,8 @@ CREATE TABLE bios (
 	version VARCHAR(25), 
 
 	PRIMARY KEY (id),
-	FOREIGN KEY (server_id) REFERENCES server(id),
-	FOREIGN KEY (baseline_id) REFERENCES baseline(id)
+	FOREIGN KEY (server_id) REFERENCES server(id) ON DELETE CASCADE ON UPDATE CASCADE ,
+	FOREIGN KEY (baseline_id) REFERENCES baseline(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 
@@ -120,8 +120,8 @@ CREATE TABLE system (
 	serialnumber VARCHAR(50), 
 
 	PRIMARY KEY (id),
-	FOREIGN KEY (server_id) REFERENCES server(id),
-	FOREIGN KEY (baseline_id) REFERENCES baseline(id)
+	FOREIGN KEY (server_id) REFERENCES server(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (baseline_id) REFERENCES baseline(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE package ( 
@@ -142,9 +142,9 @@ CREATE TABLE package (
 	version VARCHAR(50), 
 
 	PRIMARY KEY (id),
-	FOREIGN KEY (server_id) REFERENCES server(id),
-	FOREIGN KEY (baseline_id) REFERENCES baseline(id),
-	FOREIGN KEY (system_id) REFERENCES system(id)
+	FOREIGN KEY (server_id) REFERENCES server(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (baseline_id) REFERENCES baseline(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (system_id) REFERENCES system(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE filesystem ( 
@@ -152,17 +152,19 @@ CREATE TABLE filesystem (
 	server_id INT NOT NULL,
 	baseline_id INT NOT NULL,
 	system_id INT NOT NULL,
-	device VARCHAR(50), 
+	fsdevice VARCHAR(50), 
+	fsname VARCHAR(50), 
 	fstype VARCHAR(50), 
-	fsfree VARCHAR(50), 
-	name VARCHAR(50), 
-	fssize VARCHAR(50), 
+	fsopts VARCHAR(50), 
+	fstotal VARCHAR(50), 
 	fsused VARCHAR(50), 
+	fsfree VARCHAR(50), 
+	fspercent VARCHAR(50), 
 
 	PRIMARY KEY (id),
-	FOREIGN KEY (server_id) REFERENCES server(id),
-	FOREIGN KEY (baseline_id) REFERENCES baseline(id),
-	FOREIGN KEY (system_id) REFERENCES system(id)
+	FOREIGN KEY (server_id) REFERENCES server(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (baseline_id) REFERENCES baseline(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (system_id) REFERENCES system(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE swap ( 
@@ -177,9 +179,9 @@ CREATE TABLE swap (
 	swapused VARCHAR(50), 
 
 	PRIMARY KEY (id),
-	FOREIGN KEY (server_id) REFERENCES server(id),
-	FOREIGN KEY (baseline_id) REFERENCES baseline(id),
-	FOREIGN KEY (system_id) REFERENCES system(id)
+	FOREIGN KEY (server_id) REFERENCES server(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (baseline_id) REFERENCES baseline(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (system_id) REFERENCES system(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- Network configuration 
@@ -188,23 +190,24 @@ CREATE TABLE nic (
 	server_id INT NOT NULL,
 	baseline_id INT NOT NULL,
 	system_id INT NOT NULL,
-	MTU VARCHAR(25), 
-	RXbytes VARCHAR(25), 
-	RXpackets VARCHAR(25), 
-	TXbytes VARCHAR(25), 
-	TXpackets VARCHAR(25), 
-	description VARCHAR(50), 
-	macaddress VARCHAR(50), 
 	name VARCHAR(50), 
+	description VARCHAR(50), 
 	nictype VARCHAR(50), 
 	status VARCHAR(50), 
+	RXpackets VARCHAR(25), 
+	TXpackets VARCHAR(25), 
+	RXbytes VARCHAR(25), 
+	TXbytes VARCHAR(25), 
 	driver VARCHAR(50), 
+	drvver VARCHAR(50), 
+	firmware VARCHAR(50), 
+	macaddress VARCHAR(50), 
 	kernmodule VARCHAR(50), 
 
 	PRIMARY KEY (id),
-	FOREIGN KEY (server_id) REFERENCES server(id),
-	FOREIGN KEY (baseline_id) REFERENCES baseline(id),
-	FOREIGN KEY (system_id) REFERENCES system(id)
+	FOREIGN KEY (server_id) REFERENCES server(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (baseline_id) REFERENCES baseline(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (system_id) REFERENCES system(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE ipv4 ( 
@@ -218,9 +221,9 @@ CREATE TABLE ipv4 (
 	mask VARCHAR(25), 
 
 	PRIMARY KEY (id),
-	FOREIGN KEY (server_id) REFERENCES server(id),
-	FOREIGN KEY (baseline_id) REFERENCES baseline(id),
-	FOREIGN KEY (system_id) REFERENCES system(id),
+	FOREIGN KEY (server_id) REFERENCES server(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (baseline_id) REFERENCES baseline(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (system_id) REFERENCES system(id) ON DELETE CASCADE ON UPDATE CASCADE,
 	FOREIGN KEY (nic_id) REFERENCES nic(id)
 );
 
@@ -235,10 +238,10 @@ CREATE TABLE ipv6 (
 	mask VARCHAR(50), 
 
 	PRIMARY KEY (id),
-	FOREIGN KEY (server_id) REFERENCES server(id),
-	FOREIGN KEY (baseline_id) REFERENCES baseline(id),
-	FOREIGN KEY (system_id) REFERENCES system(id),
-	FOREIGN KEY (nic_id) REFERENCES nic(id)
+	FOREIGN KEY (server_id) REFERENCES server(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (baseline_id) REFERENCES baseline(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (system_id) REFERENCES system(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (nic_id) REFERENCES nic(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 
@@ -250,9 +253,9 @@ CREATE TABLE domain (
 	name VARCHAR(50), 
 
 	PRIMARY KEY (id),
-	FOREIGN KEY (server_id) REFERENCES server(id),
-	FOREIGN KEY (baseline_id) REFERENCES baseline(id),
-	FOREIGN KEY (system_id) REFERENCES system(id)
+	FOREIGN KEY (server_id) REFERENCES server(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (baseline_id) REFERENCES baseline(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (system_id) REFERENCES system(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE dnssearch ( 
@@ -263,9 +266,9 @@ CREATE TABLE dnssearch (
 	name VARCHAR(50), 
 
 	PRIMARY KEY (id),
-	FOREIGN KEY (server_id) REFERENCES server(id),
-	FOREIGN KEY (baseline_id) REFERENCES baseline(id),
-	FOREIGN KEY (system_id) REFERENCES system(id)
+	FOREIGN KEY (server_id) REFERENCES server(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (baseline_id) REFERENCES baseline(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (system_id) REFERENCES system(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 
@@ -277,9 +280,9 @@ CREATE TABLE nameserver (
 	address VARCHAR(50), 
 
 	PRIMARY KEY (id),
-	FOREIGN KEY (server_id) REFERENCES server(id),
-	FOREIGN KEY (baseline_id) REFERENCES baseline(id),
-	FOREIGN KEY (system_id) REFERENCES system(id)
+	FOREIGN KEY (server_id) REFERENCES server(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (baseline_id) REFERENCES baseline(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (system_id) REFERENCES system(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE route4 ( 
@@ -295,9 +298,9 @@ CREATE TABLE route4 (
 	metric VARCHAR(50), 
 
 	PRIMARY KEY (id),
-	FOREIGN KEY (server_id) REFERENCES server(id),
-	FOREIGN KEY (baseline_id) REFERENCES baseline(id),
-	FOREIGN KEY (system_id) REFERENCES system(id)
+	FOREIGN KEY (server_id) REFERENCES server(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (baseline_id) REFERENCES baseline(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (system_id) REFERENCES system(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 
@@ -314,9 +317,9 @@ CREATE TABLE route6 (
 	metric VARCHAR(50), 
 
 	PRIMARY KEY (id),
-	FOREIGN KEY (server_id) REFERENCES server(id),
-	FOREIGN KEY (baseline_id) REFERENCES baseline(id),
-	FOREIGN KEY (system_id) REFERENCES system(id)
+	FOREIGN KEY (server_id) REFERENCES server(id) ON DELETE CASCADE ON UPDATE CASCADE ,
+	FOREIGN KEY (baseline_id) REFERENCES baseline(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (system_id) REFERENCES system(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- System accounts
@@ -328,9 +331,9 @@ CREATE TABLE sysgroup (
 	name VARCHAR(50), 
 
 	PRIMARY KEY (id),
-	FOREIGN KEY (server_id) REFERENCES server(id),
-	FOREIGN KEY (baseline_id) REFERENCES baseline(id),
-	FOREIGN KEY (system_id) REFERENCES system(id)
+	FOREIGN KEY (server_id) REFERENCES server(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (baseline_id) REFERENCES baseline(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (system_id) REFERENCES system(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 
@@ -351,9 +354,9 @@ CREATE TABLE sysuser (
 	uid INT,
 
 	PRIMARY KEY (id),
-	FOREIGN KEY (server_id) REFERENCES server(id),
-	FOREIGN KEY (baseline_id) REFERENCES baseline(id),
-	FOREIGN KEY (system_id) REFERENCES system(id)
+	FOREIGN KEY (server_id) REFERENCES server(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (baseline_id) REFERENCES baseline(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (system_id) REFERENCES system(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 
@@ -367,9 +370,9 @@ CREATE TABLE regional (
 	charset VARCHAR(50), 
 
 	PRIMARY KEY (id),
-	FOREIGN KEY (server_id) REFERENCES server(id),
-	FOREIGN KEY (baseline_id) REFERENCES baseline(id),
-	FOREIGN KEY (system_id) REFERENCES system(id)
+	FOREIGN KEY (server_id) REFERENCES server(id) ON DELETE CASCADE ON UPDATE CASCADE ,
+	FOREIGN KEY (baseline_id) REFERENCES baseline(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (system_id) REFERENCES system(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- Process list 
@@ -389,9 +392,9 @@ CREATE TABLE process (
 	virtsize  VARCHAR(50), 
 
 	PRIMARY KEY (id),
-	FOREIGN KEY (server_id) REFERENCES server(id),
-	FOREIGN KEY (baseline_id) REFERENCES baseline(id),
-	FOREIGN KEY (system_id) REFERENCES system(id)
+	FOREIGN KEY (server_id) REFERENCES server(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (baseline_id) REFERENCES baseline(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (system_id) REFERENCES system(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- Service list 
@@ -405,9 +408,9 @@ CREATE TABLE service (
 	running VARCHAR(50), 
 
 	PRIMARY KEY (id),
-	FOREIGN KEY (server_id) REFERENCES server(id),
-	FOREIGN KEY (baseline_id) REFERENCES baseline(id),
-	FOREIGN KEY (system_id) REFERENCES system(id)
+	FOREIGN KEY (server_id) REFERENCES server(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (baseline_id) REFERENCES baseline(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (system_id) REFERENCES system(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 
