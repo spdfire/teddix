@@ -18,6 +18,7 @@ import TeddixLogger
 
 # Config parser
 import TeddixConfigFile
+import TeddixParser
 
 # OS dependend stuff
 import TeddixLinux
@@ -57,6 +58,7 @@ class TeddixBaseline:
     def _getdmi(self):
         from pprint import pprint
         DMI = { }
+
 
         # get BIOS Data
         #tmp = dmidecode.bios()
@@ -186,7 +188,7 @@ class TeddixBaseline:
         pkgs = self.osbase.getpkgs()
         partitions = self.osbase.getpartitions()
         nics = self.osbase.getnics()
-
+        
         server = xml.Element('server')
 
         generated = xml.Element('generated')
@@ -204,28 +206,28 @@ class TeddixBaseline:
 
         sysboard = xml.Element('sysboard')
         sysboard.attrib['manufacturer'] = dmi['system',0,'Manufacturer']
-        sysboard.attrib['productname'] = dmi['system',0,'Product Name']
+        sysboard.attrib['productname']  = dmi['system',0,'Product Name']
         sysboard.attrib['serialnumber'] = dmi['system',0,'Serial Number']
-        sysboard.attrib['boardtype'] = dmi['chassis',0,'Type']
+        sysboard.attrib['boardtype']    = dmi['chassis',0,'Type']
         hardware.append(sysboard)
 
         processors = xml.Element('processors')
-        processors.attrib['count'] = str(self.__getdmi_count(dmi,'processor','Current Speed'))
+        processors.attrib['count'] =  str(self.__getdmi_count(dmi,'processor','Current Speed'))
         hardware.append(processors)
         # for every CPU do:
         count = self.__getdmi_count(dmi,'processor','Current Speed')
         i = 0
         while i < count:
             processor = xml.Element('processor')
-            processor.attrib['procid'] = str(i)
-            processor.attrib['family'] = dmi['processor',i,'Family']
-            processor.attrib['proctype'] = dmi['processor',i,'Type']
-            processor.attrib['speed'] = dmi['processor',i,'Max Speed']
-            processor.attrib['version'] = dmi['processor',i,'Version']
-            processor.attrib['cores'] = dmi['processor',i,'Core Count']
-            processor.attrib['threads'] = dmi['processor',i,'Thread Count']
-            processor.attrib['extclock'] = dmi['processor',i,'External Clock']
-            processor.attrib['partnumber'] = dmi['processor',i,'Part Number']
+            processor.attrib['procid']       = str(i)
+            processor.attrib['family']       = dmi['processor',i,'Family']
+            processor.attrib['proctype']     = dmi['processor',i,'Type']
+            processor.attrib['speed']        = dmi['processor',i,'Max Speed']
+            processor.attrib['version']      = dmi['processor',i,'Version']
+            processor.attrib['cores']        = dmi['processor',i,'Core Count']
+            processor.attrib['threads']      = dmi['processor',i,'Thread Count']
+            processor.attrib['extclock']     = dmi['processor',i,'External Clock']
+            processor.attrib['partnumber']   = dmi['processor',i,'Part Number']
             processor.attrib['serialnumber'] = dmi['processor',i,'Serial Number']
             if dmi['processor',i,'Thread Count'] > dmi['processor',i,'Core Count']: 
                 processor.attrib['htsystem'] = 'Yes'
@@ -281,32 +283,34 @@ class TeddixBaseline:
         # [name][ver][pkgsize][instsize][section][status][info][homepage][signed][files][arch]
         for i in range(len(pkgs)):
             package = xml.Element('package')
-            package.attrib['name'] = pkgs[i][0]
-            package.attrib['version'] = pkgs[i][1]
-            package.attrib['pkgsize'] = pkgs[i][2]
+            package.attrib['name']          = pkgs[i][0]
+            package.attrib['version']       = pkgs[i][1]
+            package.attrib['pkgsize']       = pkgs[i][2]
             package.attrib['installedsize'] = pkgs[i][3]
-            package.attrib['section'] = pkgs[i][4]
-            package.attrib['status'] = pkgs[i][5]
-            #package.attrib['description'] = pkgs[i][6]#can't decode byte 0xe2
-            package.attrib['description'] = 'TODO'
-            package.attrib['homepage'] = pkgs[i][7]
-            package.attrib['signed'] = pkgs[i][8]
-            package.attrib['files'] = pkgs[i][9]
-            package.attrib['arch'] = pkgs[i][10]
+            package.attrib['section']       = pkgs[i][4]
+            package.attrib['status']        = pkgs[i][5]
+            package.attrib['description']   = pkgs[i][6]
+            package.attrib['homepage']      = pkgs[i][7]
+            package.attrib['signed']        = pkgs[i][8]
+            package.attrib['files']         = pkgs[i][9]
+            package.attrib['arch']          = pkgs[i][10]
             software.append(package)
 
         filesystems = xml.Element('filesystems')
         operatingsystem.append(filesystems)
 
         # for every partition do:
+        # disks[i] = [fsdev,fsmount,fstype,fsopts,fstotal,fsused,fsfree,fspercent]
         for i in range(len(partitions)):
             filesystem = xml.Element('filesystem')
-            filesystem.attrib['name'] = partitions[i][0]
-            filesystem.attrib['device'] = partitions[i][1]
-            filesystem.attrib['fssize'] = partitions[i][2]
-            filesystem.attrib['fsused'] = partitions[i][3]
-            filesystem.attrib['fsfree'] = partitions[i][4]
-            filesystem.attrib['fstype'] = partitions[i][5]
+            filesystem.attrib['device']    = partitions[i][0]
+            filesystem.attrib['name']      = partitions[i][1]
+            filesystem.attrib['fstype']    = partitions[i][2]
+            filesystem.attrib['fsopts']    = partitions[i][3]
+            filesystem.attrib['fssize']    = partitions[i][4]
+            filesystem.attrib['fsused']    = partitions[i][5]
+            filesystem.attrib['fsfree']    = partitions[i][6]
+            filesystem.attrib['fspercent'] = partitions[i][7]
             filesystems.append(filesystem)
 
         swap = xml.Element('swap')
