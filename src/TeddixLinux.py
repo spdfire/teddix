@@ -487,20 +487,20 @@ class TeddixLinux:
     # Get dnsservers 
     def getdns(self):
         self.syslog.debug("Reading DNS configuration")
+        parser = TeddixParser.TeddixStringParser() 
 
-        dns = []
+        dns = {}
         fd = open('/etc/resolv.conf')
         f = fd.read()
         lines = f.split('\n')
-            
+       
+        i = 0 
         for line in lines:
-            data = line.split(' ')
-            if data[0].lower() == 'nameserver':
-                dns.append(data[0].lower() + '/' + data[1])
-            if data[0].lower() == 'domain':
-                dns.append(data[0].lower() + '/' + data[1])
-            if data[0].lower() == 'search':
-                dns.append(data[0].lower() + '/' + data[1])
+            match = re.search(r'^(nameserver|domain|search)[ \t]+(.+)',line)
+            if match:
+                if parser.isstr(match.group(2)):
+                        dns[i] = [match.group(1),match.group(2)]
+                        i += 1
 
         fd.close()
         return dns

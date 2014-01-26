@@ -374,10 +374,10 @@ class TeddixBaseline:
         dnsservers = xml.Element('dnsservers')
         network.append(dnsservers)
         # for every dnsserver do:
-        for nameserver in self.osbase.getdns(): 
-            data = nameserver.split('/')
-            dnsentry = xml.Element(data[0])
-            dnsentry.attrib['address'] = data[1]
+        dns = self.osbase.getdns() 
+        for i in range(len(dns)): 
+            dnsentry = xml.Element(dns[i][0])
+            dnsentry.attrib['address']    = dns[i][1]
             dnsservers.append(dnsentry)
 
         routing = xml.Element('routing')
