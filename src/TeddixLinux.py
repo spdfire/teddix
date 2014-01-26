@@ -238,11 +238,16 @@ class TeddixLinux:
         parser = TeddixParser.TeddixStringParser() 
 
         names = netifaces.interfaces() 
-        # TODO: handle 'wlan0:6' 
         
         nics = {}
         i = 0
-        for name in names: 
+        for name in names:
+
+            # ignore eth0:1
+            match = re.search(r'.+:\d+',name)
+            if match:
+                continue 
+
             driver = 'N/A' 
             drvver = 'N/A' 
             kernmodule = 'N/A' 
