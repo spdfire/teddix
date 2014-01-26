@@ -238,6 +238,7 @@ class TeddixLinux:
         parser = TeddixParser.TeddixStringParser() 
 
         names = netifaces.interfaces() 
+        # TODO: handle 'wlan0:6' 
         
         nics = {}
         i = 0
@@ -254,7 +255,6 @@ class TeddixLinux:
             tx_packets = 'N/A'
             tx_bytes = 'N/A'
             macaddr = 'N/A'
-
 
             t_ethtool = "test -x /sbin/ethtool"
             lines = None
@@ -362,30 +362,62 @@ class TeddixLinux:
     # Get ipv address  
     def getip(self,nic):
         self.syslog.debug("Reading %s IPv4 configuraion" % nic)
+        parser = TeddixParser.TeddixStringParser() 
 
-        cmd = "ifconfig " + nic 
-        proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        lines = proc.stdout.read().split('\n')
-
-        ips = []
-        ipv4 = []
-        mask = []
-        for line in lines:
-            if not ipv4:
-                ipv4 = re.findall(r'inet (\d+.\d+.\d+.\d+)',line)
-            if not ipv4:
-                ipv4 = re.findall(r'inet addr:(\d+.\d+.\d+.\d+)',line)
+        t_ip = "test -x /bin/ip"
+        t_ifconfig = "test -x /sbin/ifconfig"
+        lines = None
+        ips = {}
+        i = 0
+        if subprocess.call(t_ifconfig,shell=True) == 0:
+            cmd = "/bin/ip addr list dev %s " % nic
+            proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            lines = proc.stdout.read().split('\n')
             
-            if not mask:
-                mask = re.findall(r'netmask (\d+.\d+.\d+.\d+)',line)
-            if not mask:
-                mask = re.findall(r'Mask:(\d+.\d+.\d+.\d+)',line) 
-        
-        if not mask:
-            mask = ['unknown']
-        if not ipv4:
-            ipv4 = ['unknown']
-        ips.append(ipv4[0] + '/' + mask[0])
+            for line in lines:
+                match = re.search(r'inet[ \t]+(\d+\.\d+\.\d+\.\d+)/(\d+)\W+(brd\W+(\d+\.\d+\.\d+\.\d+)|)',line)
+                if match:
+                    if not parser.isstr(match.group(1)):
+                        ipv4 = 'N/A'
+                    else:
+                        ipv4 = parser.str2uni(match.group(1))
+                    if not parser.isstr(match.group(2)):
+                        mask = 'N/A'
+                    else:
+                        mask = parser.str2uni(match.group(2))
+                    if not parser.isstr(match.group(4)):
+                        bcast = 'N/A'
+                    else:
+                        bcast = parser.str2uni(match.group(4)) 
+                    
+                    ips[i] = [ipv4,mask,bcast]
+                    i += 1
+
+        # use only if 'ip' is missing
+        # TODO: handle multiple addresses 'wlan:6' 
+        elif subprocess.call(t_ifconfig,shell=True) == 0:
+            cmd = "/sbin/ifconfig %s " % nic
+            proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            lines = proc.stdout.read().split('\n')
+            
+            for line in lines:
+                match = re.search(r'(inet |inet addr:)(\d+\.\d+\.\d+\.\d+)\W+Bcast:(\d+\.\d+\.\d+\.\d+)\W+(netmask |Mask:)(\d+\.\d+\.\d+\.\d+)',line)
+                if match:
+                    if not parser.isstr(match.group(2)):
+                        ipv4 = 'N/A'
+                    else:
+                        ipv4 = parser.str2uni(match.group(2))
+                    if not parser.isstr(match.group(5)):
+                        mask = 'N/A'
+                    else:
+                        mask = parser.str2uni(match.group(5))
+                    if not parser.isstr(match.group(3)):
+                        bcast = 'N/A'
+                    else:
+                        bcast = parser.str2uni(match.group(3)) 
+                    
+                    ips[i] = [ipv4,mask,bcast]
+                    i += 1
 
         return ips
 
@@ -393,30 +425,56 @@ class TeddixLinux:
     # Get ipv6 address  
     def getip6(self,nic):
         self.syslog.debug("Reading %s IPv6 configuraion" % nic)
+        parser = TeddixParser.TeddixStringParser() 
 
-        cmd = "ifconfig " + nic 
-        proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        lines = proc.stdout.read().split('\n')
-
-        ips6 = []
-        ipv6 = []
-        mask6 = []
-        for line in lines:
-            if not ipv6:
-                ipv6 = re.findall(r'inet6 ([\w:]+)/\d+',line)
-            if not ipv6:
-                ipv6 = re.findall(r'inet6 addr: ([\w:]+)/\d+',line)
+        t_ip = "test -x /bin/ip"
+        t_ifconfig = "test -x /sbin/ifconfig"
+        lines = None
+        ips6 = {}
+        i = 0
+        if subprocess.call(t_ifconfig,shell=True) == 0:
+            cmd = "/bin/ip addr list dev %s " % nic
+            proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            lines = proc.stdout.read().split('\n')
             
-            if not mask6:
-                mask6 = re.findall(r'inet6 [\w:]+/(\d+)',line)
-            if not mask6:
-                mask6 = re.findall(r'inet6 addr: [\w:]+/(\d+)',line)
-        
-        if not mask6:
-            mask6 = ['unknown']
-        if not ipv6:
-            ipv6 = ['unknown']
-        ips6.append(ipv6[0] + '/' + mask6[0])
+            for line in lines:
+                match = re.search(r'inet6[ \t]+([a-fA-F\d\:]+)/(\d+)\W+',line)
+                if match:
+                    if not parser.isstr(match.group(1)):
+                        ipv6 = 'N/A'
+                    else:
+                        ipv6 = parser.str2uni(match.group(1))
+                    if not parser.isstr(match.group(2)):
+                        mask = 'N/A'
+                    else:
+                        mask = parser.str2uni(match.group(2))
+                    
+                    bcast = 'N/A'
+                    ips6[i] = [ipv6,mask,bcast]
+                    i += 1
+
+        # use only if 'ip' is missing
+        # TODO: handle multiple addresses 'wlan:6' 
+        elif subprocess.call(t_ifconfig,shell=True) == 0:
+            cmd = "/sbin/ifconfig %s " % nic
+            proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            lines = proc.stdout.read().split('\n')
+            
+            for line in lines:
+                match = re.search(r'(inet6 |inet6 addr:)([a-fA-F\d\:]+)/(\d+)\W+',line)
+                if match:
+                    if not parser.isstr(match.group(2)):
+                        ipv6 = 'N/A'
+                    else:
+                        ipv6 = parser.str2uni(match.group(2))
+                    if not parser.isstr(match.group(3)):
+                        mask = 'N/A'
+                    else:
+                        mask = parser.str2uni(match.group(3))
+                    
+                    bcast = 'N/A'
+                    ips6[i] = [ipv6,mask,bcast]
+                    i += 1
 
         return ips6
 

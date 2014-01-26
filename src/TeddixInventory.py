@@ -356,21 +356,19 @@ class TeddixBaseline:
             adapters.append(adapter)
 
             ips = self.osbase.getip(nics[i][0])
-            for ipv4 in ips:
+            for j in range(len(ips)):
                 ip = xml.Element('ipv4')
-                data = ipv4.split('/')
-                ip.attrib['address'] = data[0]
-                ip.attrib['mask'] = data[1]
-                ip.attrib['broadcast'] = 'TODO' 
+                ip.attrib['address']      = ips[j][0]
+                ip.attrib['mask']         = ips[j][1]
+                ip.attrib['broadcast']    = ips[j][2] 
                 adapter.append(ip)
 
             ips6 = self.osbase.getip6(nics[i][0])
-            for ipv6 in ips6:
+            for k in range(len(ips6)):
                 ip6 = xml.Element('ipv6')
-                data = ipv6.split('/')
-                ip6.attrib['address'] = data[0]
-                ip6.attrib['mask'] = data[1]
-                ip6.attrib['broadcast'] = 'TODO' 
+                ip6.attrib['address']     = ips6[k][0] 
+                ip6.attrib['mask']        = ips6[k][1]
+                ip6.attrib['broadcast']   = ips6[k][2]
                 adapter.append(ip6)
 
         dnsservers = xml.Element('dnsservers')
