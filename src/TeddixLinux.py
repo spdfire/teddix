@@ -585,19 +585,69 @@ class TeddixLinux:
     # Get procs 
     def getprocs(self):
         self.syslog.debug("Listing system procs")
+        parser = TeddixParser.TeddixStringParser() 
 
-        pids = psutil.get_pid_list()
-        procs = []
+        #pids = psutil.get_pid_list()
+        #for pid in pids:
+        #    p = psutil.Process(pid)
+        
+        procs = {}
+        i = 0
+        for p in psutil.process_iter():
+               
+            if not parser.isstr(p.pid):
+                ppid = 'N/A'
+            else:
+                ppid = parser.str2uni(p.pid)
+
+            if not parser.isstr(p.username):
+                powner = 'N/A'
+            else:
+                powner = parser.str2uni(p.username)
             
-        for pid in pids:
-            p = psutil.Process(pid)
-            if p.cmdline:
-                pname = ''
-                for pp in p.cmdline:
-                    pp += ' '
-                    pname += pp 
+            pcputime = p.get_cpu_times()
+            if not parser.isstr(pcputime.system):
+                psystime = 'N/A'
+            else:
+                psystime = parser.str2uni(pcputime.system)
+            if not parser.isstr(pcputime.user):
+                pusertime = 'N/A'
+            else:
+                pusertime = parser.str2uni(pcputime.user)
 
-                procs.append(pname)
+            # TODO: it takes too much time
+            #pcpu = p.get_cpu_percent(interval=0.1)
+            pcpu = 'N/A'
+            pmem = p.get_memory_percent()
+            if not parser.isstr(pmem):
+                pmem = 'N/A'
+            else:
+                pmem = parser.str2uni(pmem)
+
+            ppriority = parser.str2uni(p.get_nice())
+            pstatus = parser.str2uni(p.status)
+            if not parser.isstr(p.username):
+                powner = 'N/A'
+            else:
+                powner = parser.str2uni(p.username)
+
+            if not parser.isstr(p.name):
+                pname = 'N/A'
+            else:
+                pname = parser.str2uni(p.name)
+
+            pcmd = ''
+            for pp in p.cmdline:
+                pp += ' '
+                pcmd += pp 
+            
+            if not parser.isstr(pcmd):
+                pcmd = 'N/A'
+            else:
+                pcmd = parser.str2uni(pcmd)
+
+            procs[i] = [ppid,powner,psystime,pusertime,pcpu,pmem,ppriority,pstatus,pname,pcmd]
+            i += 1 
 
         return procs
 

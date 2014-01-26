@@ -459,17 +459,20 @@ class TeddixBaseline:
         operatingsystem.append(processes)
 
         # for every process do:
-        for proc in self.osbase.getprocs(): 
+        procs = self.osbase.getprocs()
+        # [ppid,powner,psystime,pusertime,pcpu,pmem,ppriority,pstatus,pname,pcmd]
+        for i in range(len(procs)):
             process = xml.Element('process')
-            process.attrib['pid'] = 'TODO'
-            process.attrib['owner'] = 'TODO'
-            process.attrib['cputime'] = 'TODO'
-            process.attrib['pcpu'] = 'TODO'
-            process.attrib['pmemory'] = 'TODO'
-            process.attrib['virtsize'] = 'TODO'
-            process.attrib['sharedsize'] = 'TODO'
-            process.attrib['priority'] = 'TODO'
-            process.attrib['command'] = proc
+            process.attrib['pid']           = procs[i][0]
+            process.attrib['owner']         = procs[i][1]
+            process.attrib['cpusystime']    = procs[i][2]
+            process.attrib['cpuusertime']   = procs[i][3]
+            process.attrib['pcpu']          = procs[i][4]
+            process.attrib['pmemory']       = procs[i][5]
+            process.attrib['priority']      = procs[i][6]
+            process.attrib['status']        = procs[i][7]
+            process.attrib['name']          = procs[i][8]
+            process.attrib['command']       = procs[i][9]
             processes.append(process)
 
         services = xml.Element('services')

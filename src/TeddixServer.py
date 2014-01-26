@@ -425,18 +425,19 @@ class TeddixServer:
         # process list
         root = system.find('processes')
         for child in root:
-            command = child.get('command')
-            cputime = child.get('cputime')
-            owner = child.get('owner')
-            pcpu = child.get('pcpu')
             pid = child.get('pid')
+            owner = child.get('owner')
+            cpusystime = child.get('cpusystime')
+            cpuusertime = child.get('cpuusertime')
+            pcpu = child.get('pcpu')
             pmemory = child.get('pmemory')
             priority = child.get('priority')
-            sharedsize = child.get('sharedsize')
-            virtsize = child.get('virtsize')
-            sql  = "INSERT INTO process(server_id,baseline_id,system_id,command,cputime,owner,pcpu,pid,pmemory,priority,sharedsize,virtsize) "
-            sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
-            database.execute(sql,(server_id,baseline_id,system_id,command,cputime,owner,pcpu,pid,pmemory,priority,sharedsize,virtsize))
+            status = child.get('status')
+            name = child.get('name')
+            command = child.get('command')
+            sql  = "INSERT INTO process(server_id,baseline_id,system_id,pid,owner,cpusystime,cpuusertime,pcpu,pmemory,priority,status,name,command) "
+            sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,system_id,pid,owner,cpusystime,cpuusertime,pcpu,pmemory,priority,status,name,command))
 
         # services
         root = system.find('services')
