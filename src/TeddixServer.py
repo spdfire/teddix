@@ -399,20 +399,20 @@ class TeddixServer:
 
         # users
         root = system.find('users')
+        # [login,uid,gid,comment,home,shell,locked,hashtype,groups]
         for child in root:
-            expire = child.get('expire')
-            destination = child.get('destination')
-            gid = child.get('gid')
-            groups = child.get('groups')
-            hashtype = child.get('hashtype')
-            home = child.get('home')
-            locked = child.get('locked')
             login = child.get('login')
-            shell = child.get('shell')
             uid = child.get('uid')
-            sql  = "INSERT INTO sysuser(server_id,baseline_id,system_id,expire,destination,gid,groups,hashtype,home,locked,login,shell,uid) "
-            sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
-            database.execute(sql,(server_id,baseline_id,system_id,expire,destination,gid,groups,hashtype,home,locked,login,shell,uid))
+            gid = child.get('gid')
+            comment = child.get('comment')
+            home = child.get('home')
+            shell = child.get('shell')
+            locked = child.get('locked')
+            hashtype = child.get('hashtype')
+            groups = child.get('groups')
+            sql  = "INSERT INTO sysuser(server_id,baseline_id,system_id,login,uid,gid,comment,home,shell,locked,hashtype,groups) "
+            sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,system_id,login,uid,gid,comment,home,shell,locked,hashtype,groups))
 
         # language 
         timezone = system.find('regional').get('timezone')

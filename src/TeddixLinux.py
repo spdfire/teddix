@@ -566,19 +566,74 @@ class TeddixLinux:
     # Get users 
     def getusers(self):
         self.syslog.debug("Reading system users")
+        parser = TeddixParser.TeddixStringParser() 
 
-        users = []
-        fd = open('/etc/passwd')
-        f = fd.read()
-        lines = f.split('\n')
+        users = {}
+        i = 0
+        t_groups = '/usr/bin/groups'
+        fd1 = open('/etc/passwd')
+        fd2 = open('/etc/shadow')
+        f1 = fd1.read()
+        f2 = fd2.read()
+        lines1 = f1.split('\n')
+        lines2 = f2.split('\n')
             
-        for line in lines:
-            data = line.split(':')
+        for line1 in lines1:
+            data = line1.split(':')
             if data[0]:
-                users.append(data[2] + ':' + data[0] + ':' + data[5] + ':' +data[6])
+                login = data[0] 
+                uid = data[2] 
+                gid = data[3] 
+                comment = data[4] 
+                home = data[5]
+                shell = data[6] 
+        
+                locked = 'N/A'
+                hashtype = 'N/A'
+                for line2 in lines2:
+                    data = line2.split(':')
+                    if login == data[0]:
+                        if data[1] == '*':
+                            locked = 'True'
+                        elif data[1] == '!':
+                            locked = 'True'
+                        else:
+                            match = re.search(r'(\$\d)\$.+',data[1])
+                            if match:
+                                if match.group(1) == '$1':
+                                    hashtype = 'md5'
+                                    locked = 'False'
+                                if match.group(1) == '$2':
+                                    hashtype = 'blowfish'
+                                    locked = 'False'
+                                if match.group(1) == '$5':
+                                    hashtype = 'sha256'
+                                    locked = 'False'
+                                if match.group(1) == '$6':
+                                    hashtype = 'sha512'
+                                    locked = 'False'
+                            else:
+                                hashtype = 'des'
+                                locked = 'False'
 
+                if subprocess.call(t_groups,shell=True) == 0:
+                    cmd = "/usr/bin/groups %s " % login
+                    proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    lines3 = proc.stdout.read().split('\n')
+            
+                    for line3 in lines3:
+                        match = re.search(r'(.+):(.+)',line3)
+                        if match:
+                            if not parser.isstr(match.group(2)):
+                                groups = 'N/A'
+                            else:
+                                groups = parser.str2uni(match.group(2))
+        
+            users[i] = [login,uid,gid,comment,home,shell,locked,hashtype,groups]
+            i += 1
 
-        fd.close()
+        fd1.close()
+        fd2.close()
         return users
 
 

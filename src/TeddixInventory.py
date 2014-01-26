@@ -431,23 +431,24 @@ class TeddixBaseline:
                     member.attrib['name'] = usr
                 group.append(member)
 
-        users = xml.Element('users')
-        operatingsystem.append(users)
+        xmlusers = xml.Element('users')
+        operatingsystem.append(xmlusers)
 
         # for every user do:
-        for usr in self.osbase.getusers(): 
+        users = self.osbase.getusers()
+        # [login,uid,gid,comment,home,shell,locked,hashtype,groups]
+        for i in range(len(users)): 
             user = xml.Element('user')
-            data = usr.split(':')
-            user.attrib['login'] = data[1]
-            user.attrib['uid'] = data[0]
-            user.attrib['gid'] = 'TODO'
-            user.attrib['home'] = data[2]
-            user.attrib['shell'] = data[3]
-            user.attrib['expire'] = 'TODO'
-            user.attrib['locked'] = 'TODO'
-            user.attrib['hashtype'] = 'TODO'
-            user.attrib['groups'] = 'TODO'
-            users.append(user)
+            user.attrib['login']            = users[i][0]
+            user.attrib['uid']              = users[i][1]
+            user.attrib['gid']              = users[i][2]
+            user.attrib['comment']          = users[i][3]
+            user.attrib['home']             = users[i][4]
+            user.attrib['shell']            = users[i][5]
+            user.attrib['locked']           = users[i][6]
+            user.attrib['hashtype']         = users[i][7]
+            user.attrib['groups']           = users[i][8]
+            xmlusers.append(user)
 
         regional = xml.Element('regional')
         loc = locale.getdefaultlocale()
