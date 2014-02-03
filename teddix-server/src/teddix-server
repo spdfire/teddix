@@ -1,0 +1,767 @@
+#!/usr/bin/env python
+
+# Option parser
+from optparse import OptionParser
+
+# XML parsing
+import xml.etree.ElementTree as xml
+import base64
+
+# Daemon
+import threading
+import Queue
+import daemon
+import time
+import sys
+import pwd
+import grp
+import os
+import re
+
+# TCP client 
+import httplib
+import socket
+
+# Signals
+import signal
+
+# Pidfile
+try:
+    from daemon.pidfile import TimeoutPIDLockFile
+except (AttributeError,ImportError):
+    try:
+        from daemon.pidlockfile import TimeoutPIDLockFile
+    except (AttributeError,ImportError):
+        raise
+
+
+# Set python module dir
+#sys.path.append('@pythondir@' + '/teddix')
+#sys.path.append('/usr/lib/python2.7/site-packages' + '/teddix')
+
+# Syslog handler
+from teddix import TeddixLogger
+
+# Config parser
+from teddix import TeddixConfigFile
+
+# Teddix Baseline
+from teddix import TeddixInventory
+
+# SQL Database
+from teddix import TeddixDatabase
+
+# Parser
+from teddix import TeddixParser
+
+
+class TeddixServer:
+    # Signal handlers
+    def sig_handler(self,signum, stackframe):
+        if signum == signal.SIGTERM:
+            self.syslog.warn("SIGTERM caught - Shutting down TeddixServer ")
+            self.terminate = True
+        elif signum == signal.SIGINT:
+            self.syslog.warn("SIGINT caught - Shutting down TeddixServer ")
+            self.terminate = True
+        elif signum == signal.SIGHUP:
+            self.syslog.info("SIGHUP caught - TODO: reload config file ")
+        elif signum == signal.SIGUSR1:
+            self.syslog.info("SIGUSR1 caught - ignoring ")
+        elif signum == signal.SIGUSR2:
+            self.syslog.info("SIGUSR2 caught - ignoring ")
+
+    def print_time(self):
+        self.syslog.debug("Time: " )
+
+    def convert_to_seconds(self,s):
+        s = s.strip()
+        s = s.lower()
+        seconds_per_unit = {"s": 1, "m": 60, "h": 3600, "d": 86400, "w": 604800, "y": 31556926 }
+        return int(s[:-1]) * seconds_per_unit[s[-1]]
+
+    def make_request(self,host,request):
+        self.syslog.debug("%s: Make request \"GET %s\" " % (host,request))
+        try:
+            conn = httplib.HTTPSConnection(host, 45003,timeout=600)
+            conn.request("GET", request)
+            resp = conn.getresponse()
+            conn.close()
+        except httplib.BadStatusLine:
+            self.syslog.info("%s: Agent did not reply in HTTP " % host)
+            self.syslog.warn("%s: Unable to parse reply" % host)
+            return 
+
+        except Exception, e:
+            self.syslog.warn("%s: Unable to connect to server" % host)
+            # self.syslog.exception('make_request(): %s' % e )
+            return 
+
+        if resp.status != httplib.OK: 
+            self.syslog.info("%s: Wrong HTTP code" % host)
+            self.syslog.warn("%s: Unable to parse reply" % host)
+        else: 
+            self.syslog.debug("%s: Request \"GET %s\" OK " % (host,request))
+            data = resp.read()
+            return data
+
+    def parse_reply(self,host,msg):
+        root = xml.fromstring(msg)
+        if root.get('version') != '2.0':
+            self.syslog.warn("%s: Unknown message protocol version" % host)
+            return None
+        if root.get('program') != 'teddix':
+            self.syslog.warn("%s: Unknown message " % host)
+            return None
+        if root.get('type') != 'reply':
+            self.syslog.warn("%s: Unknown message " % host)
+            return None
+       
+        reply = root.find('reply')
+        request = reply.find('request').text
+        
+        if reply.find('code').text != '200': 
+            result = reply.find('result').text
+            info = reply.find('info').text
+            code = reply.find('code').text
+            self.syslog.warn("%s: server error: %s(code: %s) info: %s " % (host,result,code,info) )
+            return None
+
+        data = reply.find('data')
+        return data
+        
+    def check_dbintegrity(self,database,agents):
+        
+        self.syslog.info("main: Checking database integrity ")
+        database.execute("SELECT VERSION();")
+        database.commit()
+ 
+       
+        # keep agent list in sync to DB
+        for host in agents:
+            host = host.strip()
+            host = host.lower()
+            sql = "SELECT id FROM server WHERE LOWER(name) = %s "
+            database.execute(sql,host)
+            count = database.rowcount() 
+ 
+            if count < 1:
+                self.syslog.info("SQL adding new host(%s) to database" % host)
+                sql = "INSERT INTO server(name,created) VALUES (%s,NOW()); " 
+                database.execute(sql,host)
+                database.commit()
+
+            if count > 1: 
+                self.syslog.warn("SQL Cleaning duplicate server names: %s " % host)
+                result = database.fetchall()
+                for row in result:
+                    # TODO delete cascade 
+                    server_id = row[0]
+                    sql = "DELETE FROM server WHERE id = %s " 
+                    database.execute(sql,server_id)
+
+                    sql = "INSERT INTO server(name,created) "
+                    sql += "VALUES (%s,NOW()); " 
+                    database.execute(sql,host)
+                    database.commit()
+
+ 
+    def save_dbbaseline(self,database,host,baseline):
+        self.syslog.debug("%s: Save baseline " % (host))
+
+        # Get server ID 
+        sql = "SELECT id FROM server WHERE LOWER(name) = %s "  
+        database.execute(sql,host)
+        result = database.fetchall()
+        server_id = -1 
+        for row in result:
+            server_id = row[0] 
+
+        syslog.debug("SQL result: server %s have ID %s " % (host,server_id))
+
+        # save baseline 
+        b_hostname = baseline.find('server').find('host').get('name')
+        b_program = baseline.find('server').find('generated').get('program')
+        b_scantime = baseline.find('server').find('generated').get('scantime')
+        b_version = baseline.find('server').find('generated').get('version')
+
+        sql  = "INSERT INTO baseline(server_id,hostname,program,scantime,version) "
+        sql += "VALUES(%s,%s,%s,%s,%s)" 
+        database.execute(sql,(server_id,b_hostname,b_program,b_scantime,b_version))
+        baseline_id = database.insert_id()
+
+        # save HW info
+        hardware = baseline.find('server').find('hardware')
+
+        boardtype = hardware.find('sysboard').get('boardtype')
+        serialnumber = hardware.find('sysboard').get('serialnumber')
+        manufacturer = hardware.find('sysboard').get('manufacturer')
+        productname = hardware.find('sysboard').get('productname')
+
+        sql  = "INSERT INTO sysboard(server_id,baseline_id,boardtype,serialnumber,manufacturer,productname) "
+        sql += "VALUES(%s,%s,%s,%s,%s,%s)" 
+        database.execute(sql,(server_id,baseline_id,boardtype,serialnumber,manufacturer,productname))
+
+        # Processors 
+        root = hardware.find('processors')
+        for child in root:
+            cores = child.get('cores')
+            extclock = child.get('extclock')
+            familly = child.get('familly')
+            htsystem = child.get('htsystem')
+            procid = child.get('procid')
+            partnumber = child.get('partnumber')
+            serialnumber = child.get('serialnumber')
+            clock = child.get('clock')
+            threads = child.get('threads')
+            proctype = child.get('proctype')
+            procversion = child.get('procversion')
+            sql  = "INSERT INTO processor(server_id,baseline_id,cores,extclock,familly,htsystem,procid,partnumber,serialnumber,clock,threads,proctype,procversion) "
+            sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,cores,extclock,familly,htsystem,procid,partnumber,serialnumber,clock,threads,proctype,procversion))
+
+
+        # RAM modules 
+        root = hardware.find('memory')
+        for child in root:
+            bank = child.get('bank')
+            formfactor = child.get('formfactor')
+            location = child.get('location')
+            manufacturer = child.get('manufacturer')
+            memorytype = child.get('memorytype')
+            partnumber = child.get('partnumber')
+            serialnumber = child.get('serialnumber')
+            modulesize = child.get('modulesize')
+            width = child.get('width')
+            sql  = "INSERT INTO memorymodule(server_id,baseline_id,bank,formfactor,location,manufacturer,memorytype,partnumber,serialnumber,modulesize,width) "
+            sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,bank,formfactor,location,manufacturer,memorytype,partnumber,serialnumber,modulesize,width))
+
+
+        # firmware  
+        releasedate = hardware.find('bios').get('releasedate')
+        vendor = hardware.find('bios').get('vendor')
+        version = hardware.find('bios').get('version')
+        sql  = "INSERT INTO bios(server_id,baseline_id,releasedate,vendor,version) "
+        sql += "VALUES(%s,%s,%s,%s,%s)" 
+        database.execute(sql,(server_id,baseline_id,releasedate,vendor,version))
+
+        # save OS info
+        system = baseline.find('server').find('system')
+        arch = system.get('arch')
+        detail = system.get('detail')
+        kernel = system.get('kernel')
+        manufacturer = system.get('manufacturer')
+        name = system.get('name')
+        serialnumber = system.get('serialnumber')
+        sql  = "INSERT INTO system(server_id,baseline_id,arch,detail,kernel,manufacturer,name,serialnumber) "
+        sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s)" 
+        database.execute(sql,(server_id,baseline_id,arch,detail,kernel,manufacturer,name,serialnumber))
+        system_id = database.insert_id()
+
+
+        # packages 
+        root = system.find('software')
+        for child in root:
+            arch = child.get('arch')
+            description = child.get('description')
+            files = child.get('files')
+            homepage = child.get('homepage')
+            name = child.get('name')
+            pkgsize = child.get('pkgsize')
+            section = child.get('section')
+            signed = child.get('signed')
+            installedsize = child.get('installedsize')
+            status = child.get('status')
+            version = child.get('version')
+            sql  = "INSERT INTO package(server_id,baseline_id,system_id,arch,description,files,homepage,name,pkgsize,section,signed,installedsize,status,version) "
+            sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,system_id,arch,description,files,homepage,name,pkgsize,section,signed,installedsize,status,version))
+
+        # filesystems 
+        root = system.find('filesystems')
+        for child in root:
+            fsdevice = child.get('fsdevice')
+            fsname = child.get('fsname')
+            fstype = child.get('fstype')
+            fsopts = child.get('fsopts')
+            fstotal = child.get('fstotal')
+            fsused = child.get('fsused')
+            fsfree = child.get('fsfree')
+            fspercent = child.get('fspercent')
+            sql  = "INSERT INTO filesystem(server_id,baseline_id,system_id,fsdevice,fsname,fstype,fsopts,fstotal,fsused,fsfree,fspercent) "
+            sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,system_id,fsdevice,fsname,fstype,fsopts,fstotal,fsused,fsfree,fspercent))
+
+        # swap devices 
+        root = system.find('swap')
+        for child in root:
+            device = child.get('device')
+            swapfree = child.get('swapfree')
+            swapsize = child.get('swapsize')
+            swaptype = child.get('swaptype')
+            swapused = child.get('swapused')
+            sql  = "INSERT INTO swap(server_id,baseline_id,system_id,device,swapfree,swapsize,swaptype,swapused) "
+            sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,system_id,device,swapfree,swapsize,swaptype,swapused))
+
+        # NIC 
+        root = system.find('network').find('nics')
+        for child in root:
+            RXbytes = child.get('RXbytes')
+            RXpackets = child.get('RXpackets')
+            TXbytes = child.get('TXbytes')
+            TXpackets = child.get('TXpackets')
+            description = child.get('description')
+            driver = child.get('driver')
+            drvver = child.get('drvver')
+            firmware = child.get('firmware')
+            kernmodule = child.get('kernmodule')
+            macaddress = child.get('macaddress')
+            name = child.get('name')
+            nictype = child.get('nictype')
+            status = child.get('status')
+            sql  = "INSERT INTO nic(server_id,baseline_id,system_id,name,description,nictype,status,RXpackets,TXpackets,RXbytes,TXbytes,driver,drvver,firmware,kernmodule,macaddress) "
+            sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,system_id,name,description,nictype,status,RXpackets,TXpackets,RXbytes,TXbytes,driver,drvver,firmware,kernmodule,macaddress))
+            nic_id = database.insert_id()
+           
+            for child_ipv4 in child.findall('ipv4'):
+                address = child_ipv4.get('address')
+                broadcast = child_ipv4.get('broadcast')
+                mask = child_ipv4.get('mask')
+                sql  = "INSERT INTO ipv4(server_id,baseline_id,system_id,nic_id,address,broadcast,mask) "
+                sql += "VALUES(%s,%s,%s,%s,%s,%s,%s)" 
+                database.execute(sql,(server_id,baseline_id,system_id,nic_id,address,broadcast,mask))
+
+            for child_ipv6 in child.findall('ipv6'):
+                address = child_ipv6.get('address')
+                broadcast = child_ipv6.get('broadcast')
+                mask = child_ipv6.get('mask')
+                sql  = "INSERT INTO ipv6(server_id,baseline_id,system_id,nic_id,address,broadcast,mask) "
+                sql += "VALUES(%s,%s,%s,%s,%s,%s,%s)" 
+                database.execute(sql,(server_id,baseline_id,system_id,nic_id,address,broadcast,mask))
+
+
+        # DNS
+        root = system.find('network').find('dnsservers')
+        for child in root.findall('domain'):
+            name = child.get('name')
+            sql  = "INSERT INTO domain(server_id,baseline_id,system_id,name) "
+            sql += "VALUES(%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,system_id,name))
+
+        for child in root.findall('search'):
+            name = child.get('name')
+            sql  = "INSERT INTO dnssearch(server_id,baseline_id,system_id,name) "
+            sql += "VALUES(%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,system_id,name))
+
+        for child in root.findall('nameserver'):
+            address = child.get('address')
+            sql  = "INSERT INTO nameserver(server_id,baseline_id,system_id,address) "
+            sql += "VALUES(%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,system_id,address))
+           
+        # routing
+        root = system.find('network').find('routing').find('ipv4')
+        for child in root.findall('route'):
+            destination = child.get('destination')
+            flags = child.get('flags')
+            gateway = child.get('gateway')
+            interface = child.get('interface')
+            mask = child.get('mask')
+            metric = child.get('metric')
+            sql  = "INSERT INTO route4(server_id,baseline_id,system_id,destination,flags,gateway,interface,mask,metric) "
+            sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,system_id,destination,flags,gateway,interface,mask,metric))
+
+        root = system.find('network').find('routing').find('ipv6')
+        for child in root.findall('route'):
+            destination = child.get('destination')
+            flags = child.get('flags')
+            gateway = child.get('gateway')
+            interface = child.get('interface')
+            mask = child.get('mask')
+            metric = child.get('metric')
+            sql  = "INSERT INTO route6(server_id,baseline_id,system_id,destination,flags,gateway,interface,mask,metric) "
+            sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,system_id,destination,flags,gateway,interface,mask,metric))
+
+
+        # groups 
+        root = system.find('groups')
+        for child in root:
+            name = child.get('name')
+            sql  = "INSERT INTO sysgroup(server_id,baseline_id,system_id,name) "
+            sql += "VALUES(%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,system_id,name))
+
+        # users
+        root = system.find('users')
+        # [login,uid,gid,comment,home,shell,locked,hashtype,groups]
+        for child in root:
+            login = child.get('login')
+            uid = child.get('uid')
+            gid = child.get('gid')
+            comment = child.get('comment')
+            home = child.get('home')
+            shell = child.get('shell')
+            locked = child.get('locked')
+            hashtype = child.get('hashtype')
+            groups = child.get('groups')
+            sql  = "INSERT INTO sysuser(server_id,baseline_id,system_id,login,uid,gid,comment,home,shell,locked,hashtype,groups) "
+            sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,system_id,login,uid,gid,comment,home,shell,locked,hashtype,groups))
+
+        # language 
+        timezone = system.find('regional').get('timezone')
+        charset = system.find('regional').get('charset')
+        sql  = "INSERT INTO regional(server_id,baseline_id,system_id,timezone,charset) "
+        sql += "VALUES(%s,%s,%s,%s,%s)" 
+        database.execute(sql,(server_id,baseline_id,system_id,timezone,charset))
+
+
+        # process list
+        root = system.find('processes')
+        for child in root:
+            pid = child.get('pid')
+            owner = child.get('owner')
+            cpusystime = child.get('cpusystime')
+            cpuusertime = child.get('cpuusertime')
+            pcpu = child.get('pcpu')
+            pmemory = child.get('pmemory')
+            priority = child.get('priority')
+            status = child.get('status')
+            name = child.get('name')
+            command = child.get('command')
+            sql  = "INSERT INTO process(server_id,baseline_id,system_id,pid,owner,cpusystime,cpuusertime,pcpu,pmemory,priority,status,name,command) "
+            sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,system_id,pid,owner,cpusystime,cpuusertime,pcpu,pmemory,priority,status,name,command))
+
+        # services
+        root = system.find('services')
+        for child in root:
+            autostart = child.get('autostart')
+            name = child.get('name')
+            running = child.get('running')
+            sql  = "INSERT INTO service(server_id,baseline_id,system_id,autostart,name,running) "
+            sql += "VALUES(%s,%s,%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,system_id,autostart,name,running))
+
+        return True
+
+
+
+
+ 
+    def save_dbextra(self,database,host,cfg2html,ora2html):
+        self.syslog.debug("%s: Save in database " % (host))
+
+        parser = TeddixParser.TeddixStringParser()
+        if not parser.ishostname(host):
+            self.syslog.debug("Not string %s " % (host))
+            return False
+
+        # Get server ID 
+        sql = "SELECT id FROM server WHERE LOWER(name) = %s " 
+        database.execute(sql,host)
+        result = database.fetchall()
+        server_id = -1 
+        for row in result:
+            server_id = row[0] 
+        
+        if not parser.isb64(cfg2html):
+            self.syslog.debug("%s: cfg2html not encoded in base64 " % (host))
+            return False
+        if not parser.isb64(ora2html):
+            self.syslog.debug("%s: ora2html not encoded in base64 " % (host))
+            return False
+
+        sql  = "INSERT INTO extra(server_id,created,cfg2html,ora2html) "
+        sql += "VALUES(%s,CURDATE(),%s,%s)"  
+        database.execute(sql,(server_id,cfg2html,ora2html))
+        return True
+       
+   
+    
+    def worker_thread(self):
+       
+        #grabs host from queue
+        host = self.queue.get()
+        self.syslog.debug("%s: Starting worker " % host )
+
+        # 1. GET /baseline 
+        baseline = self.make_request(host,'/baseline')
+
+        # 2. GET /cfg2html 
+        cfg2html = self.make_request(host,'/cfg2html')
+
+        # 3. GET /ora2html
+        ora2html = self.make_request(host,'/ora2html')
+
+        # 4. Insert report to Database
+        if cfg2html == None and ora2html == None and baseline == None:
+            self.syslog.debug("%s: Agent is not responding" % host )
+        else:
+            # 4.1 Get baseline report
+            data = self.parse_reply(host,baseline)
+            if data == None: 
+                self.syslog.warn("%s: Unable to parse reply" % host )
+
+            else: 
+                baseline = data.find('baseline')
+
+            # 4.2 Get cfg2html report
+            data = self.parse_reply(host,cfg2html)
+            if data == None: 
+                self.syslog.warn("%s: Unable to parse reply" % host )
+
+            else: 
+                cfg2html = data.find('cfg2html')
+
+            # 4.3 Get ora2html report
+            data = self.parse_reply(host,ora2html)
+            if data == None: 
+                self.syslog.warn("%s: Unable to parse reply" % host )
+
+            else: 
+                ora2html = data.find('ora2html')
+
+            # 5. Save cfg2html and ora2html 
+            database = TeddixDatabase.TeddixDatabase(syslog,cfg)
+            
+            if cfg2html != None and ora2html != None: 
+                cfg2html_b64 = cfg2html.text
+                ora2html_b64 = ora2html.text
+
+                if not self.save_dbextra(database,host,cfg2html_b64,ora2html_b64):
+                    database.rollback()
+                    self.syslog.warn("%s: Unable to commit extra " % host )
+                    self.syslog.debug("%s: Stopping worker" % host)
+                    self.queue.task_done()
+                    return False
+                else:
+                    database.commit()
+
+
+            # 6. Save baseline
+            if baseline != None:
+                if not self.save_dbbaseline(database,host,baseline):
+                    database.rollback()
+                    self.syslog.warn("%s: Unable to commit baseline " % host )
+                    self.syslog.debug("%s: Stopping worker" % host)
+                    self.queue.task_done()
+                    return False
+                else:
+                    database.commit()
+
+            database.disconnect()
+
+        self.syslog.debug("%s: Stopping worker" % host)
+        self.queue.task_done()
+        return True
+
+
+    def create_server(self,syslog,cfg):
+        
+        self.terminate = False 
+        self.queue = Queue.Queue()
+       
+        # get agents
+        conf = TeddixConfigFile.TeddixServerFile(syslog,cfg.server_serverlist) 
+        agents = conf.getlist()
+        conf.close()
+
+        # check DB 
+        database = TeddixDatabase.TeddixDatabase(syslog,cfg);
+        self.check_dbintegrity(database,agents)
+        database.disconnect()
+   
+        syslog.info("main: Entering Server loop" )
+        while not self.terminate:
+            # start scheduler
+            # on scheduled time: 
+            #  - read file & create queue 
+
+            #populate queue with data
+            syslog.info("main: Started queue run" )
+
+            for host in agents:
+                if (threading.active_count() > cfg.server_workers) and (not self.terminate): 
+                    syslog.debug('main: Reached max active workers count (%d): sleeping ...' % (threading.active_count() -1) )
+                while (threading.active_count() > cfg.server_workers) and (not self.terminate): 
+                    time.sleep(1)
+                
+                if not self.terminate:
+                    t = threading.Thread(target=self.worker_thread)
+                    t.setDaemon(1)
+                    t.start()
+
+                    host = host.strip()
+                    host = host.lower()
+                    self.queue.put(host)
+
+            syslog.info("main: Finished queue run" )
+
+            # wait for all workers to finish their job 
+            #Join all existing threads to main thread.
+            if threading.active_count() > 1: 
+                syslog.debug('main: Waiting for other threads. ')
+            while (threading.active_count() > 1) and (not self.terminate):
+                time.sleep(1)
+
+            if not self.terminate:
+                syslog.info("main: Sleeping for %s " % cfg.server_refresh )
+                time.sleep(self.convert_to_seconds(cfg.server_refresh))
+
+        # wait for process to finish their job 
+        if threading.active_count() > 1: 
+            syslog.debug('main: waiting 30s for remaining %d workers' % (threading.active_count()-1))
+            time.sleep(30)
+        
+        # if there are any workers left, teminate them.
+        if threading.active_count() > 1: 
+            syslog.info('main: Terminating remaining workers. ')
+        for thread in threading.enumerate():
+                if thread is not threading.currentThread():
+                    syslog.info('main: TODO: killing workerX ')
+                    #thread.kill()
+
+        # Stop server
+        syslog.info("main: Stopping TeddixServer")
+
+
+    def __init__(self,syslog,cfg,type="daemon"):
+        self.syslog = syslog
+
+        # Switch to working directory
+        if not os.path.exists(cfg.global_workdir + '/server'):
+            try:
+                os.makedirs(cfg.global_workdir + '/server')
+            except Exception, e:
+                syslog.error("Unable to create workdir: %s " % cfg.global_workdir + '/server' )
+                syslog.exception('__init__(): %s' % e )
+                exit(20)
+
+        try:
+            os.chdir(cfg.global_workdir + '/server')
+        except Exception, e:
+            syslog.error("Unable to change workdir to %s " % cfg.global_workdir + '/server')
+            syslog.exception('__init__(): %s' % e )
+            exit(20)
+
+        if not os.access(cfg.global_workdir + '/server', os.R_OK):
+            syslog.error("workdir %s needs to be readable" % cfg.global_workdir+ '/server' )
+        if not os.access(cfg.global_workdir + '/server', os.W_OK):
+            syslog.error("workdir %s needs to be writable" % cfg.global_workdir + '/server')
+        if not os.access(cfg.global_workdir + '/server', os.X_OK):
+            syslog.error("workdir %s needs to be executable" % cfg.global_workdir + '/server')
+
+
+        # Start TeddixServer
+        if type.lower() == "daemon":
+            syslog.info("Starting TeddixServer (@VERSION@) in background " )
+            try:
+                pw_user = pwd.getpwnam(cfg.server_user)
+                pw_group = grp.getgrnam(cfg.server_group)
+            except Exception, e:
+                syslog.error("user %s or group %s does not exists " % (cfg.server_user,cfg.server_group))
+                syslog.exception('__init__(): %s' % e )
+                exit(20)
+
+            # Daemon Configuration
+            self.TeddixDaemonContext = daemon.DaemonContext(
+                working_directory=cfg.global_workdir + '/server',
+#                pidfile=lockfile.pidlockfile.PIDLockFile(cfg.agent_pidfile),
+                pidfile=TimeoutPIDLockFile(cfg.server_pidfile),
+                umask=0o007,
+                detach_process=True,
+                uid=pw_user[3],
+                gid=pw_group[2],
+            )
+
+            self.TeddixDaemonContext.signal_map = {
+                signal.SIGUSR1: self.sig_handler,
+                signal.SIGUSR2: self.sig_handler,
+                signal.SIGHUP: self.sig_handler,
+                signal.SIGINT: self.sig_handler,
+                signal.SIGTERM: self.sig_handler,
+            }
+
+            # Start daemon
+            try:
+                self.TeddixDaemonContext.open()
+            except Exception, e:
+                syslog.error("Unable to daemonize ")
+                syslog.exception('__init__(): %s' % e )
+                exit(20)
+
+            self.create_server(syslog,cfg)
+            self.TeddixDaemonContext.close()
+        else:
+            syslog.info("Starting TeddixServer (@VERSION@) in foreground " )
+
+            # Setup sig handlers
+            signal.signal(signal.SIGUSR1, self.sig_handler)
+            signal.signal(signal.SIGUSR2, self.sig_handler)
+            signal.signal(signal.SIGHUP, self.sig_handler)
+            signal.signal(signal.SIGINT, self.sig_handler)
+            signal.signal(signal.SIGTERM, self.sig_handler)
+            self.create_server(syslog,cfg)
+
+
+
+
+def parse_opts():
+
+    # Parse command line args
+    parser = OptionParser ()
+    parser.add_option ("-c", "--config",
+                    action = "store",
+                    dest = "configfile",
+                    help = "Read configuration FILE")
+    parser.add_option ("-f", "--foreground",
+                    action = "store_true",
+                    dest = "foreground",
+                    default=False,
+                    help = "Do not demonize")
+    opts = parser.parse_args()
+    return opts
+
+
+if __name__ == "__main__":
+
+    # Handle command line args
+    (opts, args) = parse_opts()
+
+    # Parse config file
+    if opts.configfile is None:
+        cfg = TeddixConfigFile.TeddixConfigFile()
+    else:
+        cfg = TeddixConfigFile.TeddixConfigFile(opts.configfile)
+
+    # Open syslog
+    syslog = TeddixLogger.TeddixLogger ("TeddixServer")
+
+    if opts.foreground:
+        syslog.open_console()
+    else:
+        if cfg.global_logging.lower() == "syslog":
+            syslog.open_syslog()
+        if cfg.global_logging.lower() == "file":
+            syslog.open_logfile(cfg.global_logfile)
+
+    syslog.info("Logging subsystem initialized")
+
+    # Check if Script is started as root
+    if os.geteuid() != 0:
+        syslog.critical("TeddixServer should be started by root")
+
+    # Create Server
+    if opts.foreground:
+        agent = TeddixServer(syslog,cfg,"nodaemon");
+    else:
+        agent = TeddixServer(syslog,cfg,"daemon");
+
+
