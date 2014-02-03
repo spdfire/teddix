@@ -129,7 +129,17 @@ class TeddixServer:
 
         data = reply.find('data')
         return data
-        
+ 
+    def clean_db(self,database):
+        self.syslog.debug("removing old entries " )
+
+        # remove older than 1month 
+        sql = "DELETE FROM extra WHERE created < DATE_SUB(NOW(), INTERVAL 1 MONTH)"  
+        database.execute(sql)
+        sql = "DELETE FROM baseline WHERE scantime < DATE_SUB(NOW(), INTERVAL 1 MONTH)"  
+        database.execute(sql)
+
+       
     def check_dbintegrity(self,database,agents):
         
         self.syslog.info("main: Checking database integrity ")
@@ -602,7 +612,6 @@ class TeddixServer:
                     host = host.lower()
                     self.queue.put(host)
 
-            syslog.info("main: Finished queue run" )
 
             # wait for all workers to finish their job 
             #Join all existing threads to main thread.
@@ -611,7 +620,13 @@ class TeddixServer:
             while (threading.active_count() > 1) and (not self.terminate):
                 time.sleep(1)
 
+            syslog.info("main: Finished queue run" )
             if not self.terminate:
+                syslog.info("main: removing old entries from DB" )
+                database = TeddixDatabase.TeddixDatabase(syslog,cfg);
+                self.clean_db(database)
+                database.commit()
+                database.disconnect()
                 syslog.info("main: Sleeping for %s " % cfg.server_refresh )
                 time.sleep(self.convert_to_seconds(cfg.server_refresh))
 
