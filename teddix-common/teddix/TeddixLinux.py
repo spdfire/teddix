@@ -570,7 +570,7 @@ class TeddixLinux:
 
         users = {}
         i = 0
-        t_groups = '/usr/bin/groups'
+        t_groups = 'test -x /usr/bin/groups'
         fd1 = open('/etc/passwd')
         fd2 = open('/etc/shadow')
         f1 = fd1.read()
@@ -620,7 +620,6 @@ class TeddixLinux:
                     cmd = "/usr/bin/groups %s " % login
                     proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                     lines3 = proc.stdout.read().split('\n')
-            
                     for line3 in lines3:
                         match = re.search(r'(.+):(.+)',line3)
                         if match:
