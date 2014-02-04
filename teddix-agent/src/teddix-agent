@@ -76,8 +76,19 @@ class TeddixTCPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
         ora2html = xml.Element('ora2html')
         ora2html.text = b64
-
+        
         return xml.tostring(ora2html, 'utf-8')
+
+    def create_message_bootlog(self,syslog,cfg):
+        bl = TeddixInventory.TeddixBootlog(syslog,cfg)
+        data = bl.get()
+        b64 = base64.b64encode(data)
+
+        bootlog = xml.Element('bootlog')
+        #bootlog.text = data
+        bootlog.text = b64
+
+        return xml.tostring(bootlog, 'utf-8')
               
 
 
@@ -173,6 +184,21 @@ class TeddixTCPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             except Exception, e:
                 self.lock.release()
                 self.syslog.warn("%s: /ora2html request failed" % self.address_string())
+                self.syslog.debug("do_GET() %s " % e)
+
+        elif self.path == '/bootlog':
+            self.syslog.info("Generating /bootlog")
+            self.lock.acquire()
+            try:
+                raw_bootlog = self.create_message_bootlog(self.syslog,self.cfg)
+                self.lock.release()
+                raw_message = self.create_message(200,"Request successful",'bootlog',raw_bootlog)
+
+                self.send_message(200,"Request successful",raw_message)
+                self.syslog.info("%s: /bootlog request sent" % self.address_string())
+            except Exception, e:
+                self.lock.release()
+                self.syslog.warn("%s: /bootlog request failed" % self.address_string())
                 self.syslog.debug("do_GET() %s " % e)
 
 

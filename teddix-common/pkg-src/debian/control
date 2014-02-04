@@ -11,7 +11,7 @@ X-Python-Version: >= 2.6
 
 Package: teddix-common
 Architecture: all
-Depends: python2.6, python-dmidecode, python-psutil, python-netifaces, python-libxml2, python-mysqldb
+Depends: python2.6, python-dmidecode, python-psutil, python-usb, python-netifaces, python-libxml2, python-mysqldb
 Description: Common libs for teddix agent and server. 
  Teddix is an inventory system for servers. 
  This package contains common libs used by agent and server. 

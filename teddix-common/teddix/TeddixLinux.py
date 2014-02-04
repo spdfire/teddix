@@ -4,6 +4,7 @@
 import os
 import re
 import sys
+import usb
 import time
 import glob
 import psutil
@@ -29,6 +30,21 @@ class TeddixLinux:
         self.dist = platform.linux_distribution()
 
         self.syslog.info("Detected: %s (%s %s) arch: %s" % (self.system,self.dist[0],self.dist[1],self.machine))
+
+    # Get USB devices 
+    def getusb(self):
+        parser = TeddixParser.TeddixStringParser() 
+
+        i = 0
+        usbdevs = {}
+        for bus in usb.busses():
+            for dev in bus.devices:
+                print "Bus %s" % (bus.dirname)
+                print "Dev %s" % (dev.filename)
+                print "ID %04x:%04x" % (dev.idVendor,dev.idProduct)
+
+
+        return ''
 
     # Get PCI devices 
     def getpci(self):
@@ -839,5 +855,4 @@ class TeddixLinux:
         #   return ''
 
         return svcs
-
 

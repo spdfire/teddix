@@ -19,6 +19,7 @@ Requires:           python-dmidecode
 Requires:           python-lockfile
 Requires:           python-psutil
 Requires:           python-netifaces
+Requires:           python-usb
 
 %description
 The Teddix Agent is a program that allows the user to collect 

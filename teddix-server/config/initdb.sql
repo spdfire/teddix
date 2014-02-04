@@ -20,6 +20,7 @@ CREATE TABLE extra (
 	created DATETIME NOT NULL, 
 	cfg2html MEDIUMTEXT, 
 	ora2html MEDIUMTEXT, 
+	bootlog MEDIUMTEXT, 
 
 	PRIMARY KEY (id),
 	CONSTRAINT fk_serverid_extra FOREIGN KEY (server_id) REFERENCES server(id) ON DELETE CASCADE ON UPDATE CASCADE 

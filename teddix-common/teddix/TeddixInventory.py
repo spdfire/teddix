@@ -198,6 +198,7 @@ class TeddixBaseline:
         nics = self.osbase.getnics()
         blockdevs = self.osbase.getblock()
         pcidevs = self.osbase.getpci()
+        #usbdevs = self.osbase.getusb()
         
         server = xml.Element('server')
 
@@ -610,6 +611,51 @@ class TeddixOra2Html:
         html = f.read()
         f.close()
         return html
+
+class TeddixBootlog:
+    def __init__(self,syslog,cfg):
+        self.syslog = syslog
+        self.cfg = cfg
+
+    def get(self):
+        dmesg = 'N/A'
+
+        t_bootdmesg1 = "test -f /var/log/dmesg"
+        t_bootdmesg2 = "test -f /var/log/dmesg.boot"
+        t_bootdmesg3 = "test -f /var/log/boot.dmesg"
+        t_bootdmesg4 = "test -f /var/log/boot.log"
+        if subprocess.call(t_bootdmesg1,shell=True) == 0:
+            self.syslog.debug("Found /var/log/dmesg" )
+            f = open('/var/log/dmesg', 'r')
+            dmesg = f.read()
+            f.close()
+ 
+        elif subprocess.call(t_bootdmesg2,shell=True) == 0:
+            self.syslog.debug("Found /var/log/dmesg.boot" )
+            f = open('/var/log/dmesg.boot', 'r')
+            dmesg = f.read()
+            f.close()
+
+        elif subprocess.call(t_bootdmesg3,shell=True) == 0:
+            self.syslog.debug("Found /var/log/boot.dmesg" )
+            f = open('/var/log/boot.dmesg', 'r')
+            dmesg = f.read()
+            f.close()
+
+        elif subprocess.call(t_bootdmesg4,shell=True) == 0:
+            self.syslog.debug("Found /var/log/boot.log" )
+            f = open('/var/log/boot.log', 'r')
+            dmesg = f.read()
+            f.close()
+
+        else: 
+            self.syslog.debug("Fallback to dmesg command" % self.dist[0])
+            cmd = "dmesg --ctime"
+            state = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            dmesg = state.stdout.read()
+
+        return dmesg
+
 
 if __name__ == "__main__":
     cfg = TeddixConfigFile.TeddixConfigFile()
