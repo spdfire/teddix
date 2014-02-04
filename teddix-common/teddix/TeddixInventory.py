@@ -197,6 +197,7 @@ class TeddixBaseline:
         swaps = self.osbase.getswap() 
         nics = self.osbase.getnics()
         blockdevs = self.osbase.getblock()
+        pcidevs = self.osbase.getpci()
         
         server = xml.Element('server')
 
@@ -291,7 +292,7 @@ class TeddixBaseline:
             memory.append(memorymodule)
             i += 1
         
-        # TODO: get blockdevices 
+        # get blockdevices 
         blockdevices = xml.Element('blockdevices')
         blockdevices.attrib['count'] = str(len(blockdevs))
         hardware.append(blockdevices)
@@ -314,7 +315,22 @@ class TeddixBaseline:
             blockdevices.append(block)
 
 
-        # TODO: get PCIdevices 
+        # get PCIdevices 
+        pcidevices = xml.Element('pcidevices')
+        pcidevices.attrib['count'] = str(len(pcidevs))
+        hardware.append(pcidevices)
+
+        # [path,devtype,vendor,model,revision]
+        i = 0 
+        for i in range(len(pcidevs)):
+            pci = xml.Element('pcidevice')
+            pci.attrib['path']        = pcidevs[i][0] 
+            pci.attrib['type']        = pcidevs[i][1] 
+            pci.attrib['vendor']      = pcidevs[i][2] 
+            pci.attrib['model']       = pcidevs[i][3] 
+            pci.attrib['revision']    = pcidevs[i][4] 
+            pcidevices.append(pci)
+
         # TODO: get info from HP tools 
 
         operatingsystem = xml.Element('system')

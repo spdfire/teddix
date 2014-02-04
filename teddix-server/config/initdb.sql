@@ -132,6 +132,22 @@ CREATE TABLE blockdevice(
 	CONSTRAINT fk_baselineid_blockdevice FOREIGN KEY (baseline_id) REFERENCES baseline(id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
+CREATE TABLE pcidevice( 
+	id INT NOT NULL AUTO_INCREMENT,
+	server_id INT NOT NULL,
+	baseline_id INT NOT NULL,
+	path VARCHAR(25), 
+	devtype VARCHAR(50), 
+	vendor VARCHAR(50), 
+	model VARCHAR(50), 
+	revision VARCHAR(25), 
+
+	PRIMARY KEY (id),
+	CONSTRAINT fk_serverid_pcidevice FOREIGN KEY (server_id) REFERENCES server(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	CONSTRAINT fk_baselineid_pcidevice FOREIGN KEY (baseline_id) REFERENCES baseline(id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+
 
 CREATE TABLE bios ( 
 	id INT NOT NULL AUTO_INCREMENT,

@@ -30,9 +30,40 @@ class TeddixLinux:
 
         self.syslog.info("Detected: %s (%s %s) arch: %s" % (self.system,self.dist[0],self.dist[1],self.machine))
 
+    # Get PCI devices 
+    def getpci(self):
+        parser = TeddixParser.TeddixStringParser() 
+        t_lspci = "test -x /usr/bin/lspci"
+        lines = None
+        if subprocess.call(t_lspci,shell=True) == 0:
+            self.syslog.debug("Detecting blockdevices " )
+            cmd = "/usr/bin/lspci -m"
+            proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            lines = sorted(proc.stdout.read().split('\n'))
+        else:
+            self.syslog.warn("Unable to execute lspci ")
+   
+        # parse PCI devices
+        pcidev = { }
+        if lines: 
+            i = 0
+            for line in lines:
+                match = re.search(r'^(.+) \"(.+)\" \"(.+)\" \"(.+)\".+\-r(\w+) .+',line)
+                if match:
+                    path = parser.str2uni(match.group(1))
+                    devtype = parser.str2uni(match.group(2))
+                    vendor = parser.str2uni(match.group(3))
+                    model = parser.str2uni(match.group(4))
+                    revision = parser.str2uni(match.group(5))
+                    pcidev[i] = [path,devtype,vendor,model,revision]
+                    i += 1
+
+        return pcidev 
+
     # Get Block devices 
     def getblock(self):
-        dev_pattern = ['sd.*','hd.*','mmcblk*']
+        dev_pattern = ['sd.*','hd.*','sr*','mmcblk*']
+        self.syslog.debug("Detecting blockdevices " )
         
         blockdev = {}
         i = 0

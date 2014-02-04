@@ -275,6 +275,18 @@ class TeddixServer:
             sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
             database.execute(sql,(server_id,baseline_id,name,devtype,vendor,model,sectors,sectorsize,rotational,readonly,removable,major,minor))
 
+        # PCI Devices 
+        root = hardware.find('pcidevices')
+        for child in root:
+            path = child.get('path')
+            devtype = child.get('type')
+            vendor = child.get('vendor')
+            model = child.get('model')
+            revision = child.get('revision')
+            sql  = "INSERT INTO pcidevice (server_id,baseline_id,path,devtype,vendor,model,revision) "
+            sql += "VALUES(%s,%s,%s,%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,path,devtype,vendor,model,revision))
+
         # firmware  
         releasedate = hardware.find('bios').get('releasedate')
         vendor = hardware.find('bios').get('vendor')
