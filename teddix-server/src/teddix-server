@@ -165,7 +165,6 @@ class TeddixServer:
                 self.syslog.warn("SQL Cleaning duplicate server names: %s " % host)
                 result = database.fetchall()
                 for row in result:
-                    # TODO delete cascade 
                     server_id = row[0]
                     sql = "DELETE FROM server WHERE id = %s " 
                     database.execute(sql,server_id)
