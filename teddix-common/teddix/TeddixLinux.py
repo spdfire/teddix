@@ -840,7 +840,7 @@ class TeddixLinux:
                 if service:
                     name = service[0][0]
                     cmd = '/usr/sbin/service'
-                    ret = subprocess.call("%s %s status" % (cmd,name), shell=True)
+                    ret = subprocess.call("%s %s status 2>/dev/null >/dev/null" % (cmd,name),shell=True)
                     if ret == 0: 
                         status = 'running'
                     else:
@@ -861,7 +861,7 @@ class TeddixLinux:
                 if service:
                     name = service[0][1]
                     cmd = '/usr/sbin/service'
-                    ret = subprocess.call("%s %s status" % (cmd,name), shell=True)
+                    ret = subprocess.call("%s %s status 2>/dev/null >/dev/null" % (cmd,name), shell=True)
 
                     if ret == 0: 
                         status = 'running'
