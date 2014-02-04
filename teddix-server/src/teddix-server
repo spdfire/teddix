@@ -136,7 +136,7 @@ class TeddixServer:
         # remove older than 1month 
         sql = "DELETE FROM extra WHERE created < DATE_SUB(NOW(), INTERVAL 1 MONTH)"  
         database.execute(sql)
-        sql = "DELETE FROM baseline WHERE scantime < DATE_SUB(NOW(), INTERVAL 1 MONTH)"  
+        sql = "DELETE FROM baseline WHERE created < DATE_SUB(NOW(), INTERVAL 1 MONTH)"  
         database.execute(sql)
 
        
@@ -195,8 +195,8 @@ class TeddixServer:
         b_scantime = baseline.find('server').find('generated').get('scantime')
         b_version = baseline.find('server').find('generated').get('version')
 
-        sql  = "INSERT INTO baseline(server_id,hostname,program,scantime,version) "
-        sql += "VALUES(%s,%s,%s,%s,%s)" 
+        sql  = "INSERT INTO baseline(server_id,created,hostname,program,scantime,version) "
+        sql += "VALUES(%s,NOW(),%s,%s,%s,%s)" 
         database.execute(sql,(server_id,b_hostname,b_program,b_scantime,b_version))
         baseline_id = database.insert_id()
 
@@ -489,7 +489,7 @@ class TeddixServer:
             return False
 
         sql  = "INSERT INTO extra(server_id,created,cfg2html,ora2html) "
-        sql += "VALUES(%s,CURDATE(),%s,%s)"  
+        sql += "VALUES(%s,NOW(),%s,%s)"  
         database.execute(sql,(server_id,cfg2html,ora2html))
         return True
        

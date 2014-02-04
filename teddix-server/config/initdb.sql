@@ -29,6 +29,7 @@ CREATE TABLE extra (
 CREATE TABLE baseline ( 
 	id INT NOT NULL AUTO_INCREMENT,
 	server_id INT NOT NULL,
+	created DATETIME NOT NULL, 
 	hostname VARCHAR(50), 
 	program VARCHAR(50), 
 	scantime VARCHAR(25), 
