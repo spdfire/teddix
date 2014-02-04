@@ -40,18 +40,33 @@ CREATE TABLE baseline (
 ) ENGINE=InnoDB;
 
 -- Hardware Informations 
-CREATE TABLE sysboard ( 
+CREATE TABLE chassis( 
 	id INT NOT NULL AUTO_INCREMENT,
 	server_id INT NOT NULL,
 	baseline_id INT NOT NULL,
-	boardtype VARCHAR(25), 
-	serialnumber VARCHAR(50), 
 	manufacturer VARCHAR(50), 
-	productname VARCHAR(50), 
+	serialnumber VARCHAR(50), 
+	thermalstate VARCHAR(50), 
+	chassistype VARCHAR(50), 
+	version VARCHAR(25), 
 
 	PRIMARY KEY (id),
-	CONSTRAINT fk_serverid_sysboard FOREIGN KEY (server_id) REFERENCES server(id) ON DELETE CASCADE ON UPDATE CASCADE,
-	CONSTRAINT fk_baselineid_sysboard FOREIGN KEY (baseline_id) REFERENCES baseline(id) ON DELETE CASCADE ON UPDATE CASCADE
+	CONSTRAINT fk_serverid_chassis FOREIGN KEY (server_id) REFERENCES server(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	CONSTRAINT fk_baselineid_chassis FOREIGN KEY (baseline_id) REFERENCES baseline(id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE baseboard ( 
+	id INT NOT NULL AUTO_INCREMENT,
+	server_id INT NOT NULL,
+	baseline_id INT NOT NULL,
+	manufacturer VARCHAR(50), 
+	productname VARCHAR(50), 
+	serialnumber VARCHAR(50), 
+	version VARCHAR(25), 
+
+	PRIMARY KEY (id),
+	CONSTRAINT fk_serverid_baseboard FOREIGN KEY (server_id) REFERENCES server(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	CONSTRAINT fk_baselineid_baseboard FOREIGN KEY (baseline_id) REFERENCES baseline(id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE processor ( 
@@ -65,7 +80,8 @@ CREATE TABLE processor (
 	procid VARCHAR(25), 
 	partnumber VARCHAR(50), 
 	serialnumber VARCHAR(50), 
-	clock VARCHAR(25), 
+	speed VARCHAR(25), 
+	socket VARCHAR(25), 
 	threads VARCHAR(25), 
 	proctype VARCHAR(50), 
 	procversion VARCHAR(50),
@@ -83,10 +99,11 @@ CREATE TABLE memorymodule (
 	formfactor VARCHAR(25), 
 	location VARCHAR(50), 
 	manufacturer VARCHAR(50), 
+	modulesize VARCHAR(25), 
 	memorytype VARCHAR(25), 
 	partnumber VARCHAR(50), 
 	serialnumber VARCHAR(50), 
-	modulesize VARCHAR(25), 
+	speed VARCHAR(25), 
 	width VARCHAR(25), 
 
 	PRIMARY KEY (id),
@@ -94,11 +111,34 @@ CREATE TABLE memorymodule (
 	CONSTRAINT fk_baselineid_memorymodule FOREIGN KEY (baseline_id) REFERENCES baseline(id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
+CREATE TABLE blockdevice( 
+	id INT NOT NULL AUTO_INCREMENT,
+	server_id INT NOT NULL,
+	baseline_id INT NOT NULL,
+	name VARCHAR(25), 
+	devtype VARCHAR(25), 
+	vendor VARCHAR(25), 
+	model VARCHAR(25), 
+	sectors VARCHAR(25), 
+	sectorsize VARCHAR(10), 
+	rotational VARCHAR(5), 
+	readonly VARCHAR(5), 
+	removable VARCHAR(5), 
+	major VARCHAR(5), 
+	minor VARCHAR(5), 
+
+	PRIMARY KEY (id),
+	CONSTRAINT fk_serverid_blockdevice FOREIGN KEY (server_id) REFERENCES server(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	CONSTRAINT fk_baselineid_blockdevice FOREIGN KEY (baseline_id) REFERENCES baseline(id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+
 CREATE TABLE bios ( 
 	id INT NOT NULL AUTO_INCREMENT,
 	server_id INT NOT NULL,
 	baseline_id INT NOT NULL,
 	releasedate VARCHAR(25), 
+	revision VARCHAR(25), 
 	vendor VARCHAR(25), 
 	version VARCHAR(25), 
 

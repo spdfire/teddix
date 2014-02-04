@@ -89,6 +89,13 @@ class TeddixBaseline:
         # get BaseBoard Data
         #tmp = dmidecode.baseboard()
         #pprint(tmp)
+        for v  in dmidecode.baseboard().values():
+            if type(v) == dict and v['dmi_type'] == 2:
+                DMI['baseboard',0,'Manufacturer'] = str((v['data']['Manufacturer']))
+                DMI['baseboard',0,'Product Name'] = str((v['data']['Product Name']))
+                DMI['baseboard',0,'Serial Number'] = str((v['data']['Serial Number']))
+                DMI['baseboard',0,'Version'] = str((v['data']['Version']))
+
 
         # get chassis Data
         #tmp = dmidecode.chassis()
@@ -189,6 +196,7 @@ class TeddixBaseline:
         partitions = self.osbase.getpartitions()
         swaps = self.osbase.getswap() 
         nics = self.osbase.getnics()
+        blockdevs = self.osbase.getblock()
         
         server = xml.Element('server')
 
@@ -205,12 +213,35 @@ class TeddixBaseline:
         hardware = xml.Element('hardware')
         server.append(hardware)
 
-        sysboard = xml.Element('sysboard')
-        sysboard.attrib['manufacturer'] = dmi['system',0,'Manufacturer']
-        sysboard.attrib['productname']  = dmi['system',0,'Product Name']
-        sysboard.attrib['serialnumber'] = dmi['system',0,'Serial Number']
-        sysboard.attrib['boardtype']    = dmi['chassis',0,'Type']
+        bios = xml.Element('bios')
+        bios.attrib['revision']     = dmi['bios',0,'BIOS Revision']
+        bios.attrib['vendor']       = dmi['bios',0,'Vendor']
+        bios.attrib['version']      = dmi['bios',0,'Version']
+        bios.attrib['releasedate']  = dmi['bios',0,'Relase Date']
+        hardware.append(bios)
+
+        sysboard = xml.Element('baseboard')
+        sysboard.attrib['manufacturer']     = dmi['baseboard',0,'Manufacturer']
+        sysboard.attrib['productname']      = dmi['baseboard',0,'Product Name']
+        sysboard.attrib['serialnumber']     = dmi['baseboard',0,'Serial Number']
+        sysboard.attrib['version']          = dmi['baseboard',0,'Version']
         hardware.append(sysboard)
+
+        system = xml.Element('system')
+        system.attrib['manufacturer'] = dmi['system',0,'Manufacturer']
+        system.attrib['productname']  = dmi['system',0,'Product Name']
+        system.attrib['family']       = dmi['system',0,'Family']
+        system.attrib['serialnumber'] = dmi['system',0,'Serial Number']
+        system.attrib['version']      = dmi['system',0,'Version']
+        hardware.append(system)
+        
+        chassis = xml.Element('chassis')
+        chassis.attrib['manufacturer'] = dmi['chassis',0,'Manufacturer']
+        chassis.attrib['serialnumber'] = dmi['chassis',0,'Serial Number']
+        chassis.attrib['thermalstate'] = dmi['chassis',0,'Thermal State']
+        chassis.attrib['type']         = dmi['chassis',0,'Type']
+        chassis.attrib['version']      = dmi['chassis',0,'Version']
+        hardware.append(chassis)
 
         processors = xml.Element('processors')
         processors.attrib['count'] =  str(self.__getdmi_count(dmi,'processor','Current Speed'))
@@ -223,6 +254,7 @@ class TeddixBaseline:
             processor.attrib['procid']       = str(i)
             processor.attrib['family']       = dmi['processor',i,'Family']
             processor.attrib['proctype']     = dmi['processor',i,'Type']
+            processor.attrib['socket']       = dmi['processor',i,'Socket Designation']
             processor.attrib['speed']        = dmi['processor',i,'Max Speed']
             processor.attrib['version']      = dmi['processor',i,'Version']
             processor.attrib['cores']        = dmi['processor',i,'Core Count']
@@ -246,23 +278,44 @@ class TeddixBaseline:
         i = 0
         while i < count:
             memorymodule = xml.Element('memorymodule')
-            memorymodule.attrib['location'] = dmi['memory',i,'Locator']
-            memorymodule.attrib['bank'] = dmi['memory',i,'Bank Locator']
-            memorymodule.attrib['memorysize'] = dmi['memory',i,'Size']
-            memorymodule.attrib['formfactor'] = dmi['memory',i,'Form Factor']
+            memorymodule.attrib['location']     = dmi['memory',i,'Locator']
+            memorymodule.attrib['bank']         = dmi['memory',i,'Bank Locator']
+            memorymodule.attrib['memorysize']   = dmi['memory',i,'Size']
+            memorymodule.attrib['formfactor']   = dmi['memory',i,'Form Factor']
             memorymodule.attrib['manufacturer'] = dmi['memory',i,'Manufacturer']
-            memorymodule.attrib['memorytype'] = dmi['memory',i,'Type']
-            memorymodule.attrib['partnumber'] = dmi['memory',i,'Part Number']
+            memorymodule.attrib['memorytype']   = dmi['memory',i,'Type']
+            memorymodule.attrib['partnumber']   = dmi['memory',i,'Part Number']
             memorymodule.attrib['serialnumber'] = dmi['memory',i,'Serial Number']
-            memorymodule.attrib['width'] = dmi['memory',i,'Data Width']
+            memorymodule.attrib['width']        = dmi['memory',i,'Data Width']
+            memorymodule.attrib['speed']        = dmi['memory',i,'Speed']
             memory.append(memorymodule)
             i += 1
+        
+        # TODO: get blockdevices 
+        blockdevices = xml.Element('blockdevices')
+        blockdevices.attrib['count'] = str(len(blockdevs))
+        hardware.append(blockdevices)
 
-        bios = xml.Element('bios')
-        bios.attrib['vendor'] = dmi['bios',0,'Vendor']
-        bios.attrib['version'] = dmi['bios',0,'Version']
-        bios.attrib['releasedate'] = dmi['bios',0,'Relase Date']
-        hardware.append(bios)
+        #[name,devtype,vendor,model,nr_sectors,sect_size,rotational,readonly,removable,major,minor]
+        i = 0 
+        for i in range(len(blockdevs)):
+            block = xml.Element('blockdevice')
+            block.attrib['name']        = blockdevs[i][0] 
+            block.attrib['type']        = blockdevs[i][1] 
+            block.attrib['vendor']      = blockdevs[i][2] 
+            block.attrib['model']       = blockdevs[i][3] 
+            block.attrib['sectors']     = blockdevs[i][4] 
+            block.attrib['sectorsize']  = blockdevs[i][5] 
+            block.attrib['rotational']  = blockdevs[i][6] 
+            block.attrib['readonly']    = blockdevs[i][7] 
+            block.attrib['removable']   = blockdevs[i][8] 
+            block.attrib['major']       = blockdevs[i][9] 
+            block.attrib['minor']       = blockdevs[i][10] 
+            blockdevices.append(block)
+
+
+        # TODO: get PCIdevices 
+        # TODO: get info from HP tools 
 
         operatingsystem = xml.Element('system')
         operatingsystem.attrib['name'] = platform.system() 

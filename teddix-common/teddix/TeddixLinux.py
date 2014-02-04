@@ -5,6 +5,7 @@ import os
 import re
 import sys
 import time
+import glob
 import psutil
 import platform
 import netifaces
@@ -28,6 +29,59 @@ class TeddixLinux:
         self.dist = platform.linux_distribution()
 
         self.syslog.info("Detected: %s (%s %s) arch: %s" % (self.system,self.dist[0],self.dist[1],self.machine))
+
+    # Get Block devices 
+    def getblock(self):
+        dev_pattern = ['sd.*','hd.*','mmcblk*']
+        
+        blockdev = {}
+        i = 0
+        for device in glob.glob('/sys/block/*'):
+            for pattern in dev_pattern:
+                if re.compile(pattern).match(os.path.basename(device)):
+                    nr_sectors = open(device+'/size').read().rstrip('\n')
+                    sect_size = open(device+'/queue/hw_sector_size').read().rstrip('\n')
+                    model = open(device+'/device/model').read().rstrip('\n')
+                    tmp = open(device+'/queue/rotational').read().rstrip('\n')
+                    if tmp == '1':
+                        rotational = 'Yes'
+                    else:
+                        rotational = 'No'
+                    tmp = open(device+'/ro').read().rstrip('\n')
+                    if tmp == '1':
+                        readonly = 'Yes'
+                    else:
+                        readonly = 'No'
+                    tmp = open(device+'/removable').read().rstrip('\n')
+                    if tmp == '1':
+                        removable = 'Yes'
+                    else:
+                        removable = 'No'
+                    lines = open(device+'/uevent').read().split('\n')
+                    major = 'N/A'
+                    minor = 'N/A'
+                    name  = 'N/A'
+                    devtype = 'N/A'
+                    for line in lines:
+                        match = re.search(r'MAJOR\=(\d+)',line)
+                        if match:
+                            major = match.group(1)
+                        match = re.search(r'MINOR\=(\d+)',line)
+                        if match:
+                            minor = match.group(1)
+                        match = re.search(r'DEVNAME\=(.+)',line)
+                        if match:
+                            name = match.group(1)
+                        match = re.search(r'DEVTYPE\=(.+)',line)
+                        if match:
+                            devtype = match.group(1)
+                    vendor = open(device+'/device/vendor').read().rstrip('\n')
+
+                    blockdev[i] = [name,devtype,vendor,model,nr_sectors,sect_size,rotational,readonly,removable,major,minor]
+                    i += 1
+
+        return blockdev
+
 
     # Get installed packages
     def getpkgs(self):

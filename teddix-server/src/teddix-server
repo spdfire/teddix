@@ -202,14 +202,24 @@ class TeddixServer:
         # save HW info
         hardware = baseline.find('server').find('hardware')
 
-        boardtype = hardware.find('sysboard').get('boardtype')
-        serialnumber = hardware.find('sysboard').get('serialnumber')
-        manufacturer = hardware.find('sysboard').get('manufacturer')
-        productname = hardware.find('sysboard').get('productname')
+        manufacturer = hardware.find('chassis').get('manufacturer')
+        serialnumber = hardware.find('chassis').get('serialnumber')
+        thermalstate = hardware.find('chassis').get('thermalstate')
+        chassistype  = hardware.find('chassis').get('type')
+        version      = hardware.find('chassis').get('version')
+        
+        sql  = "INSERT INTO chassis(server_id,baseline_id,manufacturer,serialnumber,thermalstate,chassistype,version) "
+        sql += "VALUES(%s,%s,%s,%s,%s,%s,%s)" 
+        database.execute(sql,(server_id,baseline_id,manufacturer,serialnumber,thermalstate,chassistype,version))
+        
+        manufacturer = hardware.find('baseboard').get('manufacturer')
+        productname = hardware.find('baseboard').get('productname')
+        serialnumber = hardware.find('baseboard').get('serialnumber')
+        version = hardware.find('baseboard').get('version')
 
-        sql  = "INSERT INTO sysboard(server_id,baseline_id,boardtype,serialnumber,manufacturer,productname) "
+        sql  = "INSERT INTO baseboard(server_id,baseline_id,manufacturer,productname,serialnumber,version) "
         sql += "VALUES(%s,%s,%s,%s,%s,%s)" 
-        database.execute(sql,(server_id,baseline_id,boardtype,serialnumber,manufacturer,productname))
+        database.execute(sql,(server_id,baseline_id,manufacturer,productname,serialnumber,version))
 
         # Processors 
         root = hardware.find('processors')
@@ -221,14 +231,14 @@ class TeddixServer:
             procid = child.get('procid')
             partnumber = child.get('partnumber')
             serialnumber = child.get('serialnumber')
-            clock = child.get('clock')
+            speed = child.get('clock')
             threads = child.get('threads')
             proctype = child.get('proctype')
             procversion = child.get('procversion')
-            sql  = "INSERT INTO processor(server_id,baseline_id,cores,extclock,familly,htsystem,procid,partnumber,serialnumber,clock,threads,proctype,procversion) "
-            sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
-            database.execute(sql,(server_id,baseline_id,cores,extclock,familly,htsystem,procid,partnumber,serialnumber,clock,threads,proctype,procversion))
-
+            socket = child.get('socket')
+            sql  = "INSERT INTO processor(server_id,baseline_id,socket,cores,extclock,familly,htsystem,procid,partnumber,serialnumber,speed,threads,proctype,procversion) "
+            sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,socket,cores,extclock,familly,htsystem,procid,partnumber,serialnumber,speed,threads,proctype,procversion))
 
         # RAM modules 
         root = hardware.find('memory')
@@ -241,19 +251,38 @@ class TeddixServer:
             partnumber = child.get('partnumber')
             serialnumber = child.get('serialnumber')
             modulesize = child.get('modulesize')
+            speed = child.get('speed')
             width = child.get('width')
-            sql  = "INSERT INTO memorymodule(server_id,baseline_id,bank,formfactor,location,manufacturer,memorytype,partnumber,serialnumber,modulesize,width) "
-            sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
-            database.execute(sql,(server_id,baseline_id,bank,formfactor,location,manufacturer,memorytype,partnumber,serialnumber,modulesize,width))
+            sql  = "INSERT INTO memorymodule(server_id,baseline_id,bank,formfactor,location,manufacturer,memorytype,partnumber,serialnumber,modulesize,width,speed) "
+            sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,bank,formfactor,location,manufacturer,memorytype,partnumber,serialnumber,modulesize,width,speed))
 
+        # Block Devices 
+        root = hardware.find('blockdevices')
+        for child in root:
+            name = child.get('name')
+            devtype = child.get('type')
+            vendor = child.get('vendor')
+            model = child.get('model')
+            sectors = child.get('sectors')
+            sectorsize = child.get('sectorsize')
+            rotational = child.get('rotational')
+            readonly = child.get('readonly')
+            removable = child.get('removable')
+            major = child.get('major')
+            minor = child.get('minor')
+            sql  = "INSERT INTO blockdevice (server_id,baseline_id,name,devtype,vendor,model,sectors,sectorsize,rotational,readonly,removable,major,minor) "
+            sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,name,devtype,vendor,model,sectors,sectorsize,rotational,readonly,removable,major,minor))
 
         # firmware  
         releasedate = hardware.find('bios').get('releasedate')
         vendor = hardware.find('bios').get('vendor')
         version = hardware.find('bios').get('version')
-        sql  = "INSERT INTO bios(server_id,baseline_id,releasedate,vendor,version) "
-        sql += "VALUES(%s,%s,%s,%s,%s)" 
-        database.execute(sql,(server_id,baseline_id,releasedate,vendor,version))
+        revision = hardware.find('bios').get('revision')
+        sql  = "INSERT INTO bios(server_id,baseline_id,releasedate,vendor,version,revision) "
+        sql += "VALUES(%s,%s,%s,%s,%s,%s)" 
+        database.execute(sql,(server_id,baseline_id,releasedate,vendor,version,revision))
 
         # save OS info
         system = baseline.find('server').find('system')
@@ -582,19 +611,14 @@ class TeddixServer:
         agents = conf.getlist()
         conf.close()
 
-        # check DB 
-        database = TeddixDatabase.TeddixDatabase(syslog,cfg);
-        self.check_dbintegrity(database,agents)
-        database.disconnect()
-   
         syslog.info("main: Entering Server loop" )
         while not self.terminate:
-            # start scheduler
-            # on scheduled time: 
-            #  - read file & create queue 
-
-            #populate queue with data
             syslog.info("main: Started queue run" )
+            
+            # check DB 
+            database = TeddixDatabase.TeddixDatabase(syslog,cfg);
+            self.check_dbintegrity(database,agents)
+            database.disconnect() 
 
             for host in agents:
                 if (threading.active_count() > cfg.server_workers) and (not self.terminate): 
