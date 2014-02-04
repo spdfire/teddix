@@ -199,6 +199,7 @@ class TeddixBaseline:
         blockdevs = self.osbase.getblock()
         pcidevs = self.osbase.getpci()
         #usbdevs = self.osbase.getusb()
+        svcs = self.osbase.getsvcs()
         
         server = xml.Element('server')
 
@@ -496,10 +497,10 @@ class TeddixBaseline:
 
             # for every group member do:
             for usr in data[1].split(','): 
-                member = xml.Element('member')
                 if usr:
+                    member = xml.Element('member')
                     member.attrib['name'] = usr
-                group.append(member)
+                    group.append(member)
 
         xmlusers = xml.Element('users')
         operatingsystem.append(xmlusers)
@@ -550,12 +551,12 @@ class TeddixBaseline:
         operatingsystem.append(services)
 
         # for every service do:
-        for svc in self.osbase.getsvcs(): 
+        # [name,boot,status]
+        for i in range(len(svcs)):
             service = xml.Element('service')
-            data = svc.split('/')
-            service.attrib['name'] = data[0]
-            service.attrib['autostart'] = data[1]
-            service.attrib['running'] = 'TODO'
+            service.attrib['name']          = svcs[i][0]
+            service.attrib['autostart']     = svcs[i][1]
+            service.attrib['running']       = svcs[i][2]
             services.append(service)
 
         # make xml pretty ;)

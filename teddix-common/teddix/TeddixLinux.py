@@ -813,7 +813,8 @@ class TeddixLinux:
         t_systemd = "test -x /bin/systemctl || test -x /usr/bin/systemctl || test -x /usr/local/bin/systemctl"
         t_chkconfig = "test -x /sbin/chkconfig"
         t_insserv = "test -x /sbin/insserv"
-        svcs = [ ]  
+        svcs = { } 
+        i = 0
         if subprocess.call(t_systemd,shell=True) == 0:
             self.syslog.debug("System %s has systemctl command" % self.dist[0])
             cmd = "systemctl list-unit-files "
@@ -822,7 +823,11 @@ class TeddixLinux:
             for line in lines:
                 service = re.findall(r'(.+).service\W*(\w+)\W*',line)
                 if service:
-                    svcs.append(service[0][0] + '/' + service[0][1]) 
+                    name = service[0][0]
+                    boot = service[0][1]
+                    status = 'N/A'
+                    svcs[i] = [name,boot,status]
+                    i += 1
 
         
         if subprocess.call(t_chkconfig,shell=True) == 0:
@@ -833,7 +838,17 @@ class TeddixLinux:
             for line in lines:
                 service = re.findall(r'(.+)[ ]+(.+)',line)
                 if service:
-                    svcs.append(service[0][0] + '/' + service[0][1]) 
+                    name = service[0][0]
+                    cmd = '/usr/sbin/service'
+                    ret = subprocess.call("%s %s status" % (cmd,name), shell=True)
+                    if ret == 0: 
+                        status = 'running'
+                    else:
+                        status = 'stopped'
+
+                    boot = service[0][1]
+                    svcs[i] = [name,boot,status]
+                    i += 1
 
         
         if subprocess.call(t_insserv,shell=True) == 0:
@@ -844,12 +859,22 @@ class TeddixLinux:
             for line in lines:
                 service = re.findall(r'([SK]):\d+:\w+:(.+)',line)
                 if service:
+                    name = service[0][1]
+                    cmd = '/usr/sbin/service'
+                    ret = subprocess.call("%s %s status" % (cmd,name), shell=True)
+
+                    if ret == 0: 
+                        status = 'running'
+                    else:
+                        status = 'stopped'
+
                     if service[0][0] == 'K':
-                        svcs.append(service[0][1] + '/' + 'disabled') 
+                        boot = 'disabled'
                     if service[0][0] == 'S':
-                        svcs.append(service[0][1] + '/' + 'enabled') 
+                        boot = 'enabled'
 
-
+                    svcs[i] = [name,boot,status]
+                    i += 1
         #else:
         #   self.syslog.warn("Unable to get service configuration ")
         #   return ''
