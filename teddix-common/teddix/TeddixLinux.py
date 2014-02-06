@@ -881,3 +881,30 @@ class TeddixLinux:
 
         return svcs
 
+
+    # Get updates
+    def getupdates(self):
+        self.syslog.debug("Get update list")
+        parser = TeddixParser.TeddixStringParser() 
+        
+        t_aptget = "test -x /usr/bin/apt-get"
+        t_aptitude = "test -x /usr/bin/aptitude"
+        update = { } 
+        i = 0
+        if subprocess.call(t_aptget,shell=True) == 0 and subprocess.call(t_aptitude,shell=True) == 0:
+            self.syslog.debug("System %s has apt-get and aptitude command" % self.dist[0])
+            cmd = "apt-get update -qq"
+            state = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if subprocess.call(cmd,shell=True) == 0:
+                cmd = "aptitude -F'[%p][%v][%V]' --disable-columns search '~U' "
+                state = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                lines = state.stdout.read().split('\n')
+                for line in lines:
+                    match = re.search(r'[(.+)][(.+)][(.+)]',line)
+                    if match:
+                        update[i] = [match.group(1),match.group(2),match.group(3)]
+                        i += 1
+
+        return update
+
+

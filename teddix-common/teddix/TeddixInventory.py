@@ -200,7 +200,8 @@ class TeddixBaseline:
         pcidevs = self.osbase.getpci()
         #usbdevs = self.osbase.getusb()
         svcs = self.osbase.getsvcs()
-        
+        updates = self.osbase.getupdates()
+       
         server = xml.Element('server')
 
         generated = xml.Element('generated')
@@ -370,6 +371,23 @@ class TeddixBaseline:
 
         filesystems = xml.Element('filesystems')
         operatingsystem.append(filesystems)
+
+        up2date = xml.Element('updates')
+        up2date.attrib['total'] = len(updates)
+        up2date.attrib['security'] = 'N/A'
+        up2date.attrib['bugfix'] = 'N/A'
+        operatingsystem.append(up2date)
+
+        # for every pkg do:
+        for i in range(len(updates)): 
+            package = xml.Element('package')
+            package.attrib['name']        = updates[i][0]
+            package.attrib['version']     = updates[i][1]
+            package.attrib['available']   = updates[i][2]
+            package.attrib['type']        = 'N/A'
+            package.attrib['info']        = 'N/A'
+            u2date.append(package)
+
 
         # for every partition do:
         # disks[i] = [fsdev,fsmount,fstype,fsopts,fstotal,fsused,fsfree,fspercent]
