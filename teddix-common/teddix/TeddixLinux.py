@@ -36,7 +36,7 @@ class TeddixLinux:
         t_lspci = "test -x /usr/bin/lspci || test -x /sbin/lspci"
         lines = None
         if subprocess.call(t_lspci,shell=True) == 0:
-            self.syslog.debug("Detecting blockdevices " )
+            self.syslog.debug("Detecting pcidevices " )
             cmd = "lspci -m"
             proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             lines = sorted(proc.stdout.read().split('\n'))
@@ -177,7 +177,7 @@ class TeddixLinux:
                     else:
                         #tmp = match.group(6).split(' ')
                         #if tmp[2]:
-                        val[5] = parser.str2uni(tmp[2])
+                        val[5] = parser.str2uni(match.group(6))
                         #else:
                         #    val[5] = 'N/A'
                     
@@ -883,6 +883,7 @@ class TeddixLinux:
         
         t_aptget = "test -x /usr/bin/apt-get"
         t_aptitude = "test -x /usr/bin/aptitude"
+        t_yum = "test -x /usr/bin/yum"
         update = { } 
         i = 0
         if subprocess.call(t_aptget,shell=True) == 0 and subprocess.call(t_aptitude,shell=True) == 0:
@@ -898,6 +899,16 @@ class TeddixLinux:
                     if match:
                         update[i] = [match.group(1),match.group(2),match.group(3)]
                         i += 1
+        elif subprocess.call(t_yum,shell=True) == 0:
+            self.syslog.debug("System %s have yum command" % self.dist[0])
+            cmd = "yum updateinfo list -q"
+            state = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            lines = state.stdout.read().split('\n')
+            for line in lines:
+                match = re.search(r'(.+) (.+) (.+)',line)
+                if match:
+                    update[i] = [match.group(1),match.group(2),match.group(3)]
+                    i += 1
 
         return update
 

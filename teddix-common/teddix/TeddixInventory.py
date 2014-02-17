@@ -192,16 +192,6 @@ class TeddixBaseline:
     def create_xml (self):
         dmi = self._getdmi()
         
-        pkgs = self.osbase.getpkgs()
-        partitions = self.osbase.getpartitions()
-        swaps = self.osbase.getswap() 
-        nics = self.osbase.getnics()
-        blockdevs = self.osbase.getblock()
-        pcidevs = self.osbase.getpci()
-        #usbdevs = self.osbase.getusb()
-        svcs = self.osbase.getsvcs()
-        updates = self.osbase.getupdates()
-       
         server = xml.Element('server')
 
         generated = xml.Element('generated')
@@ -296,6 +286,7 @@ class TeddixBaseline:
             i += 1
         
         # get blockdevices 
+        blockdevs = self.osbase.getblock()
         blockdevices = xml.Element('blockdevices')
         blockdevices.attrib['count'] = str(len(blockdevs))
         hardware.append(blockdevices)
@@ -317,8 +308,8 @@ class TeddixBaseline:
             block.attrib['minor']       = blockdevs[i][10] 
             blockdevices.append(block)
 
-
         # get PCIdevices 
+        pcidevs = self.osbase.getpci()
         pcidevices = xml.Element('pcidevices')
         pcidevices.attrib['count'] = str(len(pcidevs))
         hardware.append(pcidevices)
@@ -352,6 +343,7 @@ class TeddixBaseline:
         software = xml.Element('software')
         operatingsystem.append(software)
 
+        pkgs = self.osbase.getpkgs()
         # for every pkg do:
         # [name][ver][pkgsize][instsize][section][status][info][homepage][signed][files][arch]
         for i in range(len(pkgs)):
@@ -372,8 +364,10 @@ class TeddixBaseline:
         filesystems = xml.Element('filesystems')
         operatingsystem.append(filesystems)
 
+        updates = self.osbase.getupdates()
+       
         up2date = xml.Element('updates')
-        up2date.attrib['total'] = len(updates)
+        up2date.attrib['total'] = str(len(updates))
         up2date.attrib['security'] = 'N/A'
         up2date.attrib['bugfix'] = 'N/A'
         operatingsystem.append(up2date)
@@ -389,6 +383,8 @@ class TeddixBaseline:
             u2date.append(package)
 
 
+
+        partitions = self.osbase.getpartitions()
         # for every partition do:
         # disks[i] = [fsdev,fsmount,fstype,fsopts,fstotal,fsused,fsfree,fspercent]
         for i in range(len(partitions)):
@@ -406,6 +402,7 @@ class TeddixBaseline:
         swap = xml.Element('swap')
         operatingsystem.append(swap)
 
+        swaps = self.osbase.getswap() 
         # for every swap do:
         # swaps[i] = [dev,type,total,used,free]
         for i in range(len(swaps)): 
@@ -421,6 +418,7 @@ class TeddixBaseline:
         network = xml.Element('network')
         operatingsystem.append(network)
 
+        nics = self.osbase.getnics()
         # for every NIC do:
         #(a) =  nics.keys()
         #print a[0][0]
@@ -568,6 +566,7 @@ class TeddixBaseline:
         services = xml.Element('services')
         operatingsystem.append(services)
 
+        svcs = self.osbase.getsvcs()
         # for every service do:
         # [name,boot,status]
         for i in range(len(svcs)):
