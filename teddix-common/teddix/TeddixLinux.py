@@ -4,7 +4,6 @@
 import os
 import re
 import sys
-import usb
 import time
 import glob
 import psutil
@@ -31,29 +30,14 @@ class TeddixLinux:
 
         self.syslog.info("Detected: %s (%s %s) arch: %s" % (self.system,self.dist[0],self.dist[1],self.machine))
 
-    # Get USB devices 
-    def getusb(self):
-        parser = TeddixParser.TeddixStringParser() 
-
-        i = 0
-        usbdevs = {}
-        for bus in usb.busses():
-            for dev in bus.devices:
-                print "Bus %s" % (bus.dirname)
-                print "Dev %s" % (dev.filename)
-                print "ID %04x:%04x" % (dev.idVendor,dev.idProduct)
-
-
-        return ''
-
     # Get PCI devices 
     def getpci(self):
         parser = TeddixParser.TeddixStringParser() 
-        t_lspci = "test -x /usr/bin/lspci"
+        t_lspci = "test -x /usr/bin/lspci || test -x /sbin/lspci"
         lines = None
         if subprocess.call(t_lspci,shell=True) == 0:
             self.syslog.debug("Detecting blockdevices " )
-            cmd = "/usr/bin/lspci -m"
+            cmd = "lspci -m"
             proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             lines = sorted(proc.stdout.read().split('\n'))
         else:
@@ -78,7 +62,7 @@ class TeddixLinux:
 
     # Get Block devices 
     def getblock(self):
-        dev_pattern = ['sd.*','hd.*','sr*','mmcblk*']
+        dev_pattern = ['sd.*','hd.*','sr.*','mmcblk*']
         self.syslog.debug("Detecting blockdevices " )
         
         blockdev = {}
@@ -142,13 +126,13 @@ class TeddixLinux:
         if subprocess.call(t_rpm,shell=True) == 0:
             self.syslog.debug("Distro %s is RPM based " % self.dist[0])
             #cmd = "/bin/rpm -qa --queryformat '%{NAME}:%{VERSION}-%{RELEASE}\n'"
-            cmd = "/bin/rpm -qa --queryformat '\[%{NAME}\]\[%{VERSION}-%{RELEASE}\]\[%{ARCHIVESIZE}\]\[%{SIZE}\]\[%{GROUP}\]\[installed\]\[%{SUMMARY}\]\[%{URL}\]\[\]\[\]\[%{ARCH}\]\n'"
+            cmd = "rpm -qa --queryformat '\[%{NAME}\]\[%{VERSION}-%{RELEASE}\]\[%{ARCHIVESIZE}\]\[%{SIZE}\]\[%{GROUP}\]\[installed\]\[%{SUMMARY}\]\[%{URL}\]\[\]\[\]\[%{ARCH}\]\n'"
             proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             lines = sorted(proc.stdout.read().split('\n'))
 
         elif subprocess.call(t_dpkg,shell=True) == 0:
             self.syslog.debug("Distro %s is DEB based " % self.dist[0])
-            cmd = "/usr/bin/dpkg-query --show --showformat='[${Package}][${Version}][][${Installed-Size}][${Section}][${Status}][${binary:Summary}][${Homepage}][][][${Architecture}]\n'"
+            cmd = "dpkg-query --show --showformat='[${Package}][${Version}][][${Installed-Size}][${Section}][${Status}][${binary:Summary}][${Homepage}][][][${Architecture}]\n'"
             proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             lines = sorted(proc.stdout.read().split('\n'))
 
@@ -191,11 +175,11 @@ class TeddixLinux:
                     if not parser.isstr(match.group(6)):
                         val[5] = 'N/A'
                     else:
-                        tmp = match.group(6).split(' ')
-                        if tmp[2]:
-                            val[5] = parser.str2uni(tmp[2])
-                        else:
-                            val[5] = 'N/A'
+                        #tmp = match.group(6).split(' ')
+                        #if tmp[2]:
+                        val[5] = parser.str2uni(tmp[2])
+                        #else:
+                        #    val[5] = 'N/A'
                     
                     if not parser.isstr(match.group(7)):
                         val[6] = 'N/A'
@@ -367,7 +351,7 @@ class TeddixLinux:
             if subprocess.call(t_ethtool,shell=True) == 0:
                 
                 # driver
-                cmd = "/sbin/ethtool -i %s " % name 
+                cmd = "ethtool -i %s " % name 
                 proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 lines = proc.stdout.read().split('\n')
                 for line in lines:
@@ -388,7 +372,7 @@ class TeddixLinux:
                             firmware = parser.str2uni(match.group(1))
 
                 # MAC address 
-                cmd = "/sbin/ethtool -P %s " % name 
+                cmd = "ethtool -P %s " % name 
                 proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 lines = proc.stdout.read().split('\n')
                 for line in lines:
@@ -401,7 +385,7 @@ class TeddixLinux:
 
 
                 # statistics
-                cmd = "/sbin/ethtool -S %s " % name 
+                cmd = "ethtool -S %s " % name 
                 proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 lines = proc.stdout.read().split('\n')
                 for line in lines:
@@ -442,7 +426,7 @@ class TeddixLinux:
             if subprocess.call(t_ethtool,shell=True) == 0:
  
                 # driverinfo
-                cmd = "/sbin/modinfo %s " % driver
+                cmd = "modinfo %s " % driver
                 proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 lines = proc.stdout.read().split('\n')
                 for line in lines:
@@ -476,7 +460,7 @@ class TeddixLinux:
         ips = {}
         i = 0
         if subprocess.call(t_ifconfig,shell=True) == 0:
-            cmd = "/bin/ip addr list dev %s " % nic
+            cmd = "ip addr list dev %s " % nic
             proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             lines = proc.stdout.read().split('\n')
             
@@ -502,7 +486,7 @@ class TeddixLinux:
         # use only if 'ip' is missing
         # TODO: handle multiple addresses 'wlan:6' 
         elif subprocess.call(t_ifconfig,shell=True) == 0:
-            cmd = "/sbin/ifconfig %s " % nic
+            cmd = "ifconfig %s " % nic
             proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             lines = proc.stdout.read().split('\n')
             
@@ -539,7 +523,7 @@ class TeddixLinux:
         ips6 = {}
         i = 0
         if subprocess.call(t_ifconfig,shell=True) == 0:
-            cmd = "/bin/ip addr list dev %s " % nic
+            cmd = "ip addr list dev %s " % nic
             proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             lines = proc.stdout.read().split('\n')
             
@@ -562,7 +546,7 @@ class TeddixLinux:
         # use only if 'ip' is missing
         # TODO: handle multiple addresses 'wlan:6' 
         elif subprocess.call(t_ifconfig,shell=True) == 0:
-            cmd = "/sbin/ifconfig %s " % nic
+            cmd = "ifconfig %s " % nic
             proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             lines = proc.stdout.read().split('\n')
             
@@ -696,7 +680,7 @@ class TeddixLinux:
                     if login == data[0]:
                         if data[1] == '*':
                             locked = 'True'
-                        elif data[1] == '!':
+                        elif data[1] == '!' or data[1] == '!!':
                             locked = 'True'
                         else:
                             match = re.search(r'(\$\d)\$.+',data[1])
@@ -718,7 +702,7 @@ class TeddixLinux:
                                 locked = 'False'
 
                 if subprocess.call(t_groups,shell=True) == 0:
-                    cmd = "/usr/bin/groups %s " % login
+                    cmd = "groups %s " % login
                     proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                     lines3 = proc.stdout.read().split('\n')
                     for line3 in lines3:
@@ -825,7 +809,13 @@ class TeddixLinux:
                 if service:
                     name = service[0][0]
                     boot = service[0][1]
-                    status = 'N/A'
+                    cmd = 'systemctl status %s ' % name
+                    ret = subprocess.call("%s 2>/dev/null >/dev/null" % cmd,shell=True)
+                    if ret == 0: 
+                        status = 'running'
+                    else:
+                        status = 'stopped'
+
                     svcs[i] = [name,boot,status]
                     i += 1
 
@@ -836,17 +826,21 @@ class TeddixLinux:
             state = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             lines = state.stdout.read().split('\n')
             for line in lines:
-                service = re.findall(r'(.+)[ ]+(.+)',line)
+                service = re.findall(r'^(\w+).+3:(\w+)',line)
                 if service:
                     name = service[0][0]
-                    cmd = '/usr/sbin/service'
-                    ret = subprocess.call("%s %s status 2>/dev/null >/dev/null" % (cmd,name),shell=True)
+                    cmd = 'service %s status ' % name
+                    ret = subprocess.call("%s 2>/dev/null >/dev/null" % cmd,shell=True)
                     if ret == 0: 
                         status = 'running'
                     else:
                         status = 'stopped'
 
-                    boot = service[0][1]
+                    if service[0][1] == 'on':
+                        boot = 'enabled'
+                    else:
+                        boot = 'disabled'
+
                     svcs[i] = [name,boot,status]
                     i += 1
 
@@ -860,8 +854,8 @@ class TeddixLinux:
                 service = re.findall(r'([SK]):\d+:\w+:(.+)',line)
                 if service:
                     name = service[0][1]
-                    cmd = '/usr/sbin/service'
-                    ret = subprocess.call("%s %s status 2>/dev/null >/dev/null" % (cmd,name), shell=True)
+                    cmd = 'service %s status ' % name
+                    ret = subprocess.call("%s 2>/dev/null >/dev/null" % cmd, shell=True)
 
                     if ret == 0: 
                         status = 'running'
