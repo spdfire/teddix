@@ -208,33 +208,49 @@ class TeddixBaseline:
         server.append(hardware)
 
         bios = xml.Element('bios')
-        bios.attrib['revision']     = dmi['bios',0,'BIOS Revision']
-        bios.attrib['vendor']       = dmi['bios',0,'Vendor']
-        bios.attrib['version']      = dmi['bios',0,'Version']
-        bios.attrib['releasedate']  = dmi['bios',0,'Relase Date']
+        count = self.__getdmi_count(dmi,'bios','Vendor')
+        i = 0
+        while i < count:
+            bios.attrib['revision']     = dmi['bios',0,'BIOS Revision']
+            bios.attrib['vendor']       = dmi['bios',0,'Vendor']
+            bios.attrib['version']      = dmi['bios',0,'Version']
+            bios.attrib['releasedate']  = dmi['bios',0,'Relase Date']
+            i += 1
         hardware.append(bios)
 
         sysboard = xml.Element('baseboard')
-        sysboard.attrib['manufacturer']     = dmi['baseboard',0,'Manufacturer']
-        sysboard.attrib['productname']      = dmi['baseboard',0,'Product Name']
-        sysboard.attrib['serialnumber']     = dmi['baseboard',0,'Serial Number']
-        sysboard.attrib['version']          = dmi['baseboard',0,'Version']
+        count = self.__getdmi_count(dmi,'baseboard','Version')
+        i = 0
+        while i < count:
+            sysboard.attrib['manufacturer']     = dmi['baseboard',0,'Manufacturer']
+            sysboard.attrib['productname']      = dmi['baseboard',0,'Product Name']
+            sysboard.attrib['serialnumber']     = dmi['baseboard',0,'Serial Number']
+            sysboard.attrib['version']          = dmi['baseboard',0,'Version']
+            i += 1
         hardware.append(sysboard)
 
         system = xml.Element('system')
-        system.attrib['manufacturer'] = dmi['system',0,'Manufacturer']
-        system.attrib['productname']  = dmi['system',0,'Product Name']
-        system.attrib['family']       = dmi['system',0,'Family']
-        system.attrib['serialnumber'] = dmi['system',0,'Serial Number']
-        system.attrib['version']      = dmi['system',0,'Version']
+        count = self.__getdmi_count(dmi,'system','Version')
+        i = 0
+        while i < count:
+            system.attrib['manufacturer'] = dmi['system',0,'Manufacturer']
+            system.attrib['productname']  = dmi['system',0,'Product Name']
+            system.attrib['family']       = dmi['system',0,'Family']
+            system.attrib['serialnumber'] = dmi['system',0,'Serial Number']
+            system.attrib['version']      = dmi['system',0,'Version']
+            i += 1
         hardware.append(system)
         
         chassis = xml.Element('chassis')
-        chassis.attrib['manufacturer'] = dmi['chassis',0,'Manufacturer']
-        chassis.attrib['serialnumber'] = dmi['chassis',0,'Serial Number']
-        chassis.attrib['thermalstate'] = dmi['chassis',0,'Thermal State']
-        chassis.attrib['type']         = dmi['chassis',0,'Type']
-        chassis.attrib['version']      = dmi['chassis',0,'Version']
+        count = self.__getdmi_count(dmi,'chassis','Version')
+        i = 0
+        while i < count:
+            chassis.attrib['manufacturer'] = dmi['chassis',0,'Manufacturer']
+            chassis.attrib['serialnumber'] = dmi['chassis',0,'Serial Number']
+            chassis.attrib['thermalstate'] = dmi['chassis',0,'Thermal State']
+            chassis.attrib['type']         = dmi['chassis',0,'Type']
+            chassis.attrib['version']      = dmi['chassis',0,'Version']
+            i += 1
         hardware.append(chassis)
 
         processors = xml.Element('processors')
