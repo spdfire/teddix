@@ -610,7 +610,20 @@ class TeddixLinux:
                     
                     ips6[i] = [ipv6,mask,bcast]
                     i += 1
-
+                match = re.search(r'inet6 addr: ([a-fA-F\d\:]+)/(\d+)',line)
+                if match:
+                    if not parser.isstr(match.group(1)):
+                        ipv6 = 'N/A'
+                    else:
+                        ipv6 = parser.str2uni(match.group(1))
+                    if not parser.isstr(match.group(2)):
+                        mask = 'N/A'
+                    else:
+                        mask = parser.str2uni(match.group(2))
+                    bcast = 'N/A'
+                    
+                    ips6[i] = [ipv6,mask,bcast]
+                    i += 1
 
         return ips6
 
