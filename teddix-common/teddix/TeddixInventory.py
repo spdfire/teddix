@@ -380,7 +380,7 @@ class TeddixBaseline:
             package.attrib['available']   = updates[i][2]
             package.attrib['type']        = 'N/A'
             package.attrib['info']        = 'N/A'
-            u2date.append(package)
+            up2date.append(package)
 
 
 
