@@ -62,7 +62,7 @@ class TeddixLinux:
 
     # Get Block devices 
     def getblock(self):
-        dev_pattern = ['sd.*','hd.*','sr.*','mmcblk*']
+        dev_pattern = ['sd.*','hd.*','vd.*','sr.*','mmcblk*']
         self.syslog.debug("Detecting blockdevices " )
         
         blockdev = {}
@@ -70,43 +70,59 @@ class TeddixLinux:
         for device in glob.glob('/sys/block/*'):
             for pattern in dev_pattern:
                 if re.compile(pattern).match(os.path.basename(device)):
-                    nr_sectors = open(device+'/size').read().rstrip('\n')
-                    sect_size = open(device+'/queue/hw_sector_size').read().rstrip('\n')
-                    model = open(device+'/device/model').read().rstrip('\n')
-                    tmp = open(device+'/queue/rotational').read().rstrip('\n')
-                    if tmp == '1':
-                        rotational = 'Yes'
-                    else:
-                        rotational = 'No'
-                    tmp = open(device+'/ro').read().rstrip('\n')
-                    if tmp == '1':
-                        readonly = 'Yes'
-                    else:
-                        readonly = 'No'
-                    tmp = open(device+'/removable').read().rstrip('\n')
-                    if tmp == '1':
-                        removable = 'Yes'
-                    else:
-                        removable = 'No'
-                    lines = open(device+'/uevent').read().split('\n')
+                    name  = 'N/A'
+                    devtype= 'N/A'
+                    vendor= 'N/A'
+                    model= 'N/A'
+                    nr_sectors = 'N/A'
+                    sect_size = 'N/A'
+                    rotational = 'N/A'
+                    readonly = 'N/A'
+                    removable = 'N/A'
                     major = 'N/A'
                     minor = 'N/A'
-                    name  = 'N/A'
-                    devtype = 'N/A'
-                    for line in lines:
-                        match = re.search(r'MAJOR\=(\d+)',line)
-                        if match:
-                            major = match.group(1)
-                        match = re.search(r'MINOR\=(\d+)',line)
-                        if match:
-                            minor = match.group(1)
-                        match = re.search(r'DEVNAME\=(.+)',line)
-                        if match:
-                            name = match.group(1)
-                        match = re.search(r'DEVTYPE\=(.+)',line)
-                        if match:
-                            devtype = match.group(1)
-                    vendor = open(device+'/device/vendor').read().rstrip('\n')
+
+                    if os.access(device+'/size', os.R_OK):
+                        nr_sectors = open(device+'/size').read().rstrip('\n')
+                    if os.access(device+'/queue/hw_sector_size', os.R_OK):
+                        sect_size = open(device+'/queue/hw_sector_size').read().rstrip('\n')
+                    if os.access(device+'/device/model', os.R_OK):
+                        model = open(device+'/device/model').read().rstrip('\n')
+                    if os.access(device+'/queue/rotational', os.R_OK):
+                        tmp = open(device+'/queue/rotational').read().rstrip('\n')
+                        if tmp == '1':
+                            rotational = 'Yes'
+                        else:
+                            rotational = 'No'
+                    if os.access(device+'/ro', os.R_OK):
+                        tmp = open(device+'/ro').read().rstrip('\n')
+                        if tmp == '1':
+                            readonly = 'Yes'
+                        else:
+                            readonly = 'No'
+                    if os.access(device+'/removable', os.R_OK):
+                        tmp = open(device+'/removable').read().rstrip('\n')
+                        if tmp == '1':
+                            removable = 'Yes'
+                        else:
+                            removable = 'No'
+                    if os.access(device+'/uevent', os.R_OK):
+                        lines = open(device+'/uevent').read().split('\n')
+                        for line in lines:
+                            match = re.search(r'MAJOR\=(\d+)',line)
+                            if match:
+                                major = match.group(1)
+                            match = re.search(r'MINOR\=(\d+)',line)
+                            if match:
+                                minor = match.group(1)
+                            match = re.search(r'DEVNAME\=(.+)',line)
+                            if match:
+                                name = match.group(1)
+                            match = re.search(r'DEVTYPE\=(.+)',line)
+                            if match:
+                                devtype = match.group(1)
+                    if os.access(device+'/device/vendor', os.R_OK):
+                        vendor = open(device+'/device/vendor').read().rstrip('\n')
 
                     blockdev[i] = [name,devtype,vendor,model,nr_sectors,sect_size,rotational,readonly,removable,major,minor]
                     i += 1
@@ -459,33 +475,32 @@ class TeddixLinux:
         lines = None
         ips = {}
         i = 0
-        if subprocess.call(t_ifconfig,shell=True) == 0:
-            cmd = "ip addr list dev %s " % nic
-            proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            lines = proc.stdout.read().split('\n')
+        #if subprocess.call(t_ip,shell=True) == 0:
+        #    cmd = "ip -4 addr list dev %s " % nic
+        #    proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        #    lines = proc.stdout.read().split('\n')
             
-            for line in lines:
-                match = re.search(r'inet[ \t]+(\d+\.\d+\.\d+\.\d+)/(\d+)\W+(brd\W+(\d+\.\d+\.\d+\.\d+)|)',line)
-                if match:
-                    if not parser.isstr(match.group(1)):
-                        ipv4 = 'N/A'
-                    else:
-                        ipv4 = parser.str2uni(match.group(1))
-                    if not parser.isstr(match.group(2)):
-                        mask = 'N/A'
-                    else:
-                        mask = parser.str2uni(match.group(2))
-                    if not parser.isstr(match.group(4)):
-                        bcast = 'N/A'
-                    else:
-                        bcast = parser.str2uni(match.group(4)) 
+        #    for line in lines:
+        #        match = re.search(r'inet[ \t]+(\d+\.\d+\.\d+\.\d+)/(\d+)\W+(brd\W+(\d+\.\d+\.\d+\.\d+)|)',line)
+        #        if match:
+        #            if not parser.isstr(match.group(1)):
+        #                ipv4 = 'N/A'
+        #            else:
+        #                ipv4 = parser.str2uni(match.group(1))
+        #            if not parser.isstr(match.group(2)):
+        #                mask = 'N/A'
+        #            else:
+        #                mask = parser.str2uni(match.group(2))
+        #            if not parser.isstr(match.group(4)):
+        #                bcast = 'N/A'
+        #            else:
+        #                bcast = parser.str2uni(match.group(4)) 
                     
-                    ips[i] = [ipv4,mask,bcast]
-                    i += 1
+        #            ips[i] = [ipv4,mask,bcast]
+        #            i += 1
 
-        # use only if 'ip' is missing
         # TODO: handle multiple addresses 'wlan:6' 
-        elif subprocess.call(t_ifconfig,shell=True) == 0:
+        if subprocess.call(t_ifconfig,shell=True) == 0:
             cmd = "ifconfig %s " % nic
             proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             lines = proc.stdout.read().split('\n')
@@ -508,6 +523,23 @@ class TeddixLinux:
                     
                     ips[i] = [ipv4,mask,bcast]
                     i += 1
+                match = re.search(r'inet (\d+\.\d+\.\d+\.\d+)\W+netmask (\d+\.\d+\.\d+\.\d+)\W+broadcast (\d+\.\d+\.\d+\.\d+)',line)
+                if match:
+                    if not parser.isstr(match.group(1)):
+                        ipv4 = 'N/A'
+                    else:
+                        ipv4 = parser.str2uni(match.group(1))
+                    if not parser.isstr(match.group(2)):
+                        mask = 'N/A'
+                    else:
+                        mask = parser.str2uni(match.group(2))
+                    if not parser.isstr(match.group(3)):
+                        bcast = 'N/A'
+                    else:
+                        bcast = parser.str2uni(match.group(3)) 
+                    
+                    ips[i] = [ipv4,mask,bcast]
+                    i += 1
 
         return ips
 
@@ -522,30 +554,29 @@ class TeddixLinux:
         lines = None
         ips6 = {}
         i = 0
-        if subprocess.call(t_ifconfig,shell=True) == 0:
-            cmd = "ip addr list dev %s " % nic
-            proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            lines = proc.stdout.read().split('\n')
+        #if subprocess.call(t_ip,shell=True) == 0:
+        #    cmd = "ip addr list dev %s " % nic
+        #    proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        #    lines = proc.stdout.read().split('\n')
             
-            for line in lines:
-                match = re.search(r'inet6[ \t]+([a-fA-F\d\:]+)/(\d+)\W+',line)
-                if match:
-                    if not parser.isstr(match.group(1)):
-                        ipv6 = 'N/A'
-                    else:
-                        ipv6 = parser.str2uni(match.group(1))
-                    if not parser.isstr(match.group(2)):
-                        mask = 'N/A'
-                    else:
-                        mask = parser.str2uni(match.group(2))
+        #    for line in lines:
+        #        match = re.search(r'inet6[ \t]+([a-fA-F\d\:]+)/(\d+)\W+',line)
+        #        if match:
+        #            if not parser.isstr(match.group(1)):
+        #                ipv6 = 'N/A'
+        #            else:
+        #                ipv6 = parser.str2uni(match.group(1))
+        #            if not parser.isstr(match.group(2)):
+        #                mask = 'N/A'
+        #            else:
+        #                mask = parser.str2uni(match.group(2))
                     
-                    bcast = 'N/A'
-                    ips6[i] = [ipv6,mask,bcast]
-                    i += 1
+        #            bcast = 'N/A'
+        #            ips6[i] = [ipv6,mask,bcast]
+        #            i += 1
 
-        # use only if 'ip' is missing
         # TODO: handle multiple addresses 'wlan:6' 
-        elif subprocess.call(t_ifconfig,shell=True) == 0:
+        if subprocess.call(t_ifconfig,shell=True) == 0:
             cmd = "ifconfig %s " % nic
             proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             lines = proc.stdout.read().split('\n')
@@ -563,6 +594,34 @@ class TeddixLinux:
                         mask = parser.str2uni(match.group(3))
                     
                     bcast = 'N/A'
+                    ips6[i] = [ipv6,mask,bcast]
+                    i += 1
+                match = re.search(r'inet6 ([a-fA-F\d\:]+)\W+prefixlen (\d+)',line)
+                if match:
+                    if not parser.isstr(match.group(1)):
+                        ipv6 = 'N/A'
+                    else:
+                        ipv6 = parser.str2uni(match.group(1))
+                    if not parser.isstr(match.group(2)):
+                        mask = 'N/A'
+                    else:
+                        mask = parser.str2uni(match.group(2))
+                    bcast = 'N/A'
+                    
+                    ips6[i] = [ipv6,mask,bcast]
+                    i += 1
+                match = re.search(r'inet6 addr: ([a-fA-F\d\:]+)/(\d+)',line)
+                if match:
+                    if not parser.isstr(match.group(1)):
+                        ipv6 = 'N/A'
+                    else:
+                        ipv6 = parser.str2uni(match.group(1))
+                    if not parser.isstr(match.group(2)):
+                        mask = 'N/A'
+                    else:
+                        mask = parser.str2uni(match.group(2))
+                    bcast = 'N/A'
+                    
                     ips6[i] = [ipv6,mask,bcast]
                     i += 1
 
@@ -594,7 +653,10 @@ class TeddixLinux:
     # Get routes 
     def getroutes(self):
         self.syslog.debug("Reading routing table for ipv4 ")
+        parser = TeddixParser.TeddixStringParser() 
 
+        t_ip = "test -x /bin/ip"
+        t_route = "test -x /sbin/route"
         cmd = "route -n -A inet"
         proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         lines = proc.stdout.read().split('\n')
