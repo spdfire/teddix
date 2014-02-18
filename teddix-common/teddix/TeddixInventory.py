@@ -383,21 +383,28 @@ class TeddixBaseline:
         updates = self.osbase.getupdates()
        
         up2date = xml.Element('updates')
-        up2date.attrib['total'] = str(len(updates))
-        up2date.attrib['security'] = 'N/A'
-        up2date.attrib['bugfix'] = 'N/A'
         operatingsystem.append(up2date)
 
-        # for every pkg do:
+        # for every update do:
+        secupdate = 0 
+        bugfixupdate = 0 
+        totalupdate = 0 
         for i in range(len(updates)): 
             package = xml.Element('package')
-            package.attrib['name']        = updates[i][0]
-            package.attrib['version']     = updates[i][1]
+            package.attrib['type']        = updates[i][0]
+            package.attrib['name']        = updates[i][1]
             package.attrib['available']   = updates[i][2]
-            package.attrib['type']        = 'N/A'
             package.attrib['info']        = 'N/A'
+            if updates[i][0] == "security":
+                secupdate += 1 
+            if updates[i][0] == "bugfix":
+                bugfixupdate += 1 
+            totalupdate += 1 
             up2date.append(package)
-
+        
+        up2date.attrib['total'] = str(totalupdate)
+        up2date.attrib['security'] = str(secupdate)
+        up2date.attrib['bugfix'] = str(bugfixupdate)
 
 
         partitions = self.osbase.getpartitions()

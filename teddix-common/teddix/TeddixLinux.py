@@ -948,18 +948,22 @@ class TeddixLinux:
         t_yum = "test -x /usr/bin/yum"
         update = { } 
         i = 0
+        # type,package,nversion
         if subprocess.call(t_aptget,shell=True) == 0 and subprocess.call(t_aptitude,shell=True) == 0:
             self.syslog.debug("System %s has apt-get and aptitude command" % self.dist[0])
             cmd = "apt-get update -qq"
             state = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             if subprocess.call(cmd,shell=True) == 0:
-                cmd = "aptitude -F'[%p][%v][%V]' --disable-columns search '~U' "
+                cmd = "aptitude -F'[%p][%V]' --disable-columns search '~U' "
                 state = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 lines = state.stdout.read().split('\n')
                 for line in lines:
                     match = re.search(r'[(.+)][(.+)][(.+)]',line)
                     if match:
-                        update[i] = [match.group(1),match.group(2),match.group(3)]
+                        utype = 'N/A'
+                        pkg   = match.group(1)
+                        nver  = match.group(2)
+                        update[i] = [utype,pkg,nver]
                         i += 1
         elif subprocess.call(t_yum,shell=True) == 0:
             self.syslog.debug("System %s have yum command" % self.dist[0])
@@ -967,9 +971,12 @@ class TeddixLinux:
             state = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             lines = state.stdout.read().split('\n')
             for line in lines:
-                match = re.search(r'(.+) (.+) (.+)',line)
+                match = re.search(r'[\-\w]+\W+(\w+)\W+(.+)',line)
                 if match:
-                    update[i] = [match.group(1),match.group(2),match.group(3)]
+                    utype = match.group(1)
+                    pkg   = match.group(2)
+                    nver  = match.group(2)
+                    update[i] = [utype,pkg,nver]
                     i += 1
 
         return update
