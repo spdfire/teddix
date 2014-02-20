@@ -1,0 +1,17 @@
+INSTALL 
+-------------------------------------------------
+Installation is simple: 
+
+$ python setup.py build 
+$ python setup.py install 
+
+
+PACKAGES 
+-------------------------------------------------
+Debian:
+
+add "deb http://repo.teddix.info/teddix wheezy main" to sources.list
+
+RHEL/Fedora:
+
+
