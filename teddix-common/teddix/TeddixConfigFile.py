@@ -22,7 +22,7 @@ class TeddixConfigFile ():
     agent_workers     = 10
     agent_crtfile     = "/etc/teddix/agent.crt"
     agent_keyfile     = "/etc/teddix/agent.key"
-    agent_pidfile     = "/var/run/TeddixAgent.pid"
+    agent_pidfile     = "/var/run/teddix-agent.pid"
     agent_cfg2html    = "cfg2html"
     agent_ora2html    = "ora2html"
 
@@ -30,7 +30,7 @@ class TeddixConfigFile ():
     server_group      = "root"
     server_workers    = 10
     server_refresh    = "1d"
-    server_pidfile    = "/var/run/TeddixServer.pid"
+    server_pidfile    = "/var/run/teddix-server.pid"
     server_serverlist = "/etc/teddix/serverlist"
     server_dbtype     = "mysql"
     server_dbhost     = "localhost"

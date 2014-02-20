@@ -2,7 +2,7 @@
 set -e
 
 ### BEGIN INIT INFO
-# Provides:		TeddixAgent
+# Provides:		teddix-agent
 # Required-Start:	$local_fs $remote_fs $network $time
 # Required-Stop:	$local_fs $remote_fs $network $time
 # Should-Start:	$syslog

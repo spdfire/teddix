@@ -951,7 +951,8 @@ class TeddixLinux:
         # type,package,nversion
         if subprocess.call(t_aptget,shell=True) == 0 and subprocess.call(t_aptitude,shell=True) == 0:
             self.syslog.debug("System %s has apt-get and aptitude command" % self.dist[0])
-            cmd = "apt-get update -qq"
+            #cmd = "apt-get update -qq"
+            cmd = "aptitude update"
             state = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             if subprocess.call(cmd,shell=True) == 0:
                 cmd = "aptitude -F'[%p][%V]' --disable-columns search '~U' "
@@ -963,6 +964,7 @@ class TeddixLinux:
                         utype = 'N/A'
                         pkg   = match.group(1)
                         nver  = match.group(2)
+                        print pkg
                         update[i] = [utype,pkg,nver]
                         i += 1
         elif subprocess.call(t_yum,shell=True) == 0:
