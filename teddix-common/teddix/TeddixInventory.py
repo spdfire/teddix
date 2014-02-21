@@ -20,9 +20,6 @@ import TeddixLogger
 import TeddixConfigFile
 import TeddixParser
 
-# OS dependend stuff
-import TeddixLinux
-
 class TeddixBaseline:
     def __init__(self,syslog,cfg):
         self.syslog = syslog
@@ -33,10 +30,13 @@ class TeddixBaseline:
         self.syslog.info("Generating Baseline")
 
         if system == 'Linux':
+            import TeddixLinux
+
             self.osbase = TeddixLinux.TeddixLinux(syslog)
 
         elif system == 'SunOS':
-            print "TODO OS"
+            import TeddixSunOS
+            
             self.osbase = TeddixSunOS.TeddixSunOS(syslog)
 
         elif system == 'HP-UX':
@@ -496,46 +496,47 @@ class TeddixBaseline:
         ip4routes = xml.Element('ipv4')
         routing.append(ip4routes)
 
+        routes4 = self.osbase.getroutes()
         # for every iproute do:
-        for rt in self.osbase.getroutes(): 
+        for i in range(len(routes4)):
             route = xml.Element('route')
-            data = rt.split('/')
-            route.attrib['destination'] = data[0]
-            route.attrib['mask'] = data[2]
-            route.attrib['gateway'] = data[1]
-            route.attrib['flags'] = data[3]
-            route.attrib['metric'] = data[4]
-            route.attrib['interface'] = data[5]
+            route.attrib['destination'] = routes4[i][0]
+            route.attrib['gateway']     = routes4[i][1]
+            route.attrib['mask']        = routes4[i][2]
+            route.attrib['flags']       = routes4[i][3]
+            route.attrib['metric']      = routes4[i][4]
+            route.attrib['interface']   = routes4[i][5]
             ip4routes.append(route)
 
         ip6routes = xml.Element('ipv6')
         routing.append(ip6routes)
 
+        routes6 = self.osbase.getroutes6()
         # for every iproute do:
-        for rt in self.osbase.getroutes6(): 
+        for i in range(len(routes6)):
             route6 = xml.Element('route')
-            data = rt.split('/')
-            route6.attrib['destination'] = data[0]
-            route6.attrib['mask'] = data[1]
-            route6.attrib['gateway'] = data[2]
-            route6.attrib['flags'] = data[3]
-            route6.attrib['metric'] = data[4]
-            route6.attrib['interface'] = data[5]
+            route6.attrib['destination'] = routes6[i][0]
+            route6.attrib['mask']        = routes6[i][1]
+            route6.attrib['gateway']     = routes6[i][2]
+            route6.attrib['flags']       = routes6[i][3]
+            route6.attrib['metric']      = routes6[i][4]
+            route6.attrib['interface']   = routes6[i][5]
             ip6routes.append(route6)
 
 
         groups = xml.Element('groups')
         operatingsystem.append(groups)
 
+        pwgroups = self.osbase.getgroups()
         # for every group do:
-        for grp in self.osbase.getgroups(): 
+        for i in range(len(pwgroups)):
             group = xml.Element('group')
-            data = grp.split(':')
-            group.attrib['name'] = data[0]
+            group.attrib['name']        = pwgroups[i][0]
+            group.attrib['gid']         = pwgroups[i][1]
             groups.append(group)
 
             # for every group member do:
-            for usr in data[1].split(','): 
+            for usr in pwgroups[i][2].split(','): 
                 if usr:
                     member = xml.Element('member')
                     member.attrib['name'] = usr

@@ -33,30 +33,21 @@ class TeddixLinux:
     # Get PCI devices 
     def getpci(self):
         parser = TeddixParser.TeddixStringParser() 
-        t_lspci = "test -x /usr/bin/lspci || test -x /sbin/lspci"
-        lines = None
-        if subprocess.call(t_lspci,shell=True) == 0:
-            self.syslog.debug("Detecting pcidevices " )
-            cmd = "lspci -m"
-            proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            lines = sorted(proc.stdout.read().split('\n'))
-        else:
-            self.syslog.warn("Unable to execute lspci ")
-   
-        # parse PCI devices
+        
+        lines = parser.readstdout('lspci -m')
+
         pcidev = { }
-        if lines: 
-            i = 0
-            for line in lines:
-                match = re.search(r'^(.+) \"(.+)\" \"(.+)\" \"(.+)\".+\-r(\w+) .+',line)
-                if match:
-                    path = parser.str2uni(match.group(1))
-                    devtype = parser.str2uni(match.group(2))
-                    vendor = parser.str2uni(match.group(3))
-                    model = parser.str2uni(match.group(4))
-                    revision = parser.str2uni(match.group(5))
-                    pcidev[i] = [path,devtype,vendor,model,revision]
-                    i += 1
+        i = 0 
+        for i in range(len(lines)):
+            path        = parser.strsearch('^(.+) ".+" ".+" ".+".+\-r\w+ .+',lines[i])
+            devtype     = parser.strsearch('^.+ "(.+)" ".+" ".+".+\-r\w+ .+',lines[i])
+            vendor      = parser.strsearch('^.+ ".+" "(.+)" ".+".+\-r\w+ .+',lines[i])
+            model       = parser.strsearch('^.+ ".+" ".+" "(.+)".+\-r\w+ .+',lines[i])
+            revision    = parser.strsearch('^.+ ".+" ".+" ".+".+\-r(\w+) .+',lines[i])
+
+            pcidev[i]   = [path,devtype,vendor,model,revision]
+            
+            i += 1
 
         return pcidev 
 
@@ -64,65 +55,26 @@ class TeddixLinux:
     def getblock(self):
         dev_pattern = ['sd.*','hd.*','vd.*','sr.*','mmcblk*']
         self.syslog.debug("Detecting blockdevices " )
+        parser = TeddixParser.TeddixStringParser() 
         
         blockdev = {}
         i = 0
         for device in glob.glob('/sys/block/*'):
             for pattern in dev_pattern:
                 if re.compile(pattern).match(os.path.basename(device)):
-                    name  = 'N/A'
-                    devtype= 'N/A'
-                    vendor= 'N/A'
-                    model= 'N/A'
-                    nr_sectors = 'N/A'
-                    sect_size = 'N/A'
-                    rotational = 'N/A'
-                    readonly = 'N/A'
-                    removable = 'N/A'
-                    major = 'N/A'
-                    minor = 'N/A'
+                    nr_sectors  = parser.readline(device + '/size')
+                    sect_size   = parser.readline(device+'/queue/hw_sector_size')
+                    model       = parser.readline(device+'/device/model')
+                    rotational  = parser.readlineyesno(device+'/queue/rotational')
+                    readonly    = parser.readlineyesno(device+'/ro')
+                    removable   = parser.readlineyesno(device+'/removable')
+                    vendor      = parser.readline(device+'/device/vendor')
 
-                    if os.access(device+'/size', os.R_OK):
-                        nr_sectors = open(device+'/size').read().rstrip('\n')
-                    if os.access(device+'/queue/hw_sector_size', os.R_OK):
-                        sect_size = open(device+'/queue/hw_sector_size').read().rstrip('\n')
-                    if os.access(device+'/device/model', os.R_OK):
-                        model = open(device+'/device/model').read().rstrip('\n')
-                    if os.access(device+'/queue/rotational', os.R_OK):
-                        tmp = open(device+'/queue/rotational').read().rstrip('\n')
-                        if tmp == '1':
-                            rotational = 'Yes'
-                        else:
-                            rotational = 'No'
-                    if os.access(device+'/ro', os.R_OK):
-                        tmp = open(device+'/ro').read().rstrip('\n')
-                        if tmp == '1':
-                            readonly = 'Yes'
-                        else:
-                            readonly = 'No'
-                    if os.access(device+'/removable', os.R_OK):
-                        tmp = open(device+'/removable').read().rstrip('\n')
-                        if tmp == '1':
-                            removable = 'Yes'
-                        else:
-                            removable = 'No'
-                    if os.access(device+'/uevent', os.R_OK):
-                        lines = open(device+'/uevent').read().split('\n')
-                        for line in lines:
-                            match = re.search(r'MAJOR\=(\d+)',line)
-                            if match:
-                                major = match.group(1)
-                            match = re.search(r'MINOR\=(\d+)',line)
-                            if match:
-                                minor = match.group(1)
-                            match = re.search(r'DEVNAME\=(.+)',line)
-                            if match:
-                                name = match.group(1)
-                            match = re.search(r'DEVTYPE\=(.+)',line)
-                            if match:
-                                devtype = match.group(1)
-                    if os.access(device+'/device/vendor', os.R_OK):
-                        vendor = open(device+'/device/vendor').read().rstrip('\n')
+                    lines       = parser.readlines(device+'/uevent')
+                    major       = parser.arraysearch('MAJOR\=(\d+)',lines)
+                    minor       = parser.arraysearch('MINOR\=(\d+)',lines[i])
+                    name        = parser.arraysearch('DEVNAME\=(.+)',lines[i])
+                    devtype     = parser.arraysearch('DEVTYPE\=(.+)',lines[i])
 
                     blockdev[i] = [name,devtype,vendor,model,nr_sectors,sect_size,rotational,readonly,removable,major,minor]
                     i += 1
@@ -133,97 +85,37 @@ class TeddixLinux:
     # Get installed packages
     def getpkgs(self):
         parser = TeddixParser.TeddixStringParser() 
-
-        # generate pkglist
+        
         # [name][ver][pkgsize][instsize][section][status][info][homepage][signed][files][arch]
-        t_rpm = "test -x /bin/rpm"
-        t_dpkg = "test -x /usr/bin/dpkg-query"
-        lines = None
-        if subprocess.call(t_rpm,shell=True) == 0:
+        if parser.checkexec('rpm'):
             self.syslog.debug("Distro %s is RPM based " % self.dist[0])
-            #cmd = "/bin/rpm -qa --queryformat '%{NAME}:%{VERSION}-%{RELEASE}\n'"
             cmd = "rpm -qa --queryformat '\[%{NAME}\]\[%{VERSION}-%{RELEASE}\]\[%{ARCHIVESIZE}\]\[%{SIZE}\]\[%{GROUP}\]\[installed\]\[%{SUMMARY}\]\[%{URL}\]\[\]\[\]\[%{ARCH}\]\n'"
-            proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            lines = sorted(proc.stdout.read().split('\n'))
-
-        elif subprocess.call(t_dpkg,shell=True) == 0:
+            lines = parser.readstdout(cmd)
+        elif parser.checkexec('dpkg-query'):
             self.syslog.debug("Distro %s is DEB based " % self.dist[0])
             cmd = "dpkg-query --show --showformat='[${Package}][${Version}][][${Installed-Size}][${Section}][${Status}][${binary:Summary}][${Homepage}][][][${Architecture}]\n'"
-            proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            lines = sorted(proc.stdout.read().split('\n'))
-
+            lines = parser.readstdout(cmd)
         else:
             self.syslog.warn("Unknown pkg system for %s " % self.dist[0])
 
-        # parse pkglist
         packages = { }
-        if lines: 
-            i = 0
-            for line in lines:
-                match = re.search(r'\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]',line)
-                if match:
-                    val = { }
-                    if not parser.isstr(match.group(1)):
-                        val[0] = 'N/A'
-                    else:
-                        val[0] = parser.str2uni(match.group(1))
-                    
-                    if not parser.isstr(match.group(2)):
-                        val[1] = 'N/A'
-                    else:
-                        val[1] = parser.str2uni(match.group(2))
-                    
-                    if not parser.isstr(match.group(3)):
-                        val[2] = 'N/A'
-                    else:
-                        val[2] = parser.str2uni(match.group(3))
-                    
-                    if not parser.isstr(match.group(4)):
-                        val[3] = 'N/A'
-                    else:
-                        val[3] = parser.str2uni(match.group(4))
-                    
-                    if not parser.isstr(match.group(5)):
-                        val[4] = 'N/A'
-                    else:
-                        val[4] = parser.str2uni(match.group(5))
-                    
-                    if not parser.isstr(match.group(6)):
-                        val[5] = 'N/A'
-                    else:
-                        #tmp = match.group(6).split(' ')
-                        #if tmp[2]:
-                        val[5] = parser.str2uni(match.group(6))
-                        #else:
-                        #    val[5] = 'N/A'
-                    
-                    if not parser.isstr(match.group(7)):
-                        val[6] = 'N/A'
-                    else:
-                        val[6] = parser.str2uni(match.group(7))
-                    
-                    if not parser.isstr(match.group(8)):
-                        val[7] = 'N/A'
-                    else:
-                        val[7] = parser.str2uni(match.group(8))
-                    
-                    if not parser.isstr(match.group(9)):
-                        val[8] = 'N/A'
-                    else:
-                        val[8] = parser.str2uni(match.group(9))
-                    
-                    if not parser.isstr(match.group(10)):
-                        val[9] = 'N/A'
-                    else:
-                        val[9] = parser.str2uni(match.group(10))
-                    
-                    if not parser.isstr(match.group(11)):
-                        val[10] = 'N/A'
-                    else:
-                        val[10] = parser.str2uni(match.group(11))
-                        
-                    packages[i] = [val[0],val[1],val[2],val[3],val[4],val[5],val[6],val[7],val[8],val[9],val[10]]
-                    i += 1
+        i = 0 
+        for i in range(len(lines)):
+            # [name][ver][pkgsize][instsize][section][status][info][homepage][signed][files][arch]
+            name        = parser.strsearch('\[(.*)\]\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]',lines[i])
+            var         = parser.strsearch('\[.*\]\[(.*)\]\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]',lines[i])
+            pkgsize     = parser.strsearch('\[.*\]\[.*\]\[(.*)\]\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]',lines[i])
+            instalsize  = parser.strsearch('\[.*\]\[.*\]\[.*\]\[(.*)\]\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]',lines[i])
+            section     = parser.strsearch('\[.*\]\[.*\]\[.*\]\[.*\]\[(.*)\]\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]',lines[i])
+            status      = parser.strsearch('\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]\[(.*)\]\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]',lines[i])
+            info        = parser.strsearch('\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]\[(.*)\]\[.*\]\[.*\]\[.*\]\[.*\]',lines[i])
+            homepage    = parser.strsearch('\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]\[(.*)\]\[.*\]\[.*\]\[.*\]',lines[i])
+            signed      = parser.strsearch('\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]\[(.*)\]\[.*\]\[.*\]',lines[i])
+            files       = parser.strsearch('\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]\[(.*)\]\[.*\]',lines[i])
+            arch        = parser.strsearch('\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]\[.*\]\[(.*)\]',lines[i])
+
+            packages[i] = [name,var,pkgsize,instalsize,section,status,info,homepage,signed,files,arch] 
+            i += 1
 
         return packages
 
@@ -241,46 +133,15 @@ class TeddixLinux:
             if part.mountpoint:
                 usage = psutil.disk_usage(part.mountpoint)
 
-                if not parser.isstr(usage.total):
-                    fstotal = 'N/A'
-                else:
-                    fstotal = parser.str2uni(usage.total)
-
-                if not parser.isstr(usage.used):
-                    fsused = 'N/A'
-                else:
-                    fsused = parser.str2uni(usage.used)
-
-                if not parser.isstr(usage.free):
-                    fsfree = 'N/A'
-                else:
-                    fsfree = parser.str2uni(usage.free)
-
-                if not parser.isstr(usage.percent):
-                    fspercent = 'N/A'
-                else:
-                    fspercent = parser.str2uni(usage.percent)
-
+                fstotal = parser.str2uni(usage.total)
+                fsused = parser.str2uni(usage.used)
+                fsfree = parser.str2uni(usage.free)
+                fspercent = parser.str2uni(usage.percent)
     
-            if not parser.isstr(part.device):
-                fsdev = 'N/A'
-            else:
-                fsdev = parser.str2uni(part.device)
-            
-            if not parser.isstr(part.mountpoint):
-                fsmount = 'N/A'
-            else:
-                fsmount = parser.str2uni(part.mountpoint)
-
-            if not parser.isstr(part.fstype):
-                fstype = 'N/A'
-            else:
-                fstype = parser.str2uni(part.fstype)
-
-            if not parser.isstr(part.opts):
-                fsopts = 'N/A'
-            else:
-                fsopts = parser.str2uni(part.opts)
+            fsdev = parser.str2uni(part.device)
+            fsmount = parser.str2uni(part.mountpoint)
+            fstype = parser.str2uni(part.fstype)
+            fsopts = parser.str2uni(part.opts)
 
             disks[i] = [fsdev,fsmount,fstype,fsopts,fstotal,fsused,fsfree,fspercent]
             i += 1
@@ -290,46 +151,27 @@ class TeddixLinux:
 
     # Get swap 
     def getswap(self):
-        self.syslog.debug("Reading swap filesystems")
         parser = TeddixParser.TeddixStringParser() 
+        self.syslog.debug("Reading swap filesystems")
 
-        fd = open('/proc/swaps')
-        f = fd.read()
-        lines = f.split('\n')
-            
-        i = 0 
+        lines       = parser.readlines('/proc/swaps')
+
+        i = 0
+        j = 0
         swaps = { }
-        for line in lines:
-                match = re.search(r'^([^ ]+)[ ]+(\w+)\W+(\d+)\W+(\d+)',line)
-                if match:
-                    val = { }
-                    if not parser.isstr(match.group(1)):
-                        dev = 'N/A'
-                    else:
-                        dev = parser.str2uni(match.group(1))
-                    if not parser.isstr(match.group(2)):
-                        swaptype = 'N/A'
-                    else:
-                        swaptype = parser.str2uni(match.group(2))
-                    if not parser.isstr(match.group(3)):
-                        total = 'N/A'
-                    else:
-                        total = parser.str2uni(match.group(3))
-                    if not parser.isstr(match.group(4)):
-                        used = 'N/A'
-                    else:
-                        used = parser.str2uni(match.group(4))
-                    if not (parser.isint(match.group(3)) or parser.isint(match.group(4))): 
-                        free = 'N/A'
-                    else:
-                        free = parser.str2int(match.group(3)) - parser.str2int(match.group(4))
-                        free = str(free)
+        for i in range(len(lines)):
+            match         = parser.strsearch('^([^ ]+)[ ]+\w+\W+\d+\W+\d+',lines[i])
+            if match:
+                dev         = parser.strsearch('^([^ ]+)[ ]+\w+\W+\d+\W+\d+',lines[i])
+                swaptype    = parser.strsearch('^[^ ]+[ ]+(\w+)\W+\d+\W+\d+',lines[i])
+                total       = parser.strsearch('^[^ ]+[ ]+\w+\W+(\d+)\W+\d+',lines[i])
+                used        = parser.strsearch('^[^ ]+[ ]+\w+\W+\d+\W+(\d+)',lines[i])
+                free        = unicode(parser.str2int(total) - parser.str2int(used))
                   
-                    swaps[i] = [dev,swaptype,total,used,free]
-                    i += 1
+                swaps[j] = [dev,swaptype,total,used,free] 
+                j += 1
+            i += 1
                   
-        fd.close()
-
         return swaps
 
 
@@ -339,7 +181,7 @@ class TeddixLinux:
         parser = TeddixParser.TeddixStringParser() 
 
         names = netifaces.interfaces() 
-        
+
         nics = {}
         i = 0
         for name in names:
@@ -349,116 +191,28 @@ class TeddixLinux:
             if match:
                 continue 
 
-            driver = 'N/A' 
-            drvver = 'N/A' 
-            kernmodule = 'N/A' 
-            firmware = 'N/A'
-            description = 'N/A'
-            nictype = 'N/A'
-            status = 'N/A'
-            rx_packets = 'N/A'
-            rx_bytes = 'N/A'
-            tx_packets = 'N/A'
-            tx_bytes = 'N/A'
-            macaddr = 'N/A'
+            lines       = parser.readstdout("ethtool -i " + name)
+            driver      = parser.arraysearch('^driver: (\w+)',lines)
+            firmware    = parser.arraysearch('^firmware-version: (.+)',lines)
+            
+            lines       = parser.readstdout("ethtool -P " + name)
+            macaddr     = parser.arraysearch('^Permanent address: ([\w:.-]+)',lines)
+            
+            lines       = parser.readstdout("ethtool -S " + name)
+            rx_packets  = parser.arraysearch('rx_packets: (\d+)',lines)
+            rx_bytes    = parser.arraysearch('rx_bytes: (\d+)',lines)
+            tx_packets  = parser.arraysearch('tx_packets: (\d+)',lines)
+            tx_bytes    = parser.arraysearch('tx_bytes: (\d+)',lines)
+            
+            lines       = parser.readstdout("modinfo " + driver)
+            description = parser.arraysearch('^description:\W+(.+)',lines)
+            drvver      = parser.arraysearch('^version:\W*(.+)',lines)
+            
+            kernmodule = driver
 
-            t_ethtool = "test -x /sbin/ethtool"
-            lines = None
-            if subprocess.call(t_ethtool,shell=True) == 0:
-                
-                # driver
-                cmd = "ethtool -i %s " % name 
-                proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                lines = proc.stdout.read().split('\n')
-                for line in lines:
-                    match = re.search(r'^driver: (\w+)',line)
-                    if match:
-                        if not parser.isstr(match.group(1)):
-                            driver = 'N/A'
-                        else:
-                            driver = parser.str2uni(match.group(1))
-                            kernmodule = driver 
-
-                for line in lines:
-                    match = re.search(r'^firmware-version: (.+)',line)
-                    if match:
-                        if not parser.isstr(match.group(1)):
-                            firmware = 'N/A'
-                        else:
-                            firmware = parser.str2uni(match.group(1))
-
-                # MAC address 
-                cmd = "ethtool -P %s " % name 
-                proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                lines = proc.stdout.read().split('\n')
-                for line in lines:
-                    match = re.search(r'^Permanent address: ([\w:.-]+)',line)
-                    if match:
-                        if not parser.isstr(match.group(1)):
-                            macaddr = 'N/A'
-                        else:
-                            macaddr = parser.str2uni(match.group(1))
-
-
-                # statistics
-                cmd = "ethtool -S %s " % name 
-                proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                lines = proc.stdout.read().split('\n')
-                for line in lines:
-                    match = re.search(r'rx_packets: (\d+)',line)
-                    if match:
-                        if not parser.isstr(match.group(1)):
-                            rx_packets = 'N/A'
-                        else:
-                            rx_packets = parser.str2uni(match.group(1))
-
-                for line in lines:
-                    match = re.search(r'rx_bytes: (\d+)',line)
-                    if match:
-                        if not parser.isstr(match.group(1)):
-                            rx_bytes = 'N/A'
-                        else:
-                            rx_bytes = parser.str2uni(match.group(1))
-
-                for line in lines:
-                    match = re.search(r'tx_packets: (\d+)',line)
-                    if match:
-                        if not parser.isstr(match.group(1)):
-                            tx_packets = 'N/A'
-                        else:
-                            tx_packets = parser.str2uni(match.group(1))
-
-                for line in lines:
-                    match = re.search(r'tx_bytes: (\d+)',line)
-                    if match:
-                        if not parser.isstr(match.group(1)):
-                            tx_bytes = 'N/A'
-                        else:
-                            tx_bytes = parser.str2uni(match.group(1))
-
-
-            t_modinfo = "test -x /sbin/modinfo"
-            lines = None
-            if subprocess.call(t_ethtool,shell=True) == 0:
- 
-                # driverinfo
-                cmd = "modinfo %s " % driver
-                proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                lines = proc.stdout.read().split('\n')
-                for line in lines:
-                    match = re.search(r'^description:\W+(.+)',line)
-                    if match:
-                        if not parser.isstr(match.group(1)):
-                            description = 'N/A'
-                        else:
-                            description = parser.str2uni(match.group(1))
-                for line in lines:
-                    match = re.search(r'^version:\W*(.+)',line)
-                    if match:
-                        if not parser.isstr(match.group(1)):
-                            drvver = 'N/A'
-                        else:
-                            drvver = parser.str2uni(match.group(1))
+            # TODO: 
+            nictype = ''
+            status = ''
 
             nics[i] = [name,description,nictype,status,rx_packets,tx_packets,rx_bytes,tx_bytes,driver,drvver,firmware,kernmodule,macaddr]
             i += 1
@@ -470,76 +224,21 @@ class TeddixLinux:
         self.syslog.debug("Reading %s IPv4 configuraion" % nic)
         parser = TeddixParser.TeddixStringParser() 
 
-        t_ip = "test -x /bin/ip"
-        t_ifconfig = "test -x /sbin/ifconfig"
-        lines = None
-        ips = {}
-        i = 0
-        #if subprocess.call(t_ip,shell=True) == 0:
-        #    cmd = "ip -4 addr list dev %s " % nic
-        #    proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        #    lines = proc.stdout.read().split('\n')
-            
-        #    for line in lines:
-        #        match = re.search(r'inet[ \t]+(\d+\.\d+\.\d+\.\d+)/(\d+)\W+(brd\W+(\d+\.\d+\.\d+\.\d+)|)',line)
-        #        if match:
-        #            if not parser.isstr(match.group(1)):
-        #                ipv4 = 'N/A'
-        #            else:
-        #                ipv4 = parser.str2uni(match.group(1))
-        #            if not parser.isstr(match.group(2)):
-        #                mask = 'N/A'
-        #            else:
-        #                mask = parser.str2uni(match.group(2))
-        #            if not parser.isstr(match.group(4)):
-        #                bcast = 'N/A'
-        #            else:
-        #                bcast = parser.str2uni(match.group(4)) 
-                    
-        #            ips[i] = [ipv4,mask,bcast]
-        #            i += 1
-
-        # TODO: handle multiple addresses 'wlan:6' 
-        if subprocess.call(t_ifconfig,shell=True) == 0:
-            cmd = "ifconfig %s " % nic
-            proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            lines = proc.stdout.read().split('\n')
-            
-            for line in lines:
-                match = re.search(r'(inet |inet addr:)(\d+\.\d+\.\d+\.\d+)\W+Bcast:(\d+\.\d+\.\d+\.\d+)\W+(netmask |Mask:)(\d+\.\d+\.\d+\.\d+)',line)
-                if match:
-                    if not parser.isstr(match.group(2)):
-                        ipv4 = 'N/A'
-                    else:
-                        ipv4 = parser.str2uni(match.group(2))
-                    if not parser.isstr(match.group(5)):
-                        mask = 'N/A'
-                    else:
-                        mask = parser.str2uni(match.group(5))
-                    if not parser.isstr(match.group(3)):
-                        bcast = 'N/A'
-                    else:
-                        bcast = parser.str2uni(match.group(3)) 
-                    
-                    ips[i] = [ipv4,mask,bcast]
-                    i += 1
-                match = re.search(r'inet (\d+\.\d+\.\d+\.\d+)\W+netmask (\d+\.\d+\.\d+\.\d+)\W+broadcast (\d+\.\d+\.\d+\.\d+)',line)
-                if match:
-                    if not parser.isstr(match.group(1)):
-                        ipv4 = 'N/A'
-                    else:
-                        ipv4 = parser.str2uni(match.group(1))
-                    if not parser.isstr(match.group(2)):
-                        mask = 'N/A'
-                    else:
-                        mask = parser.str2uni(match.group(2))
-                    if not parser.isstr(match.group(3)):
-                        bcast = 'N/A'
-                    else:
-                        bcast = parser.str2uni(match.group(3)) 
-                    
-                    ips[i] = [ipv4,mask,bcast]
-                    i += 1
+        lines   = parser.readstdout("ip -4 addr list dev " + nic)
+      
+        ips = { }
+        i = 0 
+        j = 0 
+        for i in range(len(lines)):
+            match   = parser.strsearch('inet\W+(\d+\.\d+\.\d+\.\d+)/\d+\W+(brd\W+(\d+\.\d+\.\d+\.\d+)|)',lines[i])
+            if match:
+                ipv4    = parser.strsearch('inet\W+(\d+\.\d+\.\d+\.\d+)/\d+\W+(brd\W+(\d+\.\d+\.\d+\.\d+)|)',lines[i])
+                mask    = parser.strsearch('inet\W+\d+\.\d+\.\d+\.\d+/(\d+)\W+(brd\W+(\d+\.\d+\.\d+\.\d+)|)',lines[i])
+                bcast   = parser.strsearch('inet\W+\d+\.\d+\.\d+\.\d+/\d+\W+brd\W+(\d+\.\d+\.\d+\.\d+)',lines[i])
+       
+                ips[j] = [ipv4,mask,bcast]
+                j += 1
+            i += 1
 
         return ips
 
@@ -549,81 +248,21 @@ class TeddixLinux:
         self.syslog.debug("Reading %s IPv6 configuraion" % nic)
         parser = TeddixParser.TeddixStringParser() 
 
-        t_ip = "test -x /bin/ip"
-        t_ifconfig = "test -x /sbin/ifconfig"
-        lines = None
-        ips6 = {}
-        i = 0
-        #if subprocess.call(t_ip,shell=True) == 0:
-        #    cmd = "ip addr list dev %s " % nic
-        #    proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        #    lines = proc.stdout.read().split('\n')
-            
-        #    for line in lines:
-        #        match = re.search(r'inet6[ \t]+([a-fA-F\d\:]+)/(\d+)\W+',line)
-        #        if match:
-        #            if not parser.isstr(match.group(1)):
-        #                ipv6 = 'N/A'
-        #            else:
-        #                ipv6 = parser.str2uni(match.group(1))
-        #            if not parser.isstr(match.group(2)):
-        #                mask = 'N/A'
-        #            else:
-        #                mask = parser.str2uni(match.group(2))
-                    
-        #            bcast = 'N/A'
-        #            ips6[i] = [ipv6,mask,bcast]
-        #            i += 1
-
-        # TODO: handle multiple addresses 'wlan:6' 
-        if subprocess.call(t_ifconfig,shell=True) == 0:
-            cmd = "ifconfig %s " % nic
-            proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            lines = proc.stdout.read().split('\n')
-            
-            for line in lines:
-                match = re.search(r'(inet6 |inet6 addr:)([a-fA-F\d\:]+)/(\d+)\W+',line)
-                if match:
-                    if not parser.isstr(match.group(2)):
-                        ipv6 = 'N/A'
-                    else:
-                        ipv6 = parser.str2uni(match.group(2))
-                    if not parser.isstr(match.group(3)):
-                        mask = 'N/A'
-                    else:
-                        mask = parser.str2uni(match.group(3))
-                    
-                    bcast = 'N/A'
-                    ips6[i] = [ipv6,mask,bcast]
-                    i += 1
-                match = re.search(r'inet6 ([a-fA-F\d\:]+)\W+prefixlen (\d+)',line)
-                if match:
-                    if not parser.isstr(match.group(1)):
-                        ipv6 = 'N/A'
-                    else:
-                        ipv6 = parser.str2uni(match.group(1))
-                    if not parser.isstr(match.group(2)):
-                        mask = 'N/A'
-                    else:
-                        mask = parser.str2uni(match.group(2))
-                    bcast = 'N/A'
-                    
-                    ips6[i] = [ipv6,mask,bcast]
-                    i += 1
-                match = re.search(r'inet6 addr: ([a-fA-F\d\:]+)/(\d+)',line)
-                if match:
-                    if not parser.isstr(match.group(1)):
-                        ipv6 = 'N/A'
-                    else:
-                        ipv6 = parser.str2uni(match.group(1))
-                    if not parser.isstr(match.group(2)):
-                        mask = 'N/A'
-                    else:
-                        mask = parser.str2uni(match.group(2))
-                    bcast = 'N/A'
-                    
-                    ips6[i] = [ipv6,mask,bcast]
-                    i += 1
+        lines   = parser.readstdout("ip -6 addr list dev " + nic)
+      
+        ips6 = { }
+        i = 0 
+        j = 0 
+        for i in range(len(lines)):
+            match   = parser.strsearch('inet6[ \t]+([a-fA-F\d\:]+)/(\d+)\W+',lines[i])
+            if match:
+                ipv6    = parser.strsearch('inet6[ \t]+([a-fA-F\d\:]+)/\d+\W+',lines[i])
+                mask    = parser.strsearch('inet6[ \t]+[a-fA-F\d\:]+/(\d+)\W+',lines[i])
+                bcast   = ''
+       
+                ips6[j] = [ipv6,mask,bcast]
+                j += 1
+            i += 1
 
         return ips6
 
@@ -633,20 +272,27 @@ class TeddixLinux:
         self.syslog.debug("Reading DNS configuration")
         parser = TeddixParser.TeddixStringParser() 
 
-        dns = {}
-        fd = open('/etc/resolv.conf')
-        f = fd.read()
-        lines = f.split('\n')
-       
-        i = 0 
-        for line in lines:
-            match = re.search(r'^(nameserver|domain|search)[ \t]+(.+)',line)
-            if match:
-                if parser.isstr(match.group(2)):
-                        dns[i] = [match.group(1),match.group(2)]
-                        i += 1
+        lines       = parser.readlines('/etc/resolv.conf')
 
-        fd.close()
+        i = 0
+        j = 0
+        dns = { }
+        for i in range(len(lines)):
+            nameserver   = parser.strsearch('^nameserver[ \t]+(.+)',lines[i])
+            domain       = parser.strsearch('^domain[ \t]+(.+)',lines[i])
+            search       = parser.strsearch('^search[ \t]+(.+)',lines[i])
+            if nameserver:
+                dns[j] = ['nameserver',nameserver]
+                j += 1
+            elif domain:
+                dns[j] = ['domain',domain]
+                j += 1
+            elif search:
+                dns[j] = ['search',search]
+                j += 1
+                  
+            i += 1
+ 
         return dns
 
 
@@ -655,58 +301,69 @@ class TeddixLinux:
         self.syslog.debug("Reading routing table for ipv4 ")
         parser = TeddixParser.TeddixStringParser() 
 
-        t_ip = "test -x /bin/ip"
-        t_route = "test -x /sbin/route"
-        cmd = "route -n -A inet"
-        proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        lines = proc.stdout.read().split('\n')
+        lines   = parser.readstdout("route -n -A inet")
+      
+        routes = { }
+        i = 0 
+        j = 0 
+        for i in range(len(lines)):
+            match   = parser.strsearch('(\d+.\d+.\d+.\d+)[ ]+\d+.\d+.\d+.\d+[ ]+\d+.\d+.\d+.\d+[ ]+\w+[ ]+\d+[ ]+\w+[ ]+\w+[ ]+[\w\-\.\:]+',lines[i])
+            if match:
 
-        routes = []
-        for line in lines:
-            data = line.split(' ')
-            match = re.findall(r'(\d+.\d+.\d+.\d+)[ ]+(\d+.\d+.\d+.\d+)[ ]+(\d+.\d+.\d+.\d+)[ ]+(\w+)[ ]+(\d+)[ ]+\w+[ ]+\w+[ ]+([\w\-\.\:]+)',line)
-            for element in match:
-                routes.append(element[0]+'/'+element[1]+'/'+element[2]+'/'+element[3]+'/'+element[4]+'/'+element[5])
+                destination = parser.strsearch('(\d+.\d+.\d+.\d+)[ ]+\d+.\d+.\d+.\d+[ ]+\d+.\d+.\d+.\d+[ ]+\w+[ ]+\d+[ ]+\w+[ ]+\w+[ ]+[\w\-\.\:]+',lines[i])
+                gateway     = parser.strsearch('\d+.\d+.\d+.\d+[ ]+(\d+.\d+.\d+.\d+)[ ]+\d+.\d+.\d+.\d+[ ]+\w+[ ]+\d+[ ]+\w+[ ]+\w+[ ]+[\w\-\.\:]+',lines[i])
+                mask        = parser.strsearch('\d+.\d+.\d+.\d+[ ]+\d+.\d+.\d+.\d+[ ]+(\d+.\d+.\d+.\d+)[ ]+\w+[ ]+\d+[ ]+\w+[ ]+\w+[ ]+[\w\-\.\:]+',lines[i])
+                flags       = parser.strsearch('\d+.\d+.\d+.\d+[ ]+\d+.\d+.\d+.\d+[ ]+\d+.\d+.\d+.\d+[ ]+(\w+)[ ]+\d+[ ]+\w+[ ]+\w+[ ]+[\w\-\.\:]+',lines[i])
+                metric      = parser.strsearch('\d+.\d+.\d+.\d+[ ]+\d+.\d+.\d+.\d+[ ]+\d+.\d+.\d+.\d+[ ]+\w+[ ]+(\d+)[ ]+\w+[ ]+\w+[ ]+[\w\-\.\:]+',lines[i])
+                interface   = parser.strsearch('\d+.\d+.\d+.\d+[ ]+\d+.\d+.\d+.\d+[ ]+\d+.\d+.\d+.\d+[ ]+\w+[ ]+\d+[ ]+\w+[ ]+\w+[ ]+([\w\-\.\:]+)',lines[i])
+                routes[j] = [destination,gateway,mask,flags,metric,interface] 
+                j += 1
+            i += 1
 
         return routes
 
     # Get routes 
     def getroutes6(self):
         self.syslog.debug("Reading routing tables for ipv6 ")
+        parser = TeddixParser.TeddixStringParser() 
 
-        cmd = "route -n -A inet6"
-        proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        lines = proc.stdout.read().split('\n')
-
-        routes6 = []
-        for line in lines:
-            data = line.split(' ')
-            match = re.findall(r'([\w:]+)/(\d+)[ ]+([\w:]+)[ ]+(\w+)[ ]+(\d+)[ ]+\w+[ ]+\w+[ ]+([\w\-\.\:]+)',line)
-            for element in match:
-                routes6.append(element[0]+'/'+element[1]+'/'+element[2]+'/'+element[3]+'/'+element[4]+'/'+element[5])
+        lines   = parser.readstdout("route -n -A inet6")
+      
+        routes6 = { }
+        i = 0 
+        j = 0 
+        for i in range(len(lines)):
+            match   = parser.strsearch('([\w:]+)/(\d+)[ ]+([\w:]+)[ ]+(\w+)[ ]+(\d+)[ ]+\w+[ ]+\w+[ ]+([\w\-\.\:]+)',lines[i])
+            if match:
+                destination = parser.strsearch('([\w:]+)/\d+[ ]+[\w:]+[ ]+\w+[ ]+\d+[ ]+\w+[ ]+\w+[ ]+[\w\-\.\:]+',lines[i])
+                mask        = parser.strsearch('[\w:]+/(\d+)[ ]+[\w:]+[ ]+\w+[ ]+\d+[ ]+\w+[ ]+\w+[ ]+[\w\-\.\:]+',lines[i])
+                gateway     = parser.strsearch('[\w:]+/\d+[ ]+([\w:]+)[ ]+\w+[ ]+\d+[ ]+\w+[ ]+\w+[ ]+[\w\-\.\:]+',lines[i])
+                flags       = parser.strsearch('[\w:]+/\d+[ ]+[\w:]+[ ]+(\w+)[ ]+\d+[ ]+\w+[ ]+\w+[ ]+[\w\-\.\:]+',lines[i])
+                metric      = parser.strsearch('[\w:]+/\d+[ ]+[\w:]+[ ]+\w+[ ]+(\d+)[ ]+\w+[ ]+\w+[ ]+[\w\-\.\:]+',lines[i])
+                interface   = parser.strsearch('[\w:]+/\d+[ ]+[\w:]+[ ]+\w+[ ]+\d+[ ]+\w+[ ]+\w+[ ]+([\w\-\.\:]+)',lines[i])
+                routes6[j] = [destination,mask,gateway,flags,metric,interface] 
+                j += 1
+            i += 1
 
         return routes6
-
 
 
     # Get groups 
     def getgroups(self):
         self.syslog.debug("Reading system groups")
+        parser = TeddixParser.TeddixStringParser() 
+        
+        lines       = parser.readlines('/etc/group')
 
-        groups = []
-        fd = open('/etc/group')
-        f = fd.read()
-        lines = f.split('\n')
+        groups = { }
+        for i in range(len(lines)):
+            name        = parser.strsearch('^(.+):.+:.+:.*',lines[i])
+            gid         = parser.strsearch('^.+:.+:(.+):.*',lines[i])
+            members     = parser.strsearch('^.+:.+:.+:(.*)',lines[i])
             
-        for line in lines:
-            data = line.split(':')
-            if data[0]:
-                if data[3]: 
-                    groups.append(data[0] + ':' + data[3])
-                else:
-                    groups.append(data[0] + ':')
+            groups[i]   = [name,gid,members]
+            i += 1
 
-        fd.close()
         return groups
 
 
@@ -715,71 +372,57 @@ class TeddixLinux:
         self.syslog.debug("Reading system users")
         parser = TeddixParser.TeddixStringParser() 
 
+        pwlines       = parser.readlines('/etc/passwd')
+        swlines       = parser.readlines('/etc/shadow')
+        gplines       = parser.readlines('/etc/group')
+
         users = {}
-        i = 0
-        t_groups = 'test -x /usr/bin/groups'
-        fd1 = open('/etc/passwd')
-        fd2 = open('/etc/shadow')
-        f1 = fd1.read()
-        f2 = fd2.read()
-        lines1 = f1.split('\n')
-        lines2 = f2.split('\n')
+        for i in range(len(pwlines)):
+            login       = parser.strsearch('^(.+):.+:.+:.+:.*:.+:.+',pwlines[i])
+            uid         = parser.strsearch('^.+:.+:(.+):.+:.*:.+:.+',pwlines[i])
+            gid         = parser.strsearch('^.+:.+:.+:(.+):.*:.+:.+',pwlines[i])
+            comment     = parser.strsearch('^.+:.+:.+:.+:(.*):.+:.+',pwlines[i])
+            home        = parser.strsearch('^.+:.+:.+:.+:.*:(.+):.+',pwlines[i])
+            shell       = parser.strsearch('^.+:.+:.+:.+:.*:.+:(.+)',pwlines[i])
+            locked      = ''
+            hashtype    = ''
+            groups      = ''
             
-        for line1 in lines1:
-            data = line1.split(':')
-            if data[0]:
-                login = data[0] 
-                uid = data[2] 
-                gid = data[3] 
-                comment = data[4] 
-                home = data[5]
-                shell = data[6] 
-        
-                locked = 'N/A'
-                hashtype = 'N/A'
-                for line2 in lines2:
-                    data = line2.split(':')
-                    if login == data[0]:
-                        if data[1] == '*':
-                            locked = 'True'
-                        elif data[1] == '!' or data[1] == '!!':
-                            locked = 'True'
-                        else:
-                            match = re.search(r'(\$\d)\$.+',data[1])
-                            if match:
-                                if match.group(1) == '$1':
-                                    hashtype = 'md5'
-                                    locked = 'False'
-                                if match.group(1) == '$2':
-                                    hashtype = 'blowfish'
-                                    locked = 'False'
-                                if match.group(1) == '$5':
-                                    hashtype = 'sha256'
-                                    locked = 'False'
-                                if match.group(1) == '$6':
-                                    hashtype = 'sha512'
-                                    locked = 'False'
+            for j in range(len(swlines)):
+                login2   = parser.strsearch('^(.+):.*:.*:.*:.*:.*:.*:.*:.*',swlines[j])
+                if login == login2:
+                    hashdata   = parser.strsearch('^.+:(.*):.*:.*:.*:.*:.*:.*:.*',swlines[j])
+                    if hashdata == '*':
+                        locked = 'True'
+                    elif hashdata == '!' or hashdata == '!!':
+                        locked = 'True'
+                    else:
+                        match = parser.strsearch('(\$\d)\$.+',hashdata)
+                        if match:
+                            if match == '$1':
+                                hashtype = 'md5'
+                                locked = 'False'
+                            if match == '$2':
+                                hashtype = 'blowfish'
+                                locked = 'False'
+                            if match == '$5':
+                                hashtype = 'sha256'
+                                locked = 'False'
+                            if match == '$6':
+                                hashtype = 'sha512'
+                                locked = 'False'
                             else:
                                 hashtype = 'des'
                                 locked = 'False'
 
-                if subprocess.call(t_groups,shell=True) == 0:
-                    cmd = "groups %s " % login
-                    proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    lines3 = proc.stdout.read().split('\n')
-                    for line3 in lines3:
-                        match = re.search(r'(.+):(.+)',line3)
-                        if match:
-                            if not parser.isstr(match.group(2)):
-                                groups = 'N/A'
-                            else:
-                                groups = parser.str2uni(match.group(2))
-        
+            for k in range(len(gplines)):
+                login3   = parser.strsearch('^(.+):.+:.+:.*',gplines[k])
+                if login == login3:
+                    groups = parser.strsearch('.+:.+:.+:(.*)',gplines[k])
+
             users[i] = [login,uid,gid,comment,home,shell,locked,hashtype,groups]
             i += 1
-
-        fd1.close()
-        fd2.close()
+ 
         return users
 
 
@@ -788,64 +431,31 @@ class TeddixLinux:
         self.syslog.debug("Listing system procs")
         parser = TeddixParser.TeddixStringParser() 
 
-        #pids = psutil.get_pid_list()
-        #for pid in pids:
-        #    p = psutil.Process(pid)
-        
         procs = {}
         i = 0
         for p in psutil.process_iter():
-               
-            if not parser.isstr(p.pid):
-                ppid = 'N/A'
-            else:
-                ppid = parser.str2uni(p.pid)
-
-            if not parser.isstr(p.username):
-                powner = 'N/A'
-            else:
-                powner = parser.str2uni(p.username)
+            ppid = parser.str2uni(p.pid)
+            powner = parser.str2uni(p.username)
             
             pcputime = p.get_cpu_times()
-            if not parser.isstr(pcputime.system):
-                psystime = 'N/A'
-            else:
-                psystime = parser.str2uni(pcputime.system)
-            if not parser.isstr(pcputime.user):
-                pusertime = 'N/A'
-            else:
-                pusertime = parser.str2uni(pcputime.user)
+            psystime = parser.str2uni(pcputime.system)
+            pusertime = parser.str2uni(pcputime.user)
 
             # TODO: it takes too much time
             #pcpu = p.get_cpu_percent(interval=0.1)
-            pcpu = 'N/A'
+            pcpu = ''
             pmem = p.get_memory_percent()
-            if not parser.isstr(pmem):
-                pmem = 'N/A'
-            else:
-                pmem = parser.str2uni(pmem)
-
+            pmem = parser.str2uni(pmem)
             ppriority = parser.str2uni(p.get_nice())
             pstatus = parser.str2uni(p.status)
-            if not parser.isstr(p.username):
-                powner = 'N/A'
-            else:
-                powner = parser.str2uni(p.username)
-
-            if not parser.isstr(p.name):
-                pname = 'N/A'
-            else:
-                pname = parser.str2uni(p.name)
+            powner = parser.str2uni(p.username)
+            pname = parser.str2uni(p.name)
 
             pcmd = ''
             for pp in p.cmdline:
                 pp += ' '
-                pcmd += pp 
-            
-            if not parser.isstr(pcmd):
-                pcmd = 'N/A'
-            else:
-                pcmd = parser.str2uni(pcmd)
+                pcmd += pp  
+            pcmd = parser.str2uni(pcmd)
 
             procs[i] = [ppid,powner,psystime,pusertime,pcpu,pmem,ppriority,pstatus,pname,pcmd]
             i += 1 
@@ -855,85 +465,67 @@ class TeddixLinux:
     # Get services
     def getsvcs(self):
         self.syslog.debug("Getting system services")
+        parser = TeddixParser.TeddixStringParser() 
 
-        t_systemd = "test -x /bin/systemctl || test -x /usr/bin/systemctl || test -x /usr/local/bin/systemctl"
-        t_chkconfig = "test -x /sbin/chkconfig"
-        t_insserv = "test -x /sbin/insserv"
         svcs = { } 
-        i = 0
-        if subprocess.call(t_systemd,shell=True) == 0:
+        if parser.checkexec('systemctl'):
             self.syslog.debug("System %s has systemctl command" % self.dist[0])
-            cmd = "systemctl list-unit-files "
-            state = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            lines = state.stdout.read().split('\n')
-            for line in lines:
-                service = re.findall(r'(.+).service\W*(\w+)\W*',line)
-                if service:
-                    name = service[0][0]
-                    boot = service[0][1]
-                    cmd = 'systemctl status %s ' % name
-                    ret = subprocess.call("%s 2>/dev/null >/dev/null" % cmd,shell=True)
-                    if ret == 0: 
-                        status = 'running'
-                    else:
-                        status = 'stopped'
-
-                    svcs[i] = [name,boot,status]
-                    i += 1
-
-        
-        if subprocess.call(t_chkconfig,shell=True) == 0:
+            lines   = parser.readstdout("systemctl list-unit-files")
+            for i in range(len(lines)):
+                name        = parser.strsearch('(.+).service\W*\w+\W*',lines[i])
+                boot        = parser.strsearch('.+.service\W*(\w+)\W*',lines[i])
+                ret         = parser.getretval('service %s status ' % name)
+                if ret == 0: 
+                    status = 'running'
+                else:
+                    status = 'stopped'
+                    
+                svcs[i] = [name,boot,status]
+                i += 1
+ 
+        if parser.checkexec('chkconfig'):
             self.syslog.debug("System %s has chkconfig command" % self.dist[0])
-            cmd = "chkconfig --list"
-            state = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            lines = state.stdout.read().split('\n')
-            for line in lines:
-                service = re.findall(r'^(\w+).+3:(\w+)',line)
-                if service:
-                    name = service[0][0]
-                    cmd = 'service %s status ' % name
-                    ret = subprocess.call("%s 2>/dev/null >/dev/null" % cmd,shell=True)
-                    if ret == 0: 
-                        status = 'running'
-                    else:
-                        status = 'stopped'
-
-                    if service[0][1] == 'on':
-                        boot = 'enabled'
-                    else:
-                        boot = 'disabled'
-
-                    svcs[i] = [name,boot,status]
-                    i += 1
-
-        
-        if subprocess.call(t_insserv,shell=True) == 0:
+            lines   = parser.readstdout("chkconfig --list")
+            for i in range(len(lines)):
+                name        = parser.strsearch('^(\w+).+3:\w+',lines[i])
+                boot        = parser.strsearch('^\w+.+3:(\w+)',lines[i])
+                ret         = parser.getretval('service %s status ' % name)
+                if ret == 0: 
+                    status = 'running'
+                else:
+                    status = 'stopped'
+                    
+                svcs[i] = [name,boot,status]
+                i += 1
+ 
+        if parser.checkexec('insserv'):
+            lines       = parser.readstdout("runlevel")
+            runlevel    = parser.strsearch('\w+ (.+)',lines[0])
+                
             self.syslog.debug("System %s has insserv command" % self.dist[0])
-            cmd = "insserv --showall"
-            state = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            lines = state.stdout.read().split('\n')
-            for line in lines:
-                service = re.findall(r'([SK]):\d+:\w+:(.+)',line)
-                if service:
-                    name = service[0][1]
-                    cmd = 'service %s status ' % name
-                    ret = subprocess.call("%s 2>/dev/null >/dev/null" % cmd, shell=True)
-
+            lines   = parser.readstdout("insserv --showall")
+            j = 0
+            for i in range(len(lines)):
+                runlevels   = parser.strsearch('[SK]:\d+:(.+):.+',lines[i])
+                if runlevel in runlevels.split(' '): 
+                    name        = parser.strsearch('[SK]:.+:.+:(.+)',lines[i])
+                
+                    ret         = parser.getretval('service %s status ' % name)
                     if ret == 0: 
                         status = 'running'
                     else:
                         status = 'stopped'
-
-                    if service[0][0] == 'K':
+                    
+                    boot        = parser.strsearch('([SK]):.+:.+:.+',lines[i])
+                    if boot == 'K':
                         boot = 'disabled'
-                    if service[0][0] == 'S':
+                    if boot == 'S':
                         boot = 'enabled'
 
-                    svcs[i] = [name,boot,status]
-                    i += 1
-        #else:
-        #   self.syslog.warn("Unable to get service configuration ")
-        #   return ''
+                    svcs[j] = [name,boot,status]
+                    j += 1
+                i += 1
+               
 
         return svcs
 
@@ -943,44 +535,26 @@ class TeddixLinux:
         self.syslog.debug("Get update list")
         parser = TeddixParser.TeddixStringParser() 
         
-        t_aptget = "test -x /usr/bin/apt-get"
-        t_aptitude = "test -x /usr/bin/aptitude"
-        t_yum = "test -x /usr/bin/yum"
-        update = { } 
-        i = 0
-        # type,package,nversion
-        if subprocess.call(t_aptget,shell=True) == 0 and subprocess.call(t_aptitude,shell=True) == 0:
-            self.syslog.debug("System %s has apt-get and aptitude command" % self.dist[0])
-            #cmd = "apt-get update -qq"
-            cmd = "aptitude update"
-            state = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            if subprocess.call(cmd,shell=True) == 0:
-                cmd = "aptitude -F'[%p][%V]' --disable-columns search '~U' "
-                state = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                lines = state.stdout.read().split('\n')
-                for line in lines:
-                    match = re.search(r'[(.+)][(.+)][(.+)]',line)
-                    if match:
-                        utype = 'N/A'
-                        pkg   = match.group(1)
-                        nver  = match.group(2)
-                        print pkg
-                        update[i] = [utype,pkg,nver]
-                        i += 1
-        elif subprocess.call(t_yum,shell=True) == 0:
-            self.syslog.debug("System %s have yum command" % self.dist[0])
-            cmd = "yum updateinfo list -q"
-            state = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            lines = state.stdout.read().split('\n')
-            for line in lines:
-                match = re.search(r'[\-\w]+\W+(\w+)\W+(.+)',line)
-                if match:
-                    utype = match.group(1)
-                    pkg   = match.group(2)
-                    nver  = match.group(2)
-                    update[i] = [utype,pkg,nver]
-                    i += 1
+        updates = { }
+        if parser.checkexec('apt-get'):
+            ret     = parser.getretval('apt-get update -qq')
+            lines   = parser.readstdout("aptitude -F'[%p][%V]' --disable-columns search '~U'")
+            for i in range(len(lines)):
+                utype = ''
+                pkg   = parser.strsearch('\[(.+)\]\[.+\]',lines[i])
+                nver  = parser.strsearch('\[.+\]\[(.+)\]',lines[i])
+                updates[i] = [utype,pkg,nver]
+                i += 1
 
-        return update
+        elif parser.checkexec('yum'):
+            lines   = parser.readstdout("yum updateinfo list -q")
+            for i in range(len(lines)):
+                utype  = parser.strsearch('[\-\w]+\W+(\w+)\W+.+',lines[i])
+                pkg    = parser.strsearch('[\-\w]+\W+\w+\W+(.+)',lines[i])
+                nver   = pkg 
+                updates[i] = [utype,pkg,nver]
+                i += 1
+      
+        return updates
 
 
