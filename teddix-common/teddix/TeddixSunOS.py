@@ -28,9 +28,19 @@ class TeddixSunOS:
 
         self.syslog.info("Detected: %s (%s) arch: %s" % (self.system,self.release,self.machine))
 
+    # Get PCI devices 
+    def getpci(self):
+        self.syslog.debug("Detecting PCI devices " )
+        parser = TeddixParser.TeddixStringParser() 
+
+    # Get Block devices 
+    def getblock(self):
+        self.syslog.debug("Detecting block devices " )
+        parser = TeddixParser.TeddixStringParser() 
 
     # Get installed packages
     def getpkgs(self):
+        self.syslog.debug("Getting package list " )
         parser = TeddixParser.TeddixStringParser() 
         
         packages = { }
@@ -41,7 +51,7 @@ class TeddixSunOS:
             for i in range(len(lines)):
                 name        = parser.strsearch('^([^ ]+)[ ]+',lines[i])
 
-                lines2       = parser.readstdout('pkg info ' + name )
+                lines2      = parser.readstdout('pkg info ' + name )
                 ver         = parser.strsearch('Version: (.+)',lines2[i])
                 pkgsize     = parser.strsearch('Size: (.+)',lines2[i])
                 instalsize  = ''
@@ -66,54 +76,66 @@ class TeddixSunOS:
     # Get partitions
     def getpartitions(self):
         self.syslog.debug("Getting filesystem list ")
+        parser = TeddixParser.TeddixStringParser() 
 
+    # Get swap 
+    def getswap(self):
+        self.syslog.debug("Reading swap filesystems")
+        parser = TeddixParser.TeddixStringParser() 
+    
     # Get network interfaces
     def getnics(self):
         self.syslog.debug("Looking for available network interfaces ")
-
-
-    # Get mac address
-    def getmac(self,nic):
-        self.syslog.debug("Reading %s MAC address" % nic)
+        parser = TeddixParser.TeddixStringParser() 
 
     # Get ipv4 address  
     def getip(self,nic):
         self.syslog.debug("Reading %s IPv4 configuraion" % nic)
-
+        parser = TeddixParser.TeddixStringParser() 
 
     # Get ipv6 address  
     def getip6(self,nic):
         self.syslog.debug("Reading %s IPv6 configuraion" % nic)
+        parser = TeddixParser.TeddixStringParser() 
 
     # Get dnsservers 
     def getdns(self):
         self.syslog.debug("Reading DNS configuration")
+        parser = TeddixParser.TeddixStringParser() 
 
     # Get routes 
     def getroutes(self):
         self.syslog.debug("Reading routing table for ipv4 ")
-
+        parser = TeddixParser.TeddixStringParser() 
 
     # Get routes 
     def getroutes6(self):
         self.syslog.debug("Reading routing tables for ipv6 ")
-
+        parser = TeddixParser.TeddixStringParser() 
 
     # Get groups 
     def getgroups(self):
         self.syslog.debug("Reading system groups")
+        parser = TeddixParser.TeddixStringParser() 
 
     # Get users 
     def getusers(self):
         self.syslog.debug("Reading system users")
+        parser = TeddixParser.TeddixStringParser() 
 
     # Get procs 
     def getprocs(self):
         self.syslog.debug("Listing system procs")
+        parser = TeddixParser.TeddixStringParser() 
 
     # Get services
     def getsvcs(self):
         self.syslog.debug("Getting system services")
+        parser = TeddixParser.TeddixStringParser() 
 
+    # Get updates
+    def getupdates(self):
+        self.syslog.debug("Listing available updates")
+        parser = TeddixParser.TeddixStringParser() 
 
 
