@@ -14,6 +14,7 @@ import TeddixLogger
 
 # Config parser
 import TeddixConfigFile
+import TeddixParser 
 
 
 class TeddixSunOS:
