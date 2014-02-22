@@ -67,7 +67,7 @@ class TeddixBaseline:
             if type(v) == dict and v['dmi_type'] == 0:
                 DMI['bios',0,'BIOS Revision'] = str((v['data']['BIOS Revision']))
                 DMI['bios',0,'ROM Size'] = str((v['data']['ROM Size']))
-                DMI['bios',0,'Relase Date'] = str((v['data']['Relase Date']))
+                DMI['bios',0,'Release Date'] = str((v['data']['Release Date']))
                 DMI['bios',0,'Runtime Size'] = str((v['data']['Runtime Size']))
                 DMI['bios',0,'Vendor'] = str((v['data']['Vendor']))
                 DMI['bios',0,'Version'] = str((v['data']['Version']))
@@ -214,7 +214,7 @@ class TeddixBaseline:
             bios.attrib['revision']     = dmi['bios',0,'BIOS Revision']
             bios.attrib['vendor']       = dmi['bios',0,'Vendor']
             bios.attrib['version']      = dmi['bios',0,'Version']
-            bios.attrib['releasedate']  = dmi['bios',0,'Relase Date']
+            bios.attrib['releasedate']  = dmi['bios',0,'Release Date']
             i += 1
         hardware.append(bios)
 
