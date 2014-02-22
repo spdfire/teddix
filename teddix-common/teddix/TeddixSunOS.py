@@ -24,8 +24,9 @@ class TeddixSunOS:
         self.system = platform.system()
         self.arch = platform.architecture()
         self.machine = platform.machine()
+        self.release = platform.release()
 
-        self.syslog.info("Detected: %s (%s %s) arch: %s" % (self.system,self.dist[1],self.machine))
+        self.syslog.info("Detected: %s (%s) arch: %s" % (self.system,self.release,self.machine))
 
 
     # Get installed packages
