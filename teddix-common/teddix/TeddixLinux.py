@@ -37,7 +37,6 @@ class TeddixLinux:
         lines = parser.readstdout('lspci -m')
 
         pcidev = { }
-        i = 0 
         for i in range(len(lines)):
             path        = parser.strsearch('^(.+) ".+" ".+" ".+".+\-r\w+ .+',lines[i])
             devtype     = parser.strsearch('^.+ "(.+)" ".+" ".+".+\-r\w+ .+',lines[i])
@@ -45,8 +44,7 @@ class TeddixLinux:
             model       = parser.strsearch('^.+ ".+" ".+" "(.+)".+\-r\w+ .+',lines[i])
             revision    = parser.strsearch('^.+ ".+" ".+" ".+".+\-r(\w+) .+',lines[i])
 
-            pcidev[i]   = [path,devtype,vendor,model,revision]
-            
+            pcidev[i]   = [path,devtype,vendor,model,revision] 
             i += 1
 
         return pcidev 
@@ -154,22 +152,18 @@ class TeddixLinux:
         parser = TeddixParser.TeddixStringParser() 
         self.syslog.debug("Reading swap filesystems")
 
-        lines       = parser.readlines('/proc/swaps')
+        output  = parser.readlines('/proc/swaps')
+        lines   = parser.arrayfilter('^([^ ]+)[ ]+\w+\W+\d+\W+\d+',output)
 
-        i = 0
-        j = 0
         swaps = { }
         for i in range(len(lines)):
-            match         = parser.strsearch('^([^ ]+)[ ]+\w+\W+\d+\W+\d+',lines[i])
-            if match:
-                dev         = parser.strsearch('^([^ ]+)[ ]+\w+\W+\d+\W+\d+',lines[i])
-                swaptype    = parser.strsearch('^[^ ]+[ ]+(\w+)\W+\d+\W+\d+',lines[i])
-                total       = parser.strsearch('^[^ ]+[ ]+\w+\W+(\d+)\W+\d+',lines[i])
-                used        = parser.strsearch('^[^ ]+[ ]+\w+\W+\d+\W+(\d+)',lines[i])
-                free        = unicode(parser.str2int(total) - parser.str2int(used))
+            dev         = parser.strsearch('^([^ ]+)[ ]+\w+\W+\d+\W+\d+',lines[i])
+            swaptype    = parser.strsearch('^[^ ]+[ ]+(\w+)\W+\d+\W+\d+',lines[i])
+            total       = parser.strsearch('^[^ ]+[ ]+\w+\W+(\d+)\W+\d+',lines[i])
+            used        = parser.strsearch('^[^ ]+[ ]+\w+\W+\d+\W+(\d+)',lines[i])
+            free        = unicode(parser.str2int(total) - parser.str2int(used))
                   
-                swaps[j] = [dev,swaptype,total,used,free] 
-                j += 1
+            swaps[i] = [dev,swaptype,total,used,free] 
             i += 1
                   
         return swaps
@@ -224,20 +218,16 @@ class TeddixLinux:
         self.syslog.debug("Reading %s IPv4 configuraion" % nic)
         parser = TeddixParser.TeddixStringParser() 
 
-        lines   = parser.readstdout("ip -4 addr list dev " + nic)
+        output  = parser.readstdout("ip -4 addr list dev " + nic)
+        lines   = parser.arrayfilter('inet\W+(\d+\.\d+\.\d+\.\d+)/\d+\W+(brd\W+(\d+\.\d+\.\d+\.\d+)|)',output)
       
         ips = { }
-        i = 0 
-        j = 0 
         for i in range(len(lines)):
-            match   = parser.strsearch('inet\W+(\d+\.\d+\.\d+\.\d+)/\d+\W+(brd\W+(\d+\.\d+\.\d+\.\d+)|)',lines[i])
-            if match:
-                ipv4    = parser.strsearch('inet\W+(\d+\.\d+\.\d+\.\d+)/\d+\W+(brd\W+(\d+\.\d+\.\d+\.\d+)|)',lines[i])
-                mask    = parser.strsearch('inet\W+\d+\.\d+\.\d+\.\d+/(\d+)\W+(brd\W+(\d+\.\d+\.\d+\.\d+)|)',lines[i])
-                bcast   = parser.strsearch('inet\W+\d+\.\d+\.\d+\.\d+/\d+\W+brd\W+(\d+\.\d+\.\d+\.\d+)',lines[i])
+            ipv4    = parser.strsearch('inet\W+(\d+\.\d+\.\d+\.\d+)/\d+\W+(brd\W+(\d+\.\d+\.\d+\.\d+)|)',lines[i])
+            mask    = parser.strsearch('inet\W+\d+\.\d+\.\d+\.\d+/(\d+)\W+(brd\W+(\d+\.\d+\.\d+\.\d+)|)',lines[i])
+            bcast   = parser.strsearch('inet\W+\d+\.\d+\.\d+\.\d+/\d+\W+brd\W+(\d+\.\d+\.\d+\.\d+)',lines[i])
        
-                ips[j] = [ipv4,mask,bcast]
-                j += 1
+            ips[i] = [ipv4,mask,bcast]
             i += 1
 
         return ips
@@ -248,20 +238,16 @@ class TeddixLinux:
         self.syslog.debug("Reading %s IPv6 configuraion" % nic)
         parser = TeddixParser.TeddixStringParser() 
 
-        lines   = parser.readstdout("ip -6 addr list dev " + nic)
+        output  = parser.readstdout("ip -6 addr list dev " + nic)
+        lines   = parser.arrayfilter('inet6[ \t]+([a-fA-F\d\:]+)/(\d+)\W+',output)
       
         ips6 = { }
-        i = 0 
-        j = 0 
         for i in range(len(lines)):
-            match   = parser.strsearch('inet6[ \t]+([a-fA-F\d\:]+)/(\d+)\W+',lines[i])
-            if match:
-                ipv6    = parser.strsearch('inet6[ \t]+([a-fA-F\d\:]+)/\d+\W+',lines[i])
-                mask    = parser.strsearch('inet6[ \t]+[a-fA-F\d\:]+/(\d+)\W+',lines[i])
-                bcast   = ''
+            ipv6    = parser.strsearch('inet6[ \t]+([a-fA-F\d\:]+)/\d+\W+',lines[i])
+            mask    = parser.strsearch('inet6[ \t]+[a-fA-F\d\:]+/(\d+)\W+',lines[i])
+            bcast   = ''
        
-                ips6[j] = [ipv6,mask,bcast]
-                j += 1
+            ips6[i] = [ipv6,mask,bcast]
             i += 1
 
         return ips6
@@ -301,23 +287,19 @@ class TeddixLinux:
         self.syslog.debug("Reading routing table for ipv4 ")
         parser = TeddixParser.TeddixStringParser() 
 
-        lines   = parser.readstdout("route -n -A inet")
+        output  = parser.readstdout("route -n -A inet")
+        lines   = parser.arrayfilter('(\d+.\d+.\d+.\d+)[ ]+\d+.\d+.\d+.\d+[ ]+\d+.\d+.\d+.\d+[ ]+\w+[ ]+\d+[ ]+\w+[ ]+\w+[ ]+[\w\-\.\:]+',output)
       
         routes = { }
-        i = 0 
-        j = 0 
         for i in range(len(lines)):
-            match   = parser.strsearch('(\d+.\d+.\d+.\d+)[ ]+\d+.\d+.\d+.\d+[ ]+\d+.\d+.\d+.\d+[ ]+\w+[ ]+\d+[ ]+\w+[ ]+\w+[ ]+[\w\-\.\:]+',lines[i])
-            if match:
 
-                destination = parser.strsearch('(\d+.\d+.\d+.\d+)[ ]+\d+.\d+.\d+.\d+[ ]+\d+.\d+.\d+.\d+[ ]+\w+[ ]+\d+[ ]+\w+[ ]+\w+[ ]+[\w\-\.\:]+',lines[i])
-                gateway     = parser.strsearch('\d+.\d+.\d+.\d+[ ]+(\d+.\d+.\d+.\d+)[ ]+\d+.\d+.\d+.\d+[ ]+\w+[ ]+\d+[ ]+\w+[ ]+\w+[ ]+[\w\-\.\:]+',lines[i])
-                mask        = parser.strsearch('\d+.\d+.\d+.\d+[ ]+\d+.\d+.\d+.\d+[ ]+(\d+.\d+.\d+.\d+)[ ]+\w+[ ]+\d+[ ]+\w+[ ]+\w+[ ]+[\w\-\.\:]+',lines[i])
-                flags       = parser.strsearch('\d+.\d+.\d+.\d+[ ]+\d+.\d+.\d+.\d+[ ]+\d+.\d+.\d+.\d+[ ]+(\w+)[ ]+\d+[ ]+\w+[ ]+\w+[ ]+[\w\-\.\:]+',lines[i])
-                metric      = parser.strsearch('\d+.\d+.\d+.\d+[ ]+\d+.\d+.\d+.\d+[ ]+\d+.\d+.\d+.\d+[ ]+\w+[ ]+(\d+)[ ]+\w+[ ]+\w+[ ]+[\w\-\.\:]+',lines[i])
-                interface   = parser.strsearch('\d+.\d+.\d+.\d+[ ]+\d+.\d+.\d+.\d+[ ]+\d+.\d+.\d+.\d+[ ]+\w+[ ]+\d+[ ]+\w+[ ]+\w+[ ]+([\w\-\.\:]+)',lines[i])
-                routes[j] = [destination,gateway,mask,flags,metric,interface] 
-                j += 1
+            destination = parser.strsearch('(\d+.\d+.\d+.\d+)[ ]+\d+.\d+.\d+.\d+[ ]+\d+.\d+.\d+.\d+[ ]+\w+[ ]+\d+[ ]+\w+[ ]+\w+[ ]+[\w\-\.\:]+',lines[i])
+            gateway     = parser.strsearch('\d+.\d+.\d+.\d+[ ]+(\d+.\d+.\d+.\d+)[ ]+\d+.\d+.\d+.\d+[ ]+\w+[ ]+\d+[ ]+\w+[ ]+\w+[ ]+[\w\-\.\:]+',lines[i])
+            mask        = parser.strsearch('\d+.\d+.\d+.\d+[ ]+\d+.\d+.\d+.\d+[ ]+(\d+.\d+.\d+.\d+)[ ]+\w+[ ]+\d+[ ]+\w+[ ]+\w+[ ]+[\w\-\.\:]+',lines[i])
+            flags       = parser.strsearch('\d+.\d+.\d+.\d+[ ]+\d+.\d+.\d+.\d+[ ]+\d+.\d+.\d+.\d+[ ]+(\w+)[ ]+\d+[ ]+\w+[ ]+\w+[ ]+[\w\-\.\:]+',lines[i])
+            metric      = parser.strsearch('\d+.\d+.\d+.\d+[ ]+\d+.\d+.\d+.\d+[ ]+\d+.\d+.\d+.\d+[ ]+\w+[ ]+(\d+)[ ]+\w+[ ]+\w+[ ]+[\w\-\.\:]+',lines[i])
+            interface   = parser.strsearch('\d+.\d+.\d+.\d+[ ]+\d+.\d+.\d+.\d+[ ]+\d+.\d+.\d+.\d+[ ]+\w+[ ]+\d+[ ]+\w+[ ]+\w+[ ]+([\w\-\.\:]+)',lines[i])
+            routes[i] = [destination,gateway,mask,flags,metric,interface] 
             i += 1
 
         return routes
@@ -327,22 +309,18 @@ class TeddixLinux:
         self.syslog.debug("Reading routing tables for ipv6 ")
         parser = TeddixParser.TeddixStringParser() 
 
-        lines   = parser.readstdout("route -n -A inet6")
+        output  = parser.readstdout("route -n -A inet6")
+        lines   = parser.arrayfilter('([\w:]+)/(\d+)[ ]+([\w:]+)[ ]+(\w+)[ ]+(\d+)[ ]+\w+[ ]+\w+[ ]+([\w\-\.\:]+)',output)
       
         routes6 = { }
-        i = 0 
-        j = 0 
         for i in range(len(lines)):
-            match   = parser.strsearch('([\w:]+)/(\d+)[ ]+([\w:]+)[ ]+(\w+)[ ]+(\d+)[ ]+\w+[ ]+\w+[ ]+([\w\-\.\:]+)',lines[i])
-            if match:
-                destination = parser.strsearch('([\w:]+)/\d+[ ]+[\w:]+[ ]+\w+[ ]+\d+[ ]+\w+[ ]+\w+[ ]+[\w\-\.\:]+',lines[i])
-                mask        = parser.strsearch('[\w:]+/(\d+)[ ]+[\w:]+[ ]+\w+[ ]+\d+[ ]+\w+[ ]+\w+[ ]+[\w\-\.\:]+',lines[i])
-                gateway     = parser.strsearch('[\w:]+/\d+[ ]+([\w:]+)[ ]+\w+[ ]+\d+[ ]+\w+[ ]+\w+[ ]+[\w\-\.\:]+',lines[i])
-                flags       = parser.strsearch('[\w:]+/\d+[ ]+[\w:]+[ ]+(\w+)[ ]+\d+[ ]+\w+[ ]+\w+[ ]+[\w\-\.\:]+',lines[i])
-                metric      = parser.strsearch('[\w:]+/\d+[ ]+[\w:]+[ ]+\w+[ ]+(\d+)[ ]+\w+[ ]+\w+[ ]+[\w\-\.\:]+',lines[i])
-                interface   = parser.strsearch('[\w:]+/\d+[ ]+[\w:]+[ ]+\w+[ ]+\d+[ ]+\w+[ ]+\w+[ ]+([\w\-\.\:]+)',lines[i])
-                routes6[j] = [destination,mask,gateway,flags,metric,interface] 
-                j += 1
+            destination = parser.strsearch('([\w:]+)/\d+[ ]+[\w:]+[ ]+\w+[ ]+\d+[ ]+\w+[ ]+\w+[ ]+[\w\-\.\:]+',lines[i])
+            mask        = parser.strsearch('[\w:]+/(\d+)[ ]+[\w:]+[ ]+\w+[ ]+\d+[ ]+\w+[ ]+\w+[ ]+[\w\-\.\:]+',lines[i])
+            gateway     = parser.strsearch('[\w:]+/\d+[ ]+([\w:]+)[ ]+\w+[ ]+\d+[ ]+\w+[ ]+\w+[ ]+[\w\-\.\:]+',lines[i])
+            flags       = parser.strsearch('[\w:]+/\d+[ ]+[\w:]+[ ]+(\w+)[ ]+\d+[ ]+\w+[ ]+\w+[ ]+[\w\-\.\:]+',lines[i])
+            metric      = parser.strsearch('[\w:]+/\d+[ ]+[\w:]+[ ]+\w+[ ]+(\d+)[ ]+\w+[ ]+\w+[ ]+[\w\-\.\:]+',lines[i])
+            interface   = parser.strsearch('[\w:]+/\d+[ ]+[\w:]+[ ]+\w+[ ]+\d+[ ]+\w+[ ]+\w+[ ]+([\w\-\.\:]+)',lines[i])
+            routes6[i] = [destination,mask,gateway,flags,metric,interface] 
             i += 1
 
         return routes6
@@ -470,7 +448,8 @@ class TeddixLinux:
         svcs = { } 
         if parser.checkexec('systemctl'):
             self.syslog.debug("System %s has systemctl command" % self.dist[0])
-            lines   = parser.readstdout("systemctl list-unit-files")
+            output  = parser.readstdout("systemctl list-unit-files")
+            lines   = parser.arrayfilter('(.+).service\W*\w+\W*',output)
             for i in range(len(lines)):
                 name        = parser.strsearch('(.+).service\W*\w+\W*',lines[i])
                 boot        = parser.strsearch('.+.service\W*(\w+)\W*',lines[i])
@@ -483,9 +462,10 @@ class TeddixLinux:
                 svcs[i] = [name,boot,status]
                 i += 1
  
-        if parser.checkexec('chkconfig'):
+        elif parser.checkexec('chkconfig'):
             self.syslog.debug("System %s has chkconfig command" % self.dist[0])
-            lines   = parser.readstdout("chkconfig --list")
+            output  = parser.readstdout("chkconfig --list")
+            lines   = parser.arrayfilter('^(\w+).+3:\w+',output)
             for i in range(len(lines)):
                 name        = parser.strsearch('^(\w+).+3:\w+',lines[i])
                 boot        = parser.strsearch('^\w+.+3:(\w+)',lines[i])

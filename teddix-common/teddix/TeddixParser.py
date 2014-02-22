@@ -190,6 +190,18 @@ class TeddixStringParser:
         else:
             return line
 
+    def arrayfilter(self,regexp,lines):
+        filtered = {}
+        j = 0
+        for i in range(len(lines)):
+            tmp = self.strsearch(regexp,lines[i])
+            if tmp: 
+                filtered[j] = lines[i]
+                j += 1
+            i += 1
+        return filtered
+
+
     def checkexec(self,cmd):
         searchdir = {}
         searchdir[0] = '/bin'
