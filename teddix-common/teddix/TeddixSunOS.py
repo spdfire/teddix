@@ -27,7 +27,7 @@ class TeddixSunOS:
         self.machine = platform.machine()
         self.release = platform.release()
 
-        self.syslog.info("Detected: %s (%s) arch: %s" % (self.system,self.release,self.machine))
+        self.syslog.info("Detected: %s (%s) arch: %s" % (self.system,self.release,self.arch))
 
     # Get PCI devices 
     def getpci(self):
@@ -35,7 +35,7 @@ class TeddixSunOS:
         parser = TeddixParser.TeddixStringParser() 
 
         lines       = parser.readstdout('scanpci')
-        pcidevs = {}
+        pcidev = {}
         for i in range(len(lines)):
             if lines > 1 and parser.strsearch('^pci bus 0x(\d+) cardnum 0x\d+',lines[i - 1]):
 
@@ -47,13 +47,10 @@ class TeddixSunOS:
                 model   = lines[i]
                 revision= ''
 
-                #print lines[i-1]
-                #print lines[i]
-
                 pcidev[i]   = [path,devtype,vendor,model,revision] 
             i += 1
 
-        return pcidevs
+        return pcidev
 
     # Get Block devices 
     def getblock(self):
@@ -61,7 +58,7 @@ class TeddixSunOS:
         parser = TeddixParser.TeddixStringParser() 
 
         lines       = parser.readstdout('iostat -Enr')
-        blockdevs = {}
+        blockdev = {}
         for i in range(len(lines)):
             if parser.strsearch('^(\w+),Soft Errors:[ \d]+,Hard Errors:[ \d]+,Transport Errors:[ \d]+',lines[i]):
                 name        = parser.strsearch('^(\w+),Soft Errors:[ \d]+,Hard Errors:[ \d]+,Transport Errors:[ \d]+',lines[i])
