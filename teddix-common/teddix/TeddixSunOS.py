@@ -38,7 +38,7 @@ class TeddixSunOS:
         pcidev = {}
         for i in range(len(lines)):
             j = i - 1
-            if lines > 1 and parser.strsearch('^pci bus 0x(\d+) cardnum 0x\d+',lines[j]):
+            if i > 1 and parser.strsearch('^pci bus 0x(\d+) cardnum 0x\d+',lines[j]):
 
                 bus     = parser.strsearch('^pci bus 0x(\d+) cardnum 0x\d+',lines[j])
                 nr      = parser.strsearch('^pci bus 0x\d+ cardnum 0x(\d+)',lines[j])
