@@ -34,10 +34,60 @@ class TeddixSunOS:
         self.syslog.debug("Detecting PCI devices " )
         parser = TeddixParser.TeddixStringParser() 
 
+        lines       = parser.readstdout('scanpci')
+        pcidevs = {}
+        for i in range(len(lines)):
+            if lines > 1 and parser.strsearch('^pci bus 0x(\d+) cardnum 0x\d+',lines[i - 1]):
+
+                bus     = parser.strsearch('^pci bus 0x(\d+) cardnum 0x\d+',lines[i - 1])
+                nr      = parser.strsearch('^pci bus 0x\d+ cardnum 0x(\d+)',lines[i - 1])
+                path    = bus + ':' + nr 
+                devtype = parser.strsearch('^pci bus 0x\d+ cardnum 0x\d+ function 0x(\d+)',lines[i - 1])
+                vendor  = parser.strsearch('^pci bus 0x\d+ cardnum 0x\d+ function 0x\d+: vendor 0x(\d+)',lines[i - 1])
+                model   = lines[i]
+                revision= ''
+
+                #print lines[i-1]
+                #print lines[i]
+
+                pcidev[i]   = [path,devtype,vendor,model,revision] 
+            i += 1
+
+        return pcidevs
+
     # Get Block devices 
     def getblock(self):
         self.syslog.debug("Detecting block devices " )
         parser = TeddixParser.TeddixStringParser() 
+
+        lines       = parser.readstdout('iostat -Enr')
+        blockdevs = {}
+        for i in range(len(lines)):
+            if parser.strsearch('^(\w+),Soft Errors:[ \d]+,Hard Errors:[ \d]+,Transport Errors:[ \d]+',lines[i - 1]):
+                name        = parser.strsearch('^(\w+),Soft Errors:[ \d]+,Hard Errors:[ \d]+,Transport Errors:[ \d]+',lines[i])
+                
+                lines2      = parser.readstdout('fdisk -GR ' + name + 'p0')
+                sect_size   = parser.arraysearch('\d+[ ]+\d+[ ]+\d+[ ]+\d+[ ]+\d+[ ]+\d+[ ]+(\d+)',lines2)
+                ncyl        = parser.arraysearch('\d+[ ]+(\d+)[ ]+\d+[ ]+\d+[ ]+\d+[ ]+\d+[ ]+\d+',lines2)
+                nhead       = parser.arraysearch('\d+[ ]+\d+[ ]+\d+[ ]+\d+[ ]+(\d+)[ ]+\d+[ ]+\d+',lines2)
+                nsect       = parser.arraysearch('\d+[ ]+\d+[ ]+\d+[ ]+\d+[ ]+\d+[ ]+(\d+)[ ]+\d+',lines2)
+                nr_sectors  = unicode(parser.str2int(ncyl) * parser.str2int(nhead) * parser.str2int(nsect))
+
+                lines2      = parser.readstdout('iostat -Enr ' + name ) 
+                model       = parser.arraysearch('Model:(.+),',lines2)
+                rotational  = ''
+                readonly    = ''
+                removable   = ''
+                vendor      = parser.arraysearch('Vendor:(.+),',lines2)
+
+                major       = ''
+                minor       = ''
+                devtype     = ''
+
+                blockdev[i] = [name,devtype,vendor,model,nr_sectors,sect_size,rotational,readonly,removable,major,minor]
+                i += 1
+
+        return blockdev
 
     # Get installed packages
     def getpkgs(self):
@@ -124,14 +174,45 @@ class TeddixSunOS:
                   
         return swaps
 
-
  
     # Get network interfaces
     def getnics(self):
         self.syslog.debug("Looking for available network interfaces ")
         parser = TeddixParser.TeddixStringParser()
- 
-        ### ipadm show-if # solaris11 
+        
+        # netstat -inf inet 
+        output  = parser.readstdout('netstat -inf inet')
+        lines   = parser.arrayfilter('^\w+[ ]+\d+[ ]+[\d\.]+[ ]+[\d\.]+[ ]+\d+[ ]+\d+[ ]+\d+[ ]+\d+[ ]+\d+[ ]+\d+',output)
+        
+        nics = {}
+        for i in range(len(lines)):
+            name        = parser.strsearch('^(\w+)[ ]+\d+[ ]+[\d\.]+[ ]+[\d\.]+[ ]+\d+[ ]+\d+[ ]+\d+[ ]+\d+[ ]+\d+[ ]+\d+',lines[i])
+
+            lines2      = parser.readstdout("ifconfig " + name)
+            macaddr     = parser.arraysearch('ether ([\w:.-]+)',lines2)
+
+            lines2      = parser.readstdout("kstat -c net -n " + name)
+            rx_packets  = parser.arraysearch('ipackets[ ]+(\d+)',lines2)
+            rx_bytes    = parser.arraysearch('ibytes[ ]+(\d+)',lines2)
+            tx_packets  = parser.arraysearch('opackets[ ]+(\d+)',lines2)
+            tx_bytes    = parser.arraysearch('obytes[ ]+(\d+)',lines2)
+            
+            lines       = parser.readstdout("modinfo " + driver)
+            description = parser.arraysearch('^description:\W+(.+)',lines)
+            drvver      = parser.arraysearch('^version:\W*(.+)',lines)
+            
+            # TODO: 
+            nictype     = ''
+            status      = ''
+            driver      = ''
+            firmware    = ''
+            kernmodule  = ''
+
+
+            nics[i] = [name,description,nictype,status,rx_packets,tx_packets,rx_bytes,tx_bytes,driver,drvver,firmware,kernmodule,macaddr]
+            i += 1
+        
+        return nics
 
     # Get ipv4 address  
     def getip(self,nic):
