@@ -27,7 +27,7 @@ class TeddixSunOS:
         self.machine = platform.machine()
         self.release = platform.release()
 
-        self.syslog.info("Detected: %s (%s) arch: %s" % (self.system,self.release,self.arch))
+        self.syslog.info("Detected: %s (%s) arch: %s" % (self.system,self.release,self.machine))
 
     # Get PCI devices 
     def getpci(self):
@@ -37,13 +37,14 @@ class TeddixSunOS:
         lines       = parser.readstdout('scanpci')
         pcidev = {}
         for i in range(len(lines)):
-            if lines > 1 and parser.strsearch('^pci bus 0x(\d+) cardnum 0x\d+',lines[i - 1]):
+            j = i - 1
+            if lines > 1 and parser.strsearch('^pci bus 0x(\d+) cardnum 0x\d+',lines[j]):
 
-                bus     = parser.strsearch('^pci bus 0x(\d+) cardnum 0x\d+',lines[i - 1])
-                nr      = parser.strsearch('^pci bus 0x\d+ cardnum 0x(\d+)',lines[i - 1])
+                bus     = parser.strsearch('^pci bus 0x(\d+) cardnum 0x\d+',lines[j])
+                nr      = parser.strsearch('^pci bus 0x\d+ cardnum 0x(\d+)',lines[j])
                 path    = bus + ':' + nr 
-                devtype = parser.strsearch('^pci bus 0x\d+ cardnum 0x\d+ function 0x(\d+)',lines[i - 1])
-                vendor  = parser.strsearch('^pci bus 0x\d+ cardnum 0x\d+ function 0x\d+: vendor 0x(\d+)',lines[i - 1])
+                devtype = parser.strsearch('^pci bus 0x\d+ cardnum 0x\d+ function 0x(\d+)',lines[j])
+                vendor  = parser.strsearch('^pci bus 0x\d+ cardnum 0x\d+ function 0x\d+: vendor 0x(\d+)',lines[j])
                 model   = lines[i]
                 revision= ''
 
