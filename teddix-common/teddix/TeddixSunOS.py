@@ -203,7 +203,7 @@ class TeddixSunOS:
         
         # netstat -inf inet 
         output  = parser.readstdout('netstat -inf inet')
-        lines   = parser.arrayfilter('^\w+[ ]+\d+[ ]+[\d\.]+[ ]+[\d\.]+[ ]+\d+[ ]+\d+[ ]+\d+[ ]+\d+[ ]+\d+[ ]+\d+',output)
+        lines   = parser.arrayfilter('^(\w+)[ ]+\d+[ ]+[\d\.]+[ ]+[\d\.]+[ ]+\d+[ ]+\d+[ ]+\d+[ ]+\d+[ ]+\d+[ ]+\d+',output)
         
         nics = {}
         for i in range(len(lines)):
@@ -241,7 +241,7 @@ class TeddixSunOS:
         parser = TeddixParser.TeddixStringParser()
 
         output  = parser.readstdout("ifconfig " + nic)
-        lines   = parser.arrayfilter('inet[ ]+\d+\.\d+\.\d+\.\d+[ ]+netmask[ ]+\w+[ ]+(broadcast[ ]+\d+\.\d+\.\d+\.\d+|)',output)
+        lines   = parser.arrayfilter('inet[ ]+(\d+\.\d+\.\d+\.\d+)[ ]+netmask[ ]+\w+[ ]+(broadcast[ ]+\d+\.\d+\.\d+\.\d+|)',output)
       
         ips = { }
         for i in range(len(lines)):
@@ -261,7 +261,7 @@ class TeddixSunOS:
 
         # XXX: rtls0:1, rtls0:2
         output  = parser.readstdout("ifconfig " + nic)
-        lines   = parser.arrayfilter('inet6[ \t]+([a-fA-F\d\:]+)/(\d+)',output)
+        lines   = parser.arrayfilter('inet6[ \t]+([a-fA-F\d\:]+)/\d+',output)
       
         ips6 = { }
         for i in range(len(lines)):
