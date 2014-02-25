@@ -447,7 +447,8 @@ class TeddixSunOS:
             pcpu = ''
             pmem = p.get_memory_percent()
             pmem = parser.str2uni(pmem)
-            ppriority = parser.str2uni(p.get_nice())
+            # ppriority = parser.str2uni(p.get_nice())
+            ppriority = '' 
             pstatus = parser.str2uni(p.status)
             powner = parser.str2uni(p.username)
             pname = parser.str2uni(p.name)
