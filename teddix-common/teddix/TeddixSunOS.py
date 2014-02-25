@@ -62,8 +62,8 @@ class TeddixSunOS:
         lines       = parser.readstdout('iostat -Enr')
         blockdev = {}
         for i in range(len(lines)):
-            if parser.strsearch('^(\w+),Soft Errors:[ \d]+,Hard Errors:[ \d]+,Transport Errors:[ \d]+',lines[i]):
-                name        = parser.strsearch('^(\w+),Soft Errors:[ \d]+,Hard Errors:[ \d]+,Transport Errors:[ \d]+',lines[i])
+            if parser.strsearch('(\w+)[ ]*,Soft Errors:.+,Hard Errors:.+,Transport Errors:.+',lines[i]):
+                name        = parser.strsearch('(\w+)[ ]*,Soft Errors:.+,Hard Errors:.+,Transport Errors:.+',lines[i])
                 
                 lines2      = parser.readstdout('fdisk -GR ' + name + 'p0')
                 sect_size   = parser.arraysearch('\d+[ ]+\d+[ ]+\d+[ ]+\d+[ ]+\d+[ ]+\d+[ ]+(\d+)',lines2)
