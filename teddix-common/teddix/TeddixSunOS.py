@@ -45,7 +45,7 @@ class TeddixSunOS:
                 path    = bus + ':' + nr 
                 devtype = parser.strsearch('^pci bus 0x\d+ cardnum 0x\d+ function 0x(\d+)',lines[i])
                 vendor  = parser.strsearch('^pci bus 0x\d+ cardnum 0x\d+ function 0x\d+: vendor 0x(\d+)',lines[i])
-                j = i - 1
+                j = i + 1
                 model   = lines[j]
                 revision= ''
 
@@ -96,7 +96,7 @@ class TeddixSunOS:
         packages = { }
         # [name][ver][pkgsize][instsize][section][status][info][homepage][signed][files][arch]
         if parser.checkexec('pkg'):
-            self.syslog.debug("Distro %s is IPS based " % self.dist[0])
+            self.syslog.debug("System %s (%s) is IPS based " % (self.system,self.release))
             lines       = parser.readstdout('pkg list')
             for i in range(len(lines)):
                 name        = parser.strsearch('^([^ ]+)[ ]+',lines[i])
