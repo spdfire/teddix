@@ -218,17 +218,21 @@ class TeddixSunOS:
             tx_packets  = parser.arraysearch('opackets[ ]+(\d+)',lines2)
             tx_bytes    = parser.arraysearch('obytes[ ]+(\d+)',lines2)
             
-            lines       = parser.readstdout("modinfo " + driver)
-            description = parser.arraysearch('^description:\W+(.+)',lines)
-            drvver      = parser.arraysearch('^version:\W*(.+)',lines)
+            lines2      = parser.readstdout("ifconfig %s modlist " % name)
+            for j in range(len(lines2)):
+                driver  = parser.strsearch('^\d+[ ]+(\w+)',lines2[j])
+                kernmodule  = driver
+
+            lines2      = parser.readstdout("modinfo")
+            tmp         = '[ ]+\d+[ ]+%s[ ]+\(.+\)' % driver
+            description = parser.arraysearch(tmp,lines2)
             
             # TODO: 
+            drvver      = ''
             nictype     = ''
             status      = ''
             driver      = ''
             firmware    = ''
-            kernmodule  = ''
-
 
             nics[i] = [name,description,nictype,status,rx_packets,tx_packets,rx_bytes,tx_bytes,driver,drvver,firmware,kernmodule,macaddr]
             i += 1
