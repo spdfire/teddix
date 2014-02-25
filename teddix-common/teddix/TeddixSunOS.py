@@ -115,7 +115,7 @@ class TeddixSunOS:
                 publisher   = parser.strsearch('Publisher: (.+)',lines2[i])
                 release     = parser.strsearch('Build Release: (.+)',lines2[i])
             
-                packages[i] = [name,var,pkgsize,instalsize,section,status,info,homepage,signed,files,arch] 
+                packages[i] = [name,ver,pkgsize,instalsize,section,status,info,homepage,signed,files,arch] 
                 i += 1
         else:
             self.syslog.warn("Unknown pkg system for %s " % self.dist[0])
