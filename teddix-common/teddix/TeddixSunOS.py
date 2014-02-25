@@ -102,19 +102,20 @@ class TeddixSunOS:
                 name        = parser.strsearch('^([^ ]+)[ ]+',lines[i])
 
                 lines2      = parser.readstdout('pkg info ' + name )
-                ver         = parser.strsearch('Version: (.+)',lines2[i])
-                pkgsize     = parser.strsearch('Size: (.+)',lines2[i])
+                ver         = parser.arraysearch('Version: (.+)',lines2)
+                pkgsize     = parser.arraysearch('Size: (.+)',lines2)
                 instalsize  = ''
-                section     = parser.strsearch('Category: (.+)',lines2[i])
-                status      = parser.strsearch('State: (.+)',lines2[i])
-                info        = parser.strsearch('Summary: (.+)',lines2[i])
+                section     = parser.arraysearch('Category: (.+)',lines2)
+                status      = parser.arraysearch('State: (.+)',lines2)
+                info        = parser.arraysearch('Summary: (.+)',lines2)
                 homepage    = ''
                 signed      = ''
                 files       = ''
                 arch        = ''
-                publisher   = parser.strsearch('Publisher: (.+)',lines2[i])
-                release     = parser.strsearch('Build Release: (.+)',lines2[i])
-            
+                publisher   = parser.arraysearch('Publisher: (.+)',lines)
+                release     = parser.arraysearch('Build Release: (.+)',lines2)
+           
+                # print " name: %s ; ver: %s " % (name,ver)
                 packages[i] = [name,ver,pkgsize,instalsize,section,status,info,homepage,signed,files,arch] 
                 i += 1
         else:
