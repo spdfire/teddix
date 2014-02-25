@@ -219,7 +219,7 @@ class TeddixBaseline:
         hardware.append(bios)
 
         sysboard = xml.Element('baseboard')
-        count = self.__getdmi_count(dmi,'baseboard','Version')
+        count = self.__getdmi_count(dmi,'baseboard','Manufacturer')
         i = 0
         while i < count:
             sysboard.attrib['manufacturer']     = dmi['baseboard',0,'Manufacturer']
@@ -230,7 +230,7 @@ class TeddixBaseline:
         hardware.append(sysboard)
 
         system = xml.Element('system')
-        count = self.__getdmi_count(dmi,'system','Version')
+        count = self.__getdmi_count(dmi,'system','Manufacturer')
         i = 0
         while i < count:
             system.attrib['manufacturer'] = dmi['system',0,'Manufacturer']
@@ -242,7 +242,7 @@ class TeddixBaseline:
         hardware.append(system)
         
         chassis = xml.Element('chassis')
-        count = self.__getdmi_count(dmi,'chassis','Version')
+        count = self.__getdmi_count(dmi,'chassis','Manufacturer')
         i = 0
         while i < count:
             chassis.attrib['manufacturer'] = dmi['chassis',0,'Manufacturer']
