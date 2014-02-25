@@ -61,16 +61,18 @@ class TeddixSunOS:
 
         lines       = parser.readstdout('iostat -Enr')
         blockdev = {}
+        k = 0 
         for i in range(len(lines)):
             if parser.strsearch('(\w+)[ ]*,Soft Errors:.+,Hard Errors:.+,Transport Errors:.+',lines[i]):
                 name        = parser.strsearch('(\w+)[ ]*,Soft Errors:.+,Hard Errors:.+,Transport Errors:.+',lines[i])
                 
                 lines2      = parser.readstdout('fdisk -GR ' + name + 'p0')
                 sect_size   = parser.arraysearch('\d+[ ]+\d+[ ]+\d+[ ]+\d+[ ]+\d+[ ]+\d+[ ]+(\d+)',lines2)
-                ncyl        = parser.arraysearch('\d+[ ]+(\d+)[ ]+\d+[ ]+\d+[ ]+\d+[ ]+\d+[ ]+\d+',lines2)
-                nhead       = parser.arraysearch('\d+[ ]+\d+[ ]+\d+[ ]+\d+[ ]+(\d+)[ ]+\d+[ ]+\d+',lines2)
-                nsect       = parser.arraysearch('\d+[ ]+\d+[ ]+\d+[ ]+\d+[ ]+\d+[ ]+(\d+)[ ]+\d+',lines2)
-                nr_sectors  = unicode(parser.str2int(ncyl) * parser.str2int(nhead) * parser.str2int(nsect))
+                if sect_size:
+                    ncyl        = parser.arraysearch('\d+[ ]+(\d+)[ ]+\d+[ ]+\d+[ ]+\d+[ ]+\d+[ ]+\d+',lines2)
+                    nhead       = parser.arraysearch('\d+[ ]+\d+[ ]+\d+[ ]+\d+[ ]+(\d+)[ ]+\d+[ ]+\d+',lines2)
+                    nsect       = parser.arraysearch('\d+[ ]+\d+[ ]+\d+[ ]+\d+[ ]+\d+[ ]+(\d+)[ ]+\d+',lines2)
+                    nr_sectors  = unicode(parser.str2int(ncyl) * parser.str2int(nhead) * parser.str2int(nsect))
 
                 lines2      = parser.readstdout('iostat -Enr ' + name ) 
                 model       = parser.arraysearch('Model:(.+),',lines2)
@@ -83,8 +85,8 @@ class TeddixSunOS:
                 minor       = ''
                 devtype     = ''
 
-                blockdev[i] = [name,devtype,vendor,model,nr_sectors,sect_size,rotational,readonly,removable,major,minor]
-                i += 1
+                blockdev[k] = [name,devtype,vendor,model,nr_sectors,sect_size,rotational,readonly,removable,major,minor]
+                k += 1
 
         return blockdev
 
