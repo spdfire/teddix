@@ -433,6 +433,7 @@ class TeddixSunOS:
         parser = TeddixParser.TeddixStringParser() 
 
         procs = {}
+        return procs
         i = 0
         for p in psutil.process_iter():
             ppid = parser.str2uni(p.pid)
