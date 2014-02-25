@@ -438,9 +438,11 @@ class TeddixSunOS:
             ppid = parser.str2uni(p.pid)
             powner = parser.str2uni(p.username)
             
-            pcputime = p.get_cpu_times()
-            psystime = parser.str2uni(pcputime.system)
-            pusertime = parser.str2uni(pcputime.user)
+            #pcputime = p.get_cpu_times()
+            #psystime = parser.str2uni(pcputime.system)
+            #pusertime = parser.str2uni(pcputime.user)
+            psystime = ''
+            pusertime = ''
 
             # TODO: it takes too much time
             #pcpu = p.get_cpu_percent(interval=0.1)
