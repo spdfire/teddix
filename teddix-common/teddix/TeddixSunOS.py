@@ -97,7 +97,7 @@ class TeddixSunOS:
         # [name][ver][pkgsize][instsize][section][status][info][homepage][signed][files][arch]
         if parser.checkexec('pkg'):
             self.syslog.debug("System %s (%s) is IPS based " % (self.system,self.release))
-            lines       = parser.readstdout('pkg list')
+            lines       = parser.readstdout('pkg list -H')
             for i in range(len(lines)):
                 name        = parser.strsearch('^([^ ]+)[ ]+',lines[i])
 
