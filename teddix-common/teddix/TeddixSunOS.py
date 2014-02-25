@@ -115,20 +115,39 @@ class TeddixSunOS:
                 publisher   = parser.arraysearch('Publisher: (.+)',lines)
                 release     = parser.arraysearch('Build Release: (.+)',lines2)
            
+                if (i % 25) == 0:
+                    self.syslog.debug("package: %s/%s " % (i,len(lines)))
                 # print " name: %s ; ver: %s " % (name,ver)
                 packages[i] = [name,ver,pkgsize,instalsize,section,status,info,homepage,signed,files,arch] 
                 i += 1
         else:
-            self.syslog.warn("Unknown pkg system for %s " % self.dist[0])
+            self.syslog.warn("Unknown pkg system for %s " % self.system)
 
         return packages
 
+    # Get updates
+    def getupdates(self):
+        self.syslog.debug("Listing available updates")
+        parser = TeddixParser.TeddixStringParser() 
+        
+        updates = { }
+        if parser.checkexec('pkg'):
+            lines   = parser.readstdout('pkg update -nv')
+            for i in range(len(lines)):
+                utype = ''
+                pkg   = ''
+                nver  = ''
+                updates[i] = [utype,pkg,nver]
+                i += 1
+
+        return updates
 
     # Get partitions
     def getpartitions(self):
         self.syslog.debug("Getting filesystem list ")
         parser = TeddixParser.TeddixStringParser() 
 
+        i = 0 
         disks = { }
         mounts = psutil.disk_partitions() 
         for part in psutil.disk_partitions():
@@ -458,24 +477,6 @@ class TeddixSunOS:
             i += 1
  
         return svcs
-
-
-    # Get updates
-    def getupdates(self):
-        self.syslog.debug("Listing available updates")
-        parser = TeddixParser.TeddixStringParser() 
-        
-        updates = { }
-        if parser.checkexec('pkg'):
-            lines   = parser.readstdout('pkg update -nv')
-            for i in range(len(lines)):
-                utype = ''
-                pkg   = ''
-                nver  = ''
-                updates[i] = [utype,pkg,nver]
-                i += 1
-
-        return updates
 
 
 
