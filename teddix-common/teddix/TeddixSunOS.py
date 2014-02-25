@@ -75,11 +75,11 @@ class TeddixSunOS:
                     nr_sectors  = unicode(parser.str2int(ncyl) * parser.str2int(nhead) * parser.str2int(nsect))
 
                 lines2      = parser.readstdout('iostat -Enr ' + name ) 
-                model       = parser.arraysearch('Model:(.+),',lines2)
+                model       = parser.arraysearch('Model:(.+?),',lines2)
                 rotational  = ''
                 readonly    = ''
                 removable   = ''
-                vendor      = parser.arraysearch('Vendor:(.+),',lines2)
+                vendor      = parser.arraysearch('Vendor:(.+?),',lines2)
 
                 major       = ''
                 minor       = ''
