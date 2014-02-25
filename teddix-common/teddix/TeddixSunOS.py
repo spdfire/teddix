@@ -94,6 +94,7 @@ class TeddixSunOS:
         parser = TeddixParser.TeddixStringParser() 
         
         packages = { }
+        return packages
         # [name][ver][pkgsize][instsize][section][status][info][homepage][signed][files][arch]
         if parser.checkexec('pkg'):
             self.syslog.debug("System %s (%s) is IPS based " % (self.system,self.release))
@@ -131,6 +132,7 @@ class TeddixSunOS:
         parser = TeddixParser.TeddixStringParser() 
         
         updates = { }
+        return updates
         if parser.checkexec('pkg'):
             lines   = parser.readstdout('pkg update -nv')
             for i in range(len(lines)):
@@ -178,7 +180,7 @@ class TeddixSunOS:
         parser = TeddixParser.TeddixStringParser() 
 
         output  = parser.readstdout("swap -l")
-        lines   = parser.arrayfilter('^[^ ]+\W+[^ ]+\W+\d+\W+\d+\W+\d+',output)
+        lines   = parser.arrayfilter('^([^ ]+)\W+[^ ]+\W+\d+\W+\d+\W+\d+',output)
 
         swaps = { }
         for i in range(len(lines)):
@@ -307,7 +309,7 @@ class TeddixSunOS:
         parser = TeddixParser.TeddixStringParser() 
  
         output  = parser.readstdout("netstat -rnv -f inet")
-        lines   = parser.arrayfilter('[\w\.]+[ ]+[\d\.]+[ ]+[\d\.]+[ ]+\w+[ ]+\d+[ ]+\d+[ ]+\w+[ ]+\d+[ ]+\d+',output)
+        lines   = parser.arrayfilter('([\w\.]+)[ ]+[\d\.]+[ ]+[\d\.]+[ ]+\w+[ ]+\d+[ ]+\d+[ ]+\w+[ ]+\d+[ ]+\d+',output)
      
         routes = { }
         for i in range(len(lines)):
@@ -329,7 +331,7 @@ class TeddixSunOS:
         parser = TeddixParser.TeddixStringParser() 
         
         output  = parser.readstdout("netstat -rnv -f inet6")
-        lines   = parser.arrayfilter('[\w:]+/\d+[ ]+[\w:]+[ ]+\w+[ ]+\d+[ ]+\d+[ ]+\w+[ ]+\d+[ ]+\d+',output)
+        lines   = parser.arrayfilter('([\w:]+)/\d+[ ]+[\w:]+[ ]+\w+[ ]+\d+[ ]+\d+[ ]+\w+[ ]+\d+[ ]+\d+',output)
      
         routes6 = { }
         for i in range(len(lines)):
