@@ -36,20 +36,21 @@ class TeddixSunOS:
 
         lines       = parser.readstdout('scanpci')
         pcidev = {}
+        k = 0 
         for i in range(len(lines)):
-            j = i - 1
-            if i > 1 and parser.strsearch('^pci bus 0x(\d+) cardnum 0x\d+',lines[j]):
+            if parser.strsearch('^pci bus 0x(\d+) cardnum 0x\d+',lines[i]):
 
-                bus     = parser.strsearch('^pci bus 0x(\d+) cardnum 0x\d+',lines[j])
-                nr      = parser.strsearch('^pci bus 0x\d+ cardnum 0x(\d+)',lines[j])
+                bus     = parser.strsearch('^pci bus 0x(\d+) cardnum 0x\d+',lines[i])
+                nr      = parser.strsearch('^pci bus 0x\d+ cardnum 0x(\d+)',lines[i])
                 path    = bus + ':' + nr 
-                devtype = parser.strsearch('^pci bus 0x\d+ cardnum 0x\d+ function 0x(\d+)',lines[j])
-                vendor  = parser.strsearch('^pci bus 0x\d+ cardnum 0x\d+ function 0x\d+: vendor 0x(\d+)',lines[j])
-                model   = lines[i]
+                devtype = parser.strsearch('^pci bus 0x\d+ cardnum 0x\d+ function 0x(\d+)',lines[i])
+                vendor  = parser.strsearch('^pci bus 0x\d+ cardnum 0x\d+ function 0x\d+: vendor 0x(\d+)',lines[i])
+                j = i - 1
+                model   = lines[j]
                 revision= ''
 
-                pcidev[i]   = [path,devtype,vendor,model,revision] 
-            i += 1
+                pcidev[k]   = [path,devtype,vendor,model,revision] 
+                k += 1
 
         return pcidev
 
