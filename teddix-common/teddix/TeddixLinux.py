@@ -122,6 +122,7 @@ class TeddixLinux:
         parser = TeddixParser.TeddixStringParser() 
         self.syslog.debug("Getting filesystem list ")
 
+        i = 0 
         disks = { }
         mounts = psutil.disk_partitions() 
         for part in psutil.disk_partitions():
