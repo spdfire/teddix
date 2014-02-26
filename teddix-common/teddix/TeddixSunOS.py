@@ -483,9 +483,16 @@ class TeddixSunOS:
         svcs = { } 
         lines   = parser.readstdout('svcs -aH -o svc,state')
         for i in range(len(lines)):
-            name        = parser.strsearch('(.+)\W*\w+',lines[i])
-            boot        = parser.strsearch('.+\W*(\w+)',lines[i])
-            status      = boot
+            name        = parser.strsearch('([^ ]+)[ ]+\w+',lines[i])
+            boot        = parser.strsearch('[^ ]+[ ]+(\w+)',lines[i])
+            if boot == "online":
+                status  = "enabled"
+            elif boot == "disabled":
+                status  = boot
+            elif boot == "legacy_run":
+                status = 'unknown'
+            else:
+                status = 'unknown'
                     
             svcs[i] = [name,boot,status]
             i += 1
