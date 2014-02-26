@@ -22,12 +22,17 @@ class TeddixSunOS:
     def __init__(self,syslog):
         self.syslog = syslog
         
-        self.system = platform.system()
-        self.arch = platform.architecture()
-        self.machine = platform.machine()
-        self.release = platform.release()
+        self.system     = platform.system()
+        self.arch       = platform.architecture()
+        self.machine    = platform.machine()
+        self.name       = ''
+        self.ver        = ''
+        self.detail     = self.name + self.ver 
+        self.kernel     = platform.release()
+        self.manufacturer= 'Oracle'
+        self.serial     = ''
 
-        self.syslog.info("Detected: %s (%s) arch: %s" % (self.system,self.release,self.machine))
+        self.syslog.info("Detected: %s (%s) arch: %s" % (self.system,self.kernel,self.machine))
 
     # Get PCI devices 
     def getpci(self):
