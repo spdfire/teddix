@@ -344,16 +344,12 @@ class TeddixBaseline:
         # TODO: get info from HP tools 
 
         operatingsystem = xml.Element('system')
-        operatingsystem.attrib['name'] = platform.system() 
-        operatingsystem.attrib['arch'] = platform.machine()
-        operatingsystem.attrib['serialnumber'] = 'TODO'
-        operatingsystem.attrib['manufacturer'] = 'TODO'
-        distro = platform.linux_distribution()
-        osx = platform.mac_ver()
-        win = platform.win32_ver()
-        ostype = distro[0] + distro[1] + distro[2] + osx[0] + win[0] 
-        operatingsystem.attrib['detail'] = ostype
-        operatingsystem.attrib['kernel'] = platform.release()
+        operatingsystem.attrib['name']          = self.osbase.system  
+        operatingsystem.attrib['arch']          = self.osbase.machine
+        operatingsystem.attrib['serialnumber']  = self.osbase.serial
+        operatingsystem.attrib['manufacturer']  = self.osbase.manufacturer
+        operatingsystem.attrib['detail']        = self.osbase.detail 
+        operatingsystem.attrib['kernel']        = self.osbase.kernel
         server.append(operatingsystem)
 
         software = xml.Element('software')

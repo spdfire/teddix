@@ -23,12 +23,17 @@ class TeddixLinux:
     def __init__(self,syslog):
         self.syslog = syslog
         
-        self.system = platform.system()
-        self.arch = platform.architecture()
-        self.machine = platform.machine()
-        self.dist = platform.linux_distribution()
+        self.system     = platform.system()
+        self.arch       = platform.architecture()
+        self.machine    = platform.machine()
+        self.name       = platform.linux_distribution()[0]
+        self.ver        = platform.linux_distribution()[1]
+        self.detail     = self.name + self.ver 
+        self.kernel     = platform.release()
+        self.manufacturer= ''
+        self.serial     = ''
 
-        self.syslog.info("Detected: %s (%s %s) arch: %s" % (self.system,self.dist[0],self.dist[1],self.machine))
+        self.syslog.info("Detected: %s (%s %s) arch: %s" % (self.system,self.name,self.ver,self.machine))
 
     # Get PCI devices 
     def getpci(self):
@@ -86,15 +91,15 @@ class TeddixLinux:
         
         # [name][ver][pkgsize][instsize][section][status][info][homepage][signed][files][arch]
         if parser.checkexec('rpm'):
-            self.syslog.debug("Distro %s is RPM based " % self.dist[0])
+            self.syslog.debug("%s is RPM based" % self.system)
             cmd = "rpm -qa --queryformat '\[%{NAME}\]\[%{VERSION}-%{RELEASE}\]\[%{ARCHIVESIZE}\]\[%{SIZE}\]\[%{GROUP}\]\[installed\]\[%{SUMMARY}\]\[%{URL}\]\[\]\[\]\[%{ARCH}\]\n'"
             lines = parser.readstdout(cmd)
         elif parser.checkexec('dpkg-query'):
-            self.syslog.debug("Distro %s is DEB based " % self.dist[0])
+            self.syslog.debug("%s is DEB based " % self.system)
             cmd = "dpkg-query --show --showformat='[${Package}][${Version}][][${Installed-Size}][${Section}][${Status}][${binary:Summary}][${Homepage}][][][${Architecture}]\n'"
             lines = parser.readstdout(cmd)
         else:
-            self.syslog.warn("Unknown pkg system for %s " % self.dist[0])
+            self.syslog.warn("Unknown pkg system")
 
         packages = { }
         i = 0 
@@ -447,7 +452,7 @@ class TeddixLinux:
 
         svcs = { } 
         if parser.checkexec('systemctl'):
-            self.syslog.debug("System %s has systemctl command" % self.dist[0])
+            self.syslog.debug("System %s has systemctl command" % self.system)
             output  = parser.readstdout("systemctl list-unit-files")
             lines   = parser.arrayfilter('(.+).service\W*\w+\W*',output)
             for i in range(len(lines)):
@@ -463,7 +468,7 @@ class TeddixLinux:
                 i += 1
  
         elif parser.checkexec('chkconfig'):
-            self.syslog.debug("System %s has chkconfig command" % self.dist[0])
+            self.syslog.debug("System %s has chkconfig command" % self.system)
             output  = parser.readstdout("chkconfig --list")
             lines   = parser.arrayfilter('^(\w+).+3:\w+',output)
             for i in range(len(lines)):
@@ -482,7 +487,7 @@ class TeddixLinux:
             lines       = parser.readstdout("runlevel")
             runlevel    = parser.strsearch('\w+ (.+)',lines[0])
                 
-            self.syslog.debug("System %s has insserv command" % self.dist[0])
+            self.syslog.debug("System %s has insserv command" % self.system)
             lines   = parser.readstdout("insserv --showall")
             j = 0
             for i in range(len(lines)):
