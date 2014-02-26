@@ -141,11 +141,11 @@ class TeddixSunOS:
         updates = { }
         #return updates
         if parser.checkexec('pkg'):
-            lines   = parser.readstdout('pkg update -nv')
+            lines   = parser.readstdout('pkg list -uH')
             for i in range(len(lines)):
+                pkg   = parser.strsearch('^([^ ]+)[ ]+\(.+\)[ ]+[^ ]+[ ]+',lines[i])
                 utype = ''
-                pkg   = ''
-                nver  = ''
+                nver  = parser.strsearch('^[^ ]+[ ]+\(.+\)[ ]+([^ ])+[ ]+',lines[i]) 
                 updates[i] = [utype,pkg,nver]
                 i += 1
 
