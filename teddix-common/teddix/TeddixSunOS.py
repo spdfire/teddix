@@ -101,7 +101,7 @@ class TeddixSunOS:
         parser = TeddixParser.TeddixStringParser() 
         
         packages = { }
-        return packages
+        #return packages
         # [name][ver][pkgsize][instsize][section][status][info][homepage][signed][files][arch]
         if parser.checkexec('pkg'):
             self.syslog.debug("System %s (%s) is IPS based " % (self.system,self.release))
@@ -139,7 +139,7 @@ class TeddixSunOS:
         parser = TeddixParser.TeddixStringParser() 
         
         updates = { }
-        return updates
+        #return updates
         if parser.checkexec('pkg'):
             lines   = parser.readstdout('pkg update -nv')
             for i in range(len(lines)):
@@ -365,9 +365,9 @@ class TeddixSunOS:
 
         groups = { }
         for i in range(len(lines)):
-            name        = parser.strsearch('^(.+):.+:.+:.*',lines[i])
-            gid         = parser.strsearch('^.+:.+:(.+):.*',lines[i])
-            members     = parser.strsearch('^.+:.+:.+:(.*)',lines[i])
+            name        = parser.strsearch('^(.+):.*:.+:.*',lines[i])
+            gid         = parser.strsearch('^.+:.*:(.+):.*',lines[i])
+            members     = parser.strsearch('^.+:.*:.+:(.*)',lines[i])
             
             groups[i]   = [name,gid,members]
             i += 1
