@@ -145,7 +145,7 @@ class TeddixSunOS:
             for i in range(len(lines)):
                 pkg   = parser.strsearch('^([^ ]+)[ ]+\(.+\)[ ]+[^ ]+[ ]+',lines[i])
                 utype = ''
-                nver  = parser.strsearch('^[^ ]+[ ]+\(.+\)[ ]+([^ ])+[ ]+',lines[i]) 
+                nver  = parser.strsearch('^[^ ]+[ ]+\(.+\)[ ]+([^ ]+)[ ]+',lines[i]) 
                 updates[i] = [utype,pkg,nver]
                 i += 1
 
