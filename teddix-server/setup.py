@@ -11,5 +11,6 @@ setup(name='teddix-server',
       scripts=['src/teddix-server'],
       # TODO: fix config file 
       data_files=[('/etc/teddix',['config/serverlist']),
+	  ("/usr/share/teddix/",["config/initdb.sql"]),
           ('/etc/init.d', ['init.d/teddix-server'])]
      )

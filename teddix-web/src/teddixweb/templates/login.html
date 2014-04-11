@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="shortcut icon" href="/static/bootstrap-3.1.1/docs/assets/ico/favicon.ico">
+
+    <title>Signin Template for Bootstrap</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="/static/bootstrap-3.1.1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="/static/bootstrap-3.1.1/docs/examples/signin/signin.css" rel="stylesheet">
+
+    <link href="/static/style.css" rel="stylesheet">
+    <!-- Just for debugging purposes. Don't actually copy this line! -->
+    <!--[if lt IE 9]><script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
+
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+
+    <div class="container">
+
+{% block content %}
+
+
+        <form method="post" action="{% url django.contrib.auth.views.login %}" class="form-signin" role="form"> 
+        <img src="/static/teddy-bear.png" class="img-responsive text-center" alt="Teddix Logo" />
+	<h2 class="form-signin-heading">Please sign in</h2>
+	{% csrf_token %}
+        <input id="id_username" type="username" name="username" maxlength="30" class="form-control" placeholder="username" required autofocus>
+        <input id="id_password" type="password" name="password" maxlength="4096" class="form-control" placeholder="Password" required>
+        {% if form.errors %}
+	<p class="bg-danger text-danger text-center " ><strong>Your username and password did not match.</strong></p>
+        {% endif %}
+	
+	<label class="checkbox">
+          <input type="checkbox" name="remember_me" value="true"> Remember me
+        </label>
+	<input type="hidden" name="next" value="/">
+	<button class="btn btn-lg btn-primary btn-block" value="login" type="submit">Sign in</button>
+        </form>
+
+{% endblock %}
+    </div> <!-- /container -->
+
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+  </body>
+</html>
+

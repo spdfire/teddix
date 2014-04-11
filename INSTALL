@@ -10,8 +10,23 @@ PACKAGES
 -------------------------------------------------
 Debian:
 
-add "deb http://repo.teddix.info/teddix wheezy main" to sources.list
+Create repository file /etc/apt/sources.list.d/teddix.list:
 
-RHEL/Fedora:
+# teddix repository
+deb http://repo.teddix.info/debian wheezy unstable 
+
+
+Fedora:
+
+Create repository file /etc/yum.repos.d/teddix.repo:
+
+[teddix]
+name=Teddix official repository
+baseurl=http://repo.teddix.info/redhat/fedora/$releasever/$basearch
+gpgcheck=0
+enabled=1
+
+
+Solaris 11: 
 
 

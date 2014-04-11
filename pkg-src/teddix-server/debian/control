@@ -11,7 +11,7 @@ X-Python-Version: >= 2.6
 
 Package: teddix-server
 Architecture: all
-Depends: python2.6, python-daemon, python-libxml2, python-lockfile, teddix-common 
+Depends: python2.6, python-daemon, python-libxml2, python-lockfile, teddix-common, mysql-server 
 # create ora2html debian package 
 Description: teddix inventory system.
  Teddix is an inventory system for servers. 
