@@ -644,7 +644,7 @@ class TeddixServer:
             syslog.info("main: Started queue run" )
             
             # check DB 
-            database = TeddixDatabase.TeddixDatabase(syslog,cfg);
+            database = TeddixDatabase.TeddixDatabase(syslog,cfg)
             self.check_dbintegrity(database,agents)
             database.disconnect() 
 

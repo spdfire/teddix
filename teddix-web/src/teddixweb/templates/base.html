@@ -8,7 +8,7 @@
     <meta name="author" content="">
     <link rel="shortcut icon" href="/static/bootstrap-3.1.1/docs/assets/ico/favicon.ico">
 
-    <title>Starter Template for Bootstrap</title>
+    <title>{% block title %}Teddix startup page{% endblock %}</title>
 
     <!-- Bootstrap core CSS -->
     <link href="/static/bootstrap-3.1.1/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -106,14 +106,16 @@
     </div>
 
     <div class="container">
+    {% block content %}
 
       <div class="starter-template">
         <h1>Bootstrap starter template</h1>
         <p class="lead">Use this document as a way to quickly start any new project.<br> All you get is this text and a mostly barebones HTML document.</p>
       </div>
-
+  
+    {% endblock %}
     </div><!-- /.container -->
-
+    
     <div id="footer">
       <div class="container">
         <p class="text-muted text-center">Place sticky footer content here.</p>
