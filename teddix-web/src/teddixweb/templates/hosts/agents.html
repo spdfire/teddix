@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}Teddix Agents{% endblock %}
+
+{% block content %}
+      <h1>Agents</h1>
+      <p class="lead">List available agents</p>
+      <p>
+      <form class="form-inline"  method="get" action="{% url teddixweb.views.agents_view %}">
+        {% csrf_token %}
+        <div class="form-group" role="form">
+          <input type="search" class="form-control" name="search" value="{{ search }}" placeholder="Agent Name">
+        </div>
+        <button type="submit" class="btn btn-primary">Search</button>
+      </form>
+      </p>
+      <table class="table table-condensed table-hover">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Agent Name</th>
+            <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for agent in agent_list %}
+        <tr>
+          <td>{{ agent.id }}</td>
+          <td><a href="/agents/{{ agent.id }}">{{ agent.name }}</a></td>
+          <td>[actions]</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+{% endblock %}
+

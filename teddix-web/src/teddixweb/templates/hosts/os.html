@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}Teddix OS{% endblock %}
+
+{% block content %}
+      <h1>Opertating Systems</h1>
+      <p class="lead">List available operating systems</p>
+      <p>
+      <form class="form-inline"  method="get" action="{% url teddixweb.views.os_view %}">
+        {% csrf_token %}
+        <div class="form-group" role="form">
+          <input type="search" class="form-control" name="search" value="{{ search }}" placeholder="System Name">
+        </div>
+        <button type="submit" class="btn btn-primary">Search</button>
+      </form>
+      </p>
+      <table class="table table-condensed table-hover">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>System Name</th>
+            <th>Agents</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for os in os_list %}
+        <tr>
+          <td>{{ os.id }}</td>
+          <td>{{ os.name }}</td>
+	  <td>{{ os.count }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+{% endblock %}
+

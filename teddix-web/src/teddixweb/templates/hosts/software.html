@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}Teddix Software{% endblock %}
+
+{% block content %}
+      <h1>Installed Applications</h1>
+      <p class="lead">List all installed applications(packages)</p>
+      <p>
+      <form class="form-inline"  method="get" action="{% url teddixweb.views.software_view %}">
+        {% csrf_token %}
+        <div class="form-group" role="form">
+          <input type="search" class="form-control" name="search" value="{{ search }}" placeholder="Package Name">
+        </div>
+        <button type="submit" class="btn btn-primary">Search</button>
+      </form>
+      </p>
+      <table class="table table-condensed table-hover">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Version</th>
+            <th>Architecture</th>
+            <th>Size</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for pkg in pkg_list %}
+        <tr>
+          <td>{{ pkg.id }}</td>
+          <td>{{ pkg.name }}</td>
+	  <td>{{ pkg.version }}</td>
+	  <td>{{ pkg.arch }}</td>
+	  <td>{{ pkg.size }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+{% endblock %}
+

@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Teddix Network{% endblock %}
+
+{% block content %}
+      <h1>Network Names</h1>
+      <p class="lead">List available networks</p>
+      <p>
+      <form class="form-inline"  method="get" action="{% url teddixweb.views.net_view %}">
+        {% csrf_token %}
+        <div class="form-group" role="form">
+          <input type="search" class="form-control" name="search" value="{{ search }}" placeholder="Network Name">
+        </div>
+        <button type="submit" class="btn btn-primary">Search</button>
+      </form>
+      </p>
+      <table class="table table-condensed table-hover">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Network Name</th>
+            <th>Network Mask</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for net4 in net4_list %}
+        <tr>
+          <td>{{ net4.id }}</td>
+          <td>{{ net4.name }}</td>
+	  <td>{{ net4.mask }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <table class="table table-condensed table-hover">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Network Name</th>
+            <th>Network Mask</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for net6 in net6_list %}
+        <tr>
+          <td>{{ net6.id }}</td>
+          <td>{{ net6.name }}</td>
+	  <td>{{ net6.mask }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+
+{% endblock %}
+
