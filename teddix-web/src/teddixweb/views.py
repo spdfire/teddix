@@ -166,7 +166,7 @@ def software_view(request):
 def updates_view(request):
     check_permissions(request)
 
-def users_view(request):
+def usersgroups_view(request):
     check_permissions(request)
 
     cfg = TeddixConfigFile.TeddixConfigFile()
@@ -174,6 +174,7 @@ def users_view(request):
     syslog.open_syslog()
     parser = TeddixParser.TeddixStringParser()
     user_list = []
+    group_list = []
     search = request.GET.get('search','')
     database = TeddixDatabase.TeddixDatabase(syslog,cfg) 
     sql = "SELECT DISTINCT login FROM sysuser "
@@ -186,20 +187,6 @@ def users_view(request):
 		user_list.append({'id': user_id, 'login': user_login })
         user_id += 1 
 
-    database.disconnect()
-    context = Context({'user_list': user_list, 'search': search } )
-    return render(request, 'hosts/users.html', context )
-
-def groups_view(request):
-    check_permissions(request)
-
-    cfg = TeddixConfigFile.TeddixConfigFile()
-    syslog = TeddixLogger.TeddixLogger("TeddixWeb")
-    syslog.open_syslog()
-    parser = TeddixParser.TeddixStringParser()
-    group_list = []
-    search = request.GET.get('search','')
-    database = TeddixDatabase.TeddixDatabase(syslog,cfg) 
     sql = "SELECT DISTINCT name FROM sysgroup "
     database.execute(sql)
     result = database.fetchall()
@@ -211,8 +198,100 @@ def groups_view(request):
         group_id += 1 
 
     database.disconnect()
-    context = Context({'group_list': group_list, 'search': search } )
-    return render(request, 'hosts/groups.html', context )
+    context = Context({'user_list': user_list, 'group_list': group_list, 'search': search } )
+    return render(request, 'hosts/usersgroups.html', context )
+
+def hardware_view(request):
+    check_permissions(request)
+
+    cfg = TeddixConfigFile.TeddixConfigFile()
+    syslog = TeddixLogger.TeddixLogger("TeddixWeb")
+    syslog.open_syslog()
+    parser = TeddixParser.TeddixStringParser()
+    cpu_list = []
+    mem_list = []
+    board_list = []
+    disk_list = []
+    pci_list = []
+    bios_list = []
+    search = request.GET.get('search','')
+    database = TeddixDatabase.TeddixDatabase(syslog,cfg) 
+    sql = "SELECT DISTINCT familly,speed,cores,htsystem FROM processor "
+    database.execute(sql)
+    result = database.fetchall()
+    cpu_id = 0 
+    for row in result:
+        #cpu_familly = row[0]
+        #cpu_speed = row[1]
+        cpu_familly = 'TODO'
+        cpu_speed = 'TODO'
+        cpu_cores = row[2]
+        cpu_ht = row[3]
+        #if cpu_familly.find(search) != -1 :
+	cpu_list.append({'id': cpu_id, 'familly': cpu_familly, 'speed': cpu_speed, 'cores': cpu_cores, 'ht': cpu_ht })
+        cpu_id += 1 
+
+    sql = "SELECT DISTINCT manufacturer,modulesize,speed FROM memorymodule "
+    database.execute(sql)
+    result = database.fetchall()
+    mem_id = 0 
+    for row in result:
+        mem_manufacturer = row[0]
+        mem_modulesize = row[1]
+        mem_speed = row[2]
+        if mem_manufacturer.find(search) != -1 :
+		mem_list.append({'id': mem_id, 'manufacturer': mem_manufacturer, 'size': mem_modulesize, 'speed': mem_speed })
+        mem_id += 1 
+
+    sql = "SELECT DISTINCT manufacturer,productname,version FROM baseboard "
+    database.execute(sql)
+    result = database.fetchall()
+    board_id = 0 
+    for row in result:
+        board_manufacturer = row[0]
+        board_productname = row[1]
+        board_version = row[2]
+        if board_productname.find(search) != -1 :
+		board_list.append({'id': board_id, 'manufacturer': board_manufacturer, 'productname': board_productname, 'version': board_version })
+        board_id += 1 
+
+    sql = "SELECT DISTINCT model,sectors,sectorsize FROM blockdevice "
+    database.execute(sql)
+    result = database.fetchall()
+    disk_id = 0 
+    for row in result:
+        disk_model = row[0]
+        disk_size = str( parser.str2int(row[1]) * parser.str2int(row[2]))
+        if disk_model.find(search) != -1 :
+		disk_list.append({'id': disk_id, 'model': disk_model, 'size': disk_size })
+        disk_id += 1 
+
+    sql = "SELECT DISTINCT devtype,vendor,model FROM pcidevice "
+    database.execute(sql)
+    result = database.fetchall()
+    pci_id = 0 
+    for row in result:
+        pci_type = row[0]
+        pci_vendor = row[1]
+        pci_model = row[2]
+        if pci_model.find(search) != -1 :
+		pci_list.append({'id': pci_id, 'type': pci_type, 'vendor': pci_vendor, 'model': pci_model })
+        pci_id += 1 
+
+    sql = "SELECT DISTINCT vendor,version FROM bios "
+    database.execute(sql)
+    result = database.fetchall()
+    bios_id = 0 
+    for row in result:
+        bios_vendor = row[0]
+        bios_version = row[1]
+        if bios_vendor.find(search) != -1 :
+		bios_list.append({'id': bios_id, 'vendor': bios_vendor, 'version': bios_version })
+        bios_id += 1 
+
+    database.disconnect()
+    context = Context({'cpu_list': cpu_list, 'mem_list': mem_list, 'board_list': board_list, 'disk_list': disk_list, 'pci_list': pci_list, 'bios_list': bios_list, 'search': search } )
+    return render(request, 'hosts/hardware.html', context )
 
 
 

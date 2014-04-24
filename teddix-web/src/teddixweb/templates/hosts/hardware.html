@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+
+{% block title %}Teddix Hardware{% endblock %}
+
+{% block content %}
+      <h1>Hardware</h1>
+      <p class="lead">Processors</p>
+      <p>
+      <form class="form-inline"  method="get" action="{% url teddixweb.views.hardware_view %}">
+        {% csrf_token %}
+        <div class="form-group" role="form">
+          <input type="search" class="form-control" name="search" value="{{ search }}" placeholder="Name">
+        </div>
+        <button type="submit" class="btn btn-primary">Search</button>
+      </form>
+      </p>
+      <table class="table table-condensed table-hover">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Processor familly</th>
+            <th>Speed</th>
+            <th>Cores</th>
+            <th>HT</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for cpu in cpu_list %}
+        <tr>
+          <td>{{ cpu.id }}</td>
+          <td>{{ cpu.familly }}</td>
+	  <td>{{ cpu.speed }}</td>
+	  <td>{{ cpu.cores }}</td>
+	  <td>{{ cpu.ht }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <p class="lead">Memory</p>
+    <table class="table table-condensed table-hover">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Manufacturer</th>
+            <th>Size</th>
+            <th>Speed</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for mem in mem_list %}
+        <tr>
+          <td>{{ mem.id }}</td>
+          <td>{{ mem.manufacturer }}</td>
+	  <td>{{ mem.size }}</td>
+	  <td>{{ mem.speed }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <p class="lead">MainBoard</p>
+    <table class="table table-condensed table-hover">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Manufacturer</th>
+            <th>Name</th>
+            <th>Version</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for board in board_list %}
+        <tr>
+          <td>{{ board.id }}</td>
+          <td>{{ board.manufacturer }}</td>
+	  <td>{{ board.productname }}</td>
+	  <td>{{ board.version }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <p class="lead">Disks</p>
+    <table class="table table-condensed table-hover">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Model</th>
+            <th>Size</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for disk in disk_list %}
+        <tr>
+          <td>{{ disk.id }}</td>
+          <td>{{ disk.model }}</td>
+	  <td>{{ disk.size }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <p class="lead">PCI Devices</p>
+    <table class="table table-condensed table-hover">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Device type</th>
+            <th>Vendor</th>
+            <th>Model</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for pci in pci_list %}
+        <tr>
+          <td>{{ pci.id }}</td>
+          <td>{{ pci.devtype }}</td>
+	  <td>{{ pci.vendor }}</td>
+	  <td>{{ pci.model }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <p class="lead">Firmware (BIOS)</p>
+    <table class="table table-condensed table-hover">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Vendor</th>
+            <th>Version</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for bios in bios_list %}
+        <tr>
+          <td>{{ bios.id }}</td>
+          <td>{{ bios.vendor }}</td>
+	  <td>{{ bios.version }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+
+
+
+{% endblock %}
+
