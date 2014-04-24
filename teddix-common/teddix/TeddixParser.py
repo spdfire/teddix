@@ -60,16 +60,15 @@ class TeddixStringParser:
             else:
                 return False
 
-    def isb64(self,value):
+    def isbase64(self,value):
         if not self.isstr(value):
             return False
         else:
             match = re.search(r'([a-zA-Z1234567890\=]+)',value)
-            try:
-                base64.b64decode(value)
+            if match:
                 return True
-            except ValueError:
-                return False 
+            else:
+                return False
 
     def str2int(self,value):
         if not self.isint(value):
@@ -92,7 +91,6 @@ class TeddixStringParser:
             return None
         else:
             return base64.b64decode(value)
-
 
 
     def str2float(self,value):
