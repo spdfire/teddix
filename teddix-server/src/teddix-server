@@ -521,13 +521,13 @@ class TeddixServer:
         for row in result:
             server_id = row[0] 
         
-        if not parser.isb64(cfg2html):
+        if not parser.isbase64(cfg2html):
             self.syslog.debug("%s: cfg2html not encoded in base64 " % (host))
             return False
-        if not parser.isb64(ora2html):
+        if not parser.isbase64(ora2html):
             self.syslog.debug("%s: ora2html not encoded in base64 " % (host))
             return False
-        if not parser.isb64(bootlog):
+        if not parser.isbase64(bootlog):
             self.syslog.debug("%s: bootlog not encoded in base64 " % (host))
             return False
 
