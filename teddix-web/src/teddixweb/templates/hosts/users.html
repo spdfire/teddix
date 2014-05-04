@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}Teddix Users{% endblock %}
+
+{% block content %}
+      <h1>Users</h1>
+      <p class="lead">Users</p>
+      <p>
+      <form class="form-inline"  method="get" action="{% url teddixweb.views.users_view %}">
+        {% csrf_token %}
+        <div class="form-group" role="form">
+          <input type="search" class="form-control" name="search" value="{{ search }}" placeholder="Name">
+        </div>
+        <button type="submit" class="btn btn-primary">Search</button>
+      </form>
+      </p>
+      <table class="table table-condensed table-hover">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Name</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in user_list %}
+        <tr>
+          <td>{{ user.id }}</td>
+          <td>{{ user.login }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+{% endblock %}
+

@@ -6,14 +6,32 @@
       <h1>Network Names</h1>
       <p class="lead">List available networks</p>
       <p>
-      <form class="form-inline"  method="get" action="{% url teddixweb.views.net_view %}">
-        {% csrf_token %}
-        <div class="form-group" role="form">
-          <input type="search" class="form-control" name="search" value="{{ search }}" placeholder="Network Name">
+      <form class="form-inline" id="search_form" method="get" action="{% url teddixweb.views.net_view %}">
+        <div class="row" >
+          <div class="col-md-10">
+            {% csrf_token %}
+            <input  type="search" class="form-control" name="search_name" value="{{ search_name }}" placeholder="Network Name">
+            <button type="submit" class="btn btn-primary">Search</button>
+          </div>
+          <div class="col-md-2">
+            <div style='display:none'><input type='hidden' name='search_type' id='search_type' value="{{ search_type }}" /></div>
+            <div class="btn-group">
+              {% if search_type == "ipv4" %}
+                <button type="button" class="btn btn-primary active" data-toggle="button" onclick="document.getElementById('search_type').value='ipv4';document.getElementById('search_form').submit();" >IPv4</button>
+                <button type="button" class="btn btn-default" data-toggle="button" onclick="document.getElementById('search_type').value='ipv6';document.getElementById('search_form').submit();" >IPv6</button>
+              {% endif %}
+              {% if search_type == "ipv6" %}
+                <button type="button" class="btn btn-default" data-toggle="button" onclick="document.getElementById('search_type').value='ipv4';document.getElementById('search_form').submit();" >IPv4</button>
+                <button type="button" class="btn btn-primary active" data-toggle="button" onclick="document.getElementById('search_type').value='ipv6';document.getElementById('search_form').submit();" >IPv6</button>
+              {% endif %}
+            
+            </div>
+          </div>
         </div>
-        <button type="submit" class="btn btn-primary">Search</button>
       </form>
       </p>
+
+      {% if search_type == "ipv4" %}
       <table class="table table-condensed table-hover">
         <thead>
           <tr>
@@ -32,7 +50,9 @@
         {% endfor %}
       </tbody>
     </table>
+    {% endif %}
 
+    {% if search_type == "ipv6" %}
     <table class="table table-condensed table-hover">
         <thead>
           <tr>
@@ -51,6 +71,7 @@
         {% endfor %}
       </tbody>
     </table>
+    {% endif %}
 
 
 {% endblock %}

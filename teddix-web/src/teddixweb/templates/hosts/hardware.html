@@ -4,16 +4,55 @@
 
 {% block content %}
       <h1>Hardware</h1>
-      <p class="lead">Processors</p>
       <p>
-      <form class="form-inline"  method="get" action="{% url teddixweb.views.hardware_view %}">
-        {% csrf_token %}
-        <div class="form-group" role="form">
-          <input type="search" class="form-control" name="search" value="{{ search }}" placeholder="Name">
+      <form class="form-inline" id="search_form" method="get" action="{% url teddixweb.views.hardware_view %}">
+        <div class="row" >
+          <div class="col-md-6">
+            {% csrf_token %}
+            <input type="search" class="form-control" name="search_name" value="{{ search_name }}" placeholder="Name">
+            <button type="submit" class="btn btn-primary">Search</button>
+          </div>
+          <div class="col-md-6">
+            <div style='display:none'><input type='hidden' name='search_type' id='search_type' value="{{ search_type }}" /></div>
+            <div class="btn-group">
+            {% if search_type == "processor" %}
+              <button type="button" class="btn btn-primary active" data-toggle="button" onclick="document.getElementById('search_type').value='processor';document.getElementById('search_form').submit();" >Processor</button>
+            {% else %}
+              <button type="button" class="btn btn-default" data-toggle="button" onclick="document.getElementById('search_type').value='processor';document.getElementById('search_form').submit();" >Processor</button>
+            {% endif %}
+            {% if search_type == "memory" %}
+                <button type="button" class="btn  btn-primary active" data-toggle="button" onclick="document.getElementById('search_type').value='memory';document.getElementById('search_form').submit();" >Memory</button>
+            {% else %}
+                <button type="button" class="btn btn-default" data-toggle="button" onclick="document.getElementById('search_type').value='memory';document.getElementById('search_form').submit();" >Memory</button>
+            {% endif %}
+            {% if search_type == "mainboard" %}
+                <button type="button" class="btn  btn-primary active" data-toggle="button" onclick="document.getElementById('search_type').value='mainboard';document.getElementById('search_form').submit();" >Mainboard</button>
+            {% else %}
+                <button type="button" class="btn btn-default" data-toggle="button" onclick="document.getElementById('search_type').value='mainboard';document.getElementById('search_form').submit();" >Mainboard</button>
+            {% endif %}
+            {% if search_type == "disk" %}
+                <button type="button" class="btn  btn-primary active" data-toggle="button" onclick="document.getElementById('search_type').value='disk';document.getElementById('search_form').submit();" >Disks</button>
+            {% else %}
+                <button type="button" class="btn btn-default" data-toggle="button" onclick="document.getElementById('search_type').value='disk';document.getElementById('search_form').submit();" >Disks</button>
+            {% endif %}
+            {% if search_type == "pcidev" %}
+                <button type="button" class="btn  btn-primary active" data-toggle="button" onclick="document.getElementById('search_type').value='pcidev';document.getElementById('search_form').submit();" >PCI device</button>
+            {% else %}
+                <button type="button" class="btn btn-default" data-toggle="button" onclick="document.getElementById('search_type').value='pcidev';document.getElementById('search_form').submit();" >PCI device</button>
+            {% endif %}
+            {% if search_type == "firmware" %}
+                <button type="button" class="btn  btn-primary active" data-toggle="button" onclick="document.getElementById('search_type').value='firmware';document.getElementById('search_form').submit();" >Firmware</button>
+            {% else %}
+                <button type="button" class="btn btn-default" data-toggle="button" onclick="document.getElementById('search_type').value='firmware';document.getElementById('search_form').submit();" >Firmware</button>
+            {% endif %}
+            </div>
+          </div>
         </div>
-        <button type="submit" class="btn btn-primary">Search</button>
       </form>
       </p>
+      
+      {% if search_type == "processor" %}
+      <p class="lead">Processor</p>
       <table class="table table-condensed table-hover">
         <thead>
           <tr>
@@ -22,128 +61,137 @@
             <th>Speed</th>
             <th>Cores</th>
             <th>HT</th>
-        </tr>
-      </thead>
-      <tbody>
+          </tr>
+        </thead>
+        <tbody>
         {% for cpu in cpu_list %}
-        <tr>
-          <td>{{ cpu.id }}</td>
-          <td>{{ cpu.familly }}</td>
-	  <td>{{ cpu.speed }}</td>
-	  <td>{{ cpu.cores }}</td>
-	  <td>{{ cpu.ht }}</td>
-        </tr>
+          <tr>
+            <td>{{ cpu.id }}</td>
+            <td>{{ cpu.familly }}</td>
+	          <td>{{ cpu.speed }}</td>
+	          <td>{{ cpu.cores }}</td>
+	          <td>{{ cpu.ht }}</td>
+          </tr>
         {% endfor %}
-      </tbody>
-    </table>
+        </tbody>
+      </table>
+      {% endif %}
 
-    <p class="lead">Memory</p>
-    <table class="table table-condensed table-hover">
+      {% if search_type == "memory" %}
+      <p class="lead">Memory</p>
+      <table class="table table-condensed table-hover">
         <thead>
           <tr>
             <th>#</th>
             <th>Manufacturer</th>
             <th>Size</th>
             <th>Speed</th>
-        </tr>
-      </thead>
-      <tbody>
+          </tr>
+        </thead>
+        <tbody>
         {% for mem in mem_list %}
-        <tr>
-          <td>{{ mem.id }}</td>
-          <td>{{ mem.manufacturer }}</td>
-	  <td>{{ mem.size }}</td>
-	  <td>{{ mem.speed }}</td>
-        </tr>
+          <tr>
+            <td>{{ mem.id }}</td>
+            <td>{{ mem.manufacturer }}</td>
+	          <td>{{ mem.size }}</td>
+	          <td>{{ mem.speed }}</td>
+          </tr>
         {% endfor %}
-      </tbody>
-    </table>
+        </tbody>
+      </table>
+      {% endif %}
 
-    <p class="lead">MainBoard</p>
-    <table class="table table-condensed table-hover">
+      {% if search_type == "mainboard" %}
+      <p class="lead">Mainboard</p>
+      <table class="table table-condensed table-hover">
         <thead>
           <tr>
             <th>#</th>
             <th>Manufacturer</th>
             <th>Name</th>
             <th>Version</th>
-        </tr>
-      </thead>
-      <tbody>
+          </tr>
+        </thead>
+        <tbody>
         {% for board in board_list %}
-        <tr>
-          <td>{{ board.id }}</td>
-          <td>{{ board.manufacturer }}</td>
-	  <td>{{ board.productname }}</td>
-	  <td>{{ board.version }}</td>
-        </tr>
+          <tr>
+            <td>{{ board.id }}</td>
+            <td>{{ board.manufacturer }}</td>
+	          <td>{{ board.productname }}</td>
+	          <td>{{ board.version }}</td>
+          </tr>
         {% endfor %}
-      </tbody>
-    </table>
+        </tbody>
+      </table>
+      {% endif %}
 
-    <p class="lead">Disks</p>
-    <table class="table table-condensed table-hover">
+      {% if search_type == "disk" %}
+      <p class="lead">Disks</p>
+      <table class="table table-condensed table-hover">
         <thead>
           <tr>
             <th>#</th>
             <th>Model</th>
             <th>Size</th>
-        </tr>
-      </thead>
-      <tbody>
+          </tr>
+        </thead>
+        <tbody>
         {% for disk in disk_list %}
-        <tr>
-          <td>{{ disk.id }}</td>
-          <td>{{ disk.model }}</td>
-	  <td>{{ disk.size }}</td>
+          <tr>
+            <td>{{ disk.id }}</td>
+            <td>{{ disk.model }}</td>
+	          <td>{{ disk.size }}</td>
         </tr>
         {% endfor %}
-      </tbody>
-    </table>
+        </tbody>
+      </table>
+      {% endif %}
 
-    <p class="lead">PCI Devices</p>
-    <table class="table table-condensed table-hover">
+      {% if search_type == "pcidev" %}
+      <p class="lead">PCI Devices</p>
+      <table class="table table-condensed table-hover">
         <thead>
           <tr>
             <th>#</th>
             <th>Device type</th>
             <th>Vendor</th>
             <th>Model</th>
-        </tr>
-      </thead>
-      <tbody>
+          </tr>
+        </thead>
+        <tbody>
         {% for pci in pci_list %}
-        <tr>
-          <td>{{ pci.id }}</td>
-          <td>{{ pci.devtype }}</td>
-	  <td>{{ pci.vendor }}</td>
-	  <td>{{ pci.model }}</td>
-        </tr>
+          <tr>
+            <td>{{ pci.id }}</td>
+            <td>{{ pci.devtype }}</td>
+	          <td>{{ pci.vendor }}</td>
+	          <td>{{ pci.model }}</td>
+          </tr>
         {% endfor %}
-      </tbody>
-    </table>
+        </tbody>
+      </table>
+      {% endif %}
 
-    <p class="lead">Firmware (BIOS)</p>
-    <table class="table table-condensed table-hover">
+      {% if search_type == "firmware" %}
+      <p class="lead">Firmware (BIOS)</p>
+      <table class="table table-condensed table-hover">
         <thead>
           <tr>
             <th>#</th>
             <th>Vendor</th>
             <th>Version</th>
-        </tr>
-      </thead>
-      <tbody>
+          </tr>
+        </thead>
+        <tbody>
         {% for bios in bios_list %}
-        <tr>
-          <td>{{ bios.id }}</td>
-          <td>{{ bios.vendor }}</td>
-	  <td>{{ bios.version }}</td>
-        </tr>
+          <tr>
+            <td>{{ bios.id }}</td>
+            <td>{{ bios.vendor }}</td>
+	          <td>{{ bios.version }}</td>
+          </tr>
         {% endfor %}
-      </tbody>
-    </table>
-
-
+        </tbody>
+      </table>
+      {% endif %}
 
 
 {% endblock %}
