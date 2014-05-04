@@ -613,7 +613,7 @@ class TeddixCfg2Html:
     def __init__(self,syslog,cfg):
         self.syslog = syslog
         self.cfg = cfg
-        self.agent_cfg2html_file = self.cfg.global_workdir  + '/agent' + "/" + self.cfg.global_hostname + ".html" 
+        self.agent_cfg2html_file = self.cfg.global_workdir  + '/agent' + "/" + self.cfg.global_hostname + ".txt" 
 
     def run(self):
         try:
@@ -634,11 +634,11 @@ class TeddixOra2Html:
     def __init__(self,syslog,cfg):
         self.syslog = syslog
         self.cfg = cfg
-        self.ora2html_file = self.cfg.global_workdir  + '/agent' + "/" + self.cfg.global_hostname + "_ora2html.html"
+        self.ora2html_file = self.cfg.global_workdir  + '/agent' + "/" + self.cfg.global_hostname + "_ora2html.txt"
 
     def run(self):
         try:
-            subprocess.Popen([self.cfg.agent_ora2html,"-file", self.ora2html_file], stderr=subprocess.STDOUT, stdout=subprocess.PIPE).communicate()[0]
+            subprocess.Popen([self.cfg.agent_ora2html,"-text","-file", self.ora2html_file], stderr=subprocess.STDOUT, stdout=subprocess.PIPE).communicate()[0]
             self.syslog.info("ora2html succeeded ")
         except Exception, e:
             self.syslog.warn("ora2html failed ")
