@@ -14,7 +14,7 @@
         <button type="submit" class="btn btn-primary">Search</button>
       </form>
       </p>
-      <table class="table table-condensed table-hover">
+      <table class="table table-hover">
         <thead>
           <tr>
             <th>#</th>
@@ -27,7 +27,12 @@
         <tr>
           <td>{{ agent.id }}</td>
           <td><a href="/agents/{{ agent.id }}">{{ agent.name }}</a></td>
-          <td>[actions]</td>
+          <td>
+            <a href="/agents/{{ agent.id }}/schedule"><img src="/static/actions/schedule.png" alt="Schedule"/></a>
+            <a href="/agents/{{ agent.id }}/restart"><img src="/static/actions/restart.png" alt="Restart"/></a>
+            <a href="/agents/{{ agent.id }}/edit"><img src="/static/actions/edit.png" alt="Edit"/></a>
+            <a href="/agents/{{ agent.id }}/delete"><img src="/static/actions/delete.png" alt="Delete"/></a>
+          </td>
         </tr>
         {% endfor %}
       </tbody>
