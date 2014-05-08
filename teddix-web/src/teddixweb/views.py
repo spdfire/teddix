@@ -4,6 +4,10 @@ from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import redirect
 from django.core.context_processors import csrf
 from django.template import Context, Template
+import pygal
+from pygal.style import LightSolarizedStyle
+from pygal.style import CleanStyle
+from pygal.style import LightColorizedStyle
 
 # Syslog handler                                                                
 import logging
@@ -344,6 +348,36 @@ def cfg2html_view(request):
 
 def dashboard_view(request):
     check_permissions(request)
+    pie_chart = pygal.Pie(width=300, height=300, explicit_size=False, style=CleanStyle)
+    pie_chart.title = 'Operating Systems'
+    pie_chart.add('Windows', 40)
+    pie_chart.add('Linux', 30)
+    pie_chart.add('Aix', 20)
+    pie_chart.add('HP-UX', 10)
+    pie_chart.render_to_file('teddixweb/static/charts/dashboard-os.svg')
+    pie_chart = pygal.Pie(width=300, height=300, explicit_size=False, style=CleanStyle)
+    pie_chart.title = 'Architectures'
+    pie_chart.add('x86_64', 70)
+    pie_chart.add('x86', 20)
+    pie_chart.add('ppc', 5)
+    pie_chart.add('arm', 5)
+    pie_chart.render_to_file('teddixweb/static/charts/dashboard-arch.svg')
+    pie_chart = pygal.Pie(width=300, height=300, explicit_size=False, style=CleanStyle)
+    pie_chart.title = 'Networks per system'
+    pie_chart.add('192.168.1.0/24', 60)
+    pie_chart.add('10.0.0.0/16', 40)
+    pie_chart.render_to_file('teddixweb/static/charts/dashboard-networks.svg')
+    pie_chart = pygal.Pie(width=300, height=300, explicit_size=False, style=CleanStyle)
+    pie_chart.title = 'Installed packages'
+    pie_chart.add('glibc', 60)
+    pie_chart.add('gcc', 20)
+    pie_chart.add('httpd', 10)
+    pie_chart.add('python', 5)
+    pie_chart.add('perl', 5)
+    pie_chart.render_to_file('teddixweb/static/charts/dashboard-packages.svg')
+
+
+
     return render(request, 'monitor/dashboard.html')
 
 
