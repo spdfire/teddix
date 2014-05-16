@@ -294,7 +294,7 @@ def hardware_view(request):
                 mem_list.append({'id': mem_id, 'manufacturer': mem_manufacturer, 'size': mem_modulesize, 'speed': mem_speed })
             mem_id += 1 
 
-    elif search_type == 'baseboard':
+    elif search_type == 'mainboard':
         sql = "SELECT DISTINCT manufacturer,productname,version FROM baseboard "
         database.execute(sql)
         result = database.fetchall()
