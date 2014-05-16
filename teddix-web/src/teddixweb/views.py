@@ -171,8 +171,32 @@ def software_view(request):
     context = Context({'pkg_list': pkg_list, 'search': search } )
     return render(request, 'hosts/software.html', context )
 
-def updates_view(request):
+def patches_view(request):
     check_permissions(request)
+
+    cfg = TeddixConfigFile.TeddixConfigFile()
+    syslog = TeddixLogger.TeddixLogger("TeddixWeb")
+    syslog.open_syslog()
+    parser = TeddixParser.TeddixStringParser()
+    patch_list = []
+    search = request.GET.get('search','')
+    database = TeddixDatabase.TeddixDatabase(syslog,cfg) 
+    sql = "SELECT DISTINCT name,version,patchtype FROM patch "
+    database.execute(sql)
+    result = database.fetchall()
+    patch_id = 0 
+    for row in result:
+        patch_name = row[0]
+        patch_version = row[1]
+        patch_type = row[2]
+        if patch_name.find(search) != -1 :
+		patch_list.append({'id': patch_id, 'name': patch_name, 'version': patch_version, 'type': patch_type })
+        patch_id += 1 
+
+    database.disconnect()
+    context = Context({'patch_list': patch_list, 'search': search } )
+    return render(request, 'hosts/patches.html', context )
+
 
 def users_view(request):
     check_permissions(request)

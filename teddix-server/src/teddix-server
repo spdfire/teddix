@@ -328,6 +328,17 @@ class TeddixServer:
             sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
             database.execute(sql,(server_id,baseline_id,system_id,arch,description,files,homepage,name,pkgsize,section,signed,installedsize,status,version))
 
+        # patches 
+        root = system.find('updates')
+        for child in root:
+            name = child.get('name')
+            description = child.get('info')
+            patchtype = child.get('type')
+            version = child.get('available')
+            sql  = "INSERT INTO patch(server_id,baseline_id,system_id,name,description,patchtype,version) "
+            sql += "VALUES(%s,%s,%s,%s,%s,%s,%s)" 
+            database.execute(sql,(server_id,baseline_id,system_id,name,description,patchtype,version))
+
         # filesystems 
         root = system.find('filesystems')
         for child in root:

@@ -205,6 +205,22 @@ CREATE TABLE package (
 	CONSTRAINT fk_systemid_package FOREIGN KEY (system_id) REFERENCES system(id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
+CREATE TABLE patch ( 
+	id INT NOT NULL AUTO_INCREMENT,
+	server_id INT NOT NULL,
+	baseline_id INT NOT NULL,
+	system_id INT NOT NULL,
+	name VARCHAR(50), 
+	description VARCHAR(250), 
+	patchtype VARCHAR(50), 
+	version VARCHAR(50), 
+
+	PRIMARY KEY (id),
+	CONSTRAINT fk_serverid_patch FOREIGN KEY (server_id) REFERENCES server(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	CONSTRAINT fk_baselineid_patch FOREIGN KEY (baseline_id) REFERENCES baseline(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	CONSTRAINT fk_systemid_patch FOREIGN KEY (system_id) REFERENCES system(id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
 CREATE TABLE filesystem ( 
 	id INT NOT NULL AUTO_INCREMENT,
 	server_id INT NOT NULL,
