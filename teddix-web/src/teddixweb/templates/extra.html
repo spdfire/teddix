@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}Teddix extra{% endblock %}
+
+{% block content %}
+      <h1 class="page-header">Extra</h1>
+      <p class="lead">Additional server information</p>
+      <p>
+      <form class="form-inline"  method="get" action="{% url teddixweb.views.extra_view %}">
+        {% csrf_token %}
+        <div class="form-group" role="form">
+          <input type="search" class="form-control" name="search" value="{{ search }}" placeholder="Server Name">
+        </div>
+        <button type="submit" class="btn btn-primary">Search</button>
+      </form>
+      </p>
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Agent Name</th>
+            <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for agent in agent_list %}
+        <tr>
+          <td>{{ agent.id }}</td>
+          <td>{{ agent.name }}</td>
+          <td>
+            <a href="/extra/{{ agent.id }}/cfg2html" class="btn btn-success btn-xs" data-toggle="modal" data-target="#cfg2html-modal">cfg2html</a>
+            <a href="/extra/{{ agent.id }}/bootlog" class="btn btn-success btn-xs"  data-toggle="modal" data-target="#bootlog-modal">bootlog</a>
+            <a href="/extra/{{ agent.id }}/dmesg" class="btn btn-success btn-xs"    data-toggle="modal" data-target="#dmesg-modal">dmesg</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+
+    <!-- Large modal -->
+    <div class="modal fade" id="cfg2html-modal" tabindex="-1" role="dialog" aria-labelledby="cfg2html-label" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h4 class="modal-title" id="cfg2html-label">Loading...</h4>
+          </div>
+
+          <div class="modal-body"> loading...
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Large modal -->
+    <div class="modal fade" id="bootlog-modal" tabindex="-1" role="dialog" aria-labelledby="bootlog-label" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h4 class="modal-title" id="bootlog-label">Loading...</h4>
+          </div>
+
+          <div class="modal-body"> loading...
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Large modal -->
+    <div class="modal fade" id="dmesg-modal" tabindex="-1" role="dialog" aria-labelledby="dmesg-label" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h4 class="modal-title" id="dmesg-label">Loading...</h4>
+          </div>
+
+          <div class="modal-body"> loading...
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+
+
+{% endblock %}
+

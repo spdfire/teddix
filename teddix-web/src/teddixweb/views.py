@@ -324,6 +324,30 @@ def hardware_view(request):
     context = Context({'cpu_list': cpu_list, 'mem_list': mem_list, 'board_list': board_list, 'disk_list': disk_list, 'pci_list': pci_list, 'bios_list': bios_list, 'search_name': search_name, 'search_type': search_type } )
     return render(request, 'hosts/hardware.html', context )
 
+def extra_view(request):
+    check_permissions(request)
+
+    cfg = TeddixConfigFile.TeddixConfigFile()
+    syslog = TeddixLogger.TeddixLogger("TeddixWeb")
+    syslog.open_syslog()
+    parser = TeddixParser.TeddixStringParser()
+    search = request.GET.get('search','')
+    database = TeddixDatabase.TeddixDatabase(syslog,cfg) 
+    agent_list = []
+    sql = "SELECT id,name FROM server "
+    database.execute(sql)
+    result = database.fetchall()
+    for row in result:
+        server_id = row[0]
+        server_name = row[1]
+        if server_name.find(search) != -1 :
+            agent_list.append({'id': server_id, 'name': server_name })
+
+    database.disconnect()
+    context = Context({'agent_list': agent_list, 'search': search } )
+    return render(request, 'extra.html', context )
+
+
 def cfg2html_view(request):
     check_permissions(request)
 
@@ -333,7 +357,7 @@ def cfg2html_view(request):
     parser = TeddixParser.TeddixStringParser()
     search = request.GET.get('search','')
     database = TeddixDatabase.TeddixDatabase(syslog,cfg) 
-    sql = "SELECT cfg2html FROM extra LIMIT 1 "
+    sql = "SELECT cfg2html FROM extra LIMIT 1 " 
     database.execute(sql)
     result = database.fetchall()
     for row in result:
@@ -344,6 +368,45 @@ def cfg2html_view(request):
     context = Context({'cfg2html': cfg2html, 'search': search } )
     return render(request, 'extra/cfg2html.html', context )
 
+def bootlog_view(request):
+    check_permissions(request)
+
+    cfg = TeddixConfigFile.TeddixConfigFile()
+    syslog = TeddixLogger.TeddixLogger("TeddixWeb")
+    syslog.open_syslog()
+    parser = TeddixParser.TeddixStringParser()
+    search = request.GET.get('search','')
+    database = TeddixDatabase.TeddixDatabase(syslog,cfg) 
+    sql = "SELECT bootlog FROM extra LIMIT 1 " 
+    database.execute(sql)
+    result = database.fetchall()
+    for row in result:
+    	b64_bootlog = row[0]
+	bootlog = parser.b64decode(b64_bootlog)
+
+    database.disconnect()
+    context = Context({'bootlog': bootlog, 'search': search } )
+    return render(request, 'extra/bootlog.html', context )
+
+def dmesg_view(request):
+    check_permissions(request)
+
+    cfg = TeddixConfigFile.TeddixConfigFile()
+    syslog = TeddixLogger.TeddixLogger("TeddixWeb")
+    syslog.open_syslog()
+    parser = TeddixParser.TeddixStringParser()
+    search = request.GET.get('search','')
+    database = TeddixDatabase.TeddixDatabase(syslog,cfg) 
+    sql = "SELECT dmesg FROM extra LIMIT 1 " 
+    database.execute(sql)
+    result = database.fetchall()
+    for row in result:
+    	b64_dmesg = row[0]
+	dmesg = parser.b64decode(b64_dmesg)
+
+    database.disconnect()
+    context = Context({'dmesg': dmesg, 'search': search } )
+    return render(request, 'extra/dmesg.html', context )
 
 
 def dashboard_view(request):

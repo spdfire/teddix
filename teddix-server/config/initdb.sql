@@ -13,14 +13,14 @@ CREATE TABLE server (
 	PRIMARY KEY (id)
 ) ENGINE=InnoDB;
 
--- container for cfg2html & ora2html
+-- container for cfg2html
 CREATE TABLE extra ( 
 	id INT NOT NULL AUTO_INCREMENT, 
 	server_id INT NOT NULL, 
 	created DATETIME NOT NULL, 
 	cfg2html MEDIUMTEXT, 
-	ora2html MEDIUMTEXT, 
 	bootlog MEDIUMTEXT, 
+	dmesg MEDIUMTEXT, 
 
 	PRIMARY KEY (id),
 	CONSTRAINT fk_serverid_extra FOREIGN KEY (server_id) REFERENCES server(id) ON DELETE CASCADE ON UPDATE CASCADE 
