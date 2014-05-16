@@ -69,15 +69,15 @@ class TeddixTCPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
         return xml.tostring(cfg2html, 'utf-8')
   
-    def create_message_ora2html(self,syslog,cfg):
-        ora2html = TeddixInventory.TeddixOra2Html(syslog,cfg)
-        ora2html.run()
-        b64 = base64.b64encode(ora2html.create_html())
+    def create_message_dmesg(self,syslog,cfg):
+        dmesg = TeddixInventory.TeddixDmesg(syslog,cfg)
+        data = dmesg.run()
+        b64 = base64.b64encode(data)
 
-        ora2html = xml.Element('ora2html')
-        ora2html.text = b64
+        dmesg = xml.Element('dmesg')
+        dmesg.text = b64
         
-        return xml.tostring(ora2html, 'utf-8')
+        return xml.tostring(dmesg, 'utf-8')
 
     def create_message_bootlog(self,syslog,cfg):
         bl = TeddixInventory.TeddixBootlog(syslog,cfg)
@@ -171,19 +171,19 @@ class TeddixTCPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 self.syslog.warn("%s: /cfg2html request failed" % self.address_string())
                 self.syslog.debug("do_GET() %s " % e)
 
-        elif self.path == '/ora2html':
-            self.syslog.info("Generating /ora2html")
+        elif self.path == '/dmesg':
+            self.syslog.info("Generating /dmesg")
             self.lock.acquire()
             try:
-                raw_ora2html = self.create_message_ora2html(self.syslog,self.cfg)
+                raw_dmesg = self.create_message_dmesg(syslog,cfg)
                 self.lock.release()
-                raw_message = self.create_message(200,"Request successful",'ora2html',raw_ora2html)
+                raw_message = self.create_message(200,"Request successful",'dmesg',raw_dmesg)
 
                 self.send_message(200,"Request successful",raw_message)
-                self.syslog.info("%s: /ora2html request sent" % self.address_string())
+                self.syslog.info("%s: /dmesg request sent" % self.address_string())
             except Exception, e:
                 self.lock.release()
-                self.syslog.warn("%s: /ora2html request failed" % self.address_string())
+                self.syslog.warn("%s: /dmesg request failed" % self.address_string())
                 self.syslog.debug("do_GET() %s " % e)
 
         elif self.path == '/bootlog':

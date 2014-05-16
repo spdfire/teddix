@@ -501,11 +501,8 @@ class TeddixServer:
 
         return True
 
-
-
-
  
-    def save_dbextra(self,database,host,cfg2html,ora2html,bootlog):
+    def save_dbextra(self,database,host,cfg2html,dmesg,bootlog):
         self.syslog.debug("%s: Save in database " % (host))
 
         parser = TeddixParser.TeddixStringParser()
@@ -524,16 +521,16 @@ class TeddixServer:
         if not parser.isbase64(cfg2html):
             self.syslog.debug("%s: cfg2html not encoded in base64 " % (host))
             return False
-        if not parser.isbase64(ora2html):
-            self.syslog.debug("%s: ora2html not encoded in base64 " % (host))
+        if not parser.isbase64(dmesg):
+            self.syslog.debug("%s: dmesg not encoded in base64 " % (host))
             return False
         if not parser.isbase64(bootlog):
             self.syslog.debug("%s: bootlog not encoded in base64 " % (host))
             return False
 
-        sql  = "INSERT INTO extra(server_id,created,cfg2html,ora2html,bootlog) "
+        sql  = "INSERT INTO extra(server_id,created,cfg2html,dmesg,bootlog) "
         sql += "VALUES(%s,NOW(),%s,%s,%s)"  
-        database.execute(sql,(server_id,cfg2html,ora2html,bootlog))
+        database.execute(sql,(server_id,cfg2html,dmesg,bootlog))
         return True
        
    
@@ -550,14 +547,14 @@ class TeddixServer:
         # 2. GET /cfg2html 
         cfg2html = self.make_request(host,'/cfg2html')
 
-        # 3. GET /ora2html
-        ora2html = self.make_request(host,'/ora2html')
+        # 3. GET /dmesg
+        dmesg = self.make_request(host,'/dmesg')
 
         # 4. GET /bootlog
         bootlog = self.make_request(host,'/bootlog')
 
         # 5. Insert report to Database
-        if cfg2html == None and ora2html == None and baseline == None and bootlog == None:
+        if cfg2html == None and dmesg == None and baseline == None and bootlog == None:
             self.syslog.debug("%s: Agent is not responding" % host )
         else:
             # 5.1 Get baseline report
@@ -576,13 +573,13 @@ class TeddixServer:
             else: 
                 cfg2html = data.find('cfg2html')
 
-            # 5.3 Get ora2html report
-            data = self.parse_reply(host,ora2html)
+            # 5.3 Get dmesg report
+            data = self.parse_reply(host,dmesg)
             if data == None: 
                 self.syslog.warn("%s: Unable to parse reply" % host )
 
             else: 
-                ora2html = data.find('ora2html')
+                dmesg = data.find('dmesg')
 
             # 5.4 Get bootlog report
             data = self.parse_reply(host,bootlog)
@@ -593,15 +590,15 @@ class TeddixServer:
                 bootlog = data.find('bootlog')
 
 
-            # 6. Save cfg2html, ora2html and bootlog
+            # 6. Save cfg2html, dmesg and bootlog
             database = TeddixDatabase.TeddixDatabase(syslog,cfg)
             
-            if cfg2html != None and ora2html != None and bootlog != None: 
+            if cfg2html != None and dmesg != None and bootlog != None: 
                 cfg2html_b64 = cfg2html.text
-                ora2html_b64 = ora2html.text
+                dmesg_b64 = dmesg.text
                 bootlog_b64 = bootlog.text
 
-                if not self.save_dbextra(database,host,cfg2html_b64,ora2html_b64,bootlog_b64):
+                if not self.save_dbextra(database,host,cfg2html_b64,dmesg_b64,bootlog_b64):
                     database.rollback()
                     self.syslog.warn("%s: Unable to commit extra " % host )
                     self.syslog.debug("%s: Stopping worker" % host)

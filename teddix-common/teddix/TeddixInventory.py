@@ -630,25 +630,22 @@ class TeddixCfg2Html:
         return html
 
 
-class TeddixOra2Html:
+class TeddixDmesg:
     def __init__(self,syslog,cfg):
         self.syslog = syslog
         self.cfg = cfg
-        self.ora2html_file = self.cfg.global_workdir  + '/agent' + "/" + self.cfg.global_hostname + "_ora2html.html"
 
     def run(self):
-        try:
-            subprocess.Popen([self.cfg.agent_ora2html,"-file", self.ora2html_file], stderr=subprocess.STDOUT, stdout=subprocess.PIPE).communicate()[0]
-            self.syslog.info("ora2html succeeded ")
-        except Exception, e:
-            self.syslog.warn("ora2html failed ")
-            self.syslog.debug("run() %s " % e)
+        dmesg = ''
+        parser = TeddixParser.TeddixStringParser()
 
-    def create_html(self):
-        f = open(self.ora2html_file, 'r')
-        html = f.read()
-        f.close()
-        return html
+        if parser.checkexec('dmesg'):
+            lines = parser.readstdout('dmesg --ctime')
+            for i in range(len(lines)):
+                dmesg += lines[i] + "\n"
+                i += 1 
+                                            
+        return dmesg
 
 class TeddixBootlog:
     def __init__(self,syslog,cfg):
@@ -665,34 +662,28 @@ class TeddixBootlog:
         if subprocess.call(t_bootdmesg1,shell=True) == 0:
             self.syslog.debug("Found /var/log/dmesg" )
             f = open('/var/log/dmesg', 'r')
-            dmesg = f.read()
+            bootlog = f.read()
             f.close()
  
         elif subprocess.call(t_bootdmesg2,shell=True) == 0:
             self.syslog.debug("Found /var/log/dmesg.boot" )
             f = open('/var/log/dmesg.boot', 'r')
-            dmesg = f.read()
+            bootlog = f.read()
             f.close()
 
         elif subprocess.call(t_bootdmesg3,shell=True) == 0:
             self.syslog.debug("Found /var/log/boot.dmesg" )
             f = open('/var/log/boot.dmesg', 'r')
-            dmesg = f.read()
+            bootlog = f.read()
             f.close()
 
         elif subprocess.call(t_bootdmesg4,shell=True) == 0:
             self.syslog.debug("Found /var/log/boot.log" )
             f = open('/var/log/boot.log', 'r')
-            dmesg = f.read()
+            bootlog = f.read()
             f.close()
 
-        else: 
-            self.syslog.debug("Fallback to dmesg command" % self.dist[0])
-            cmd = "dmesg --ctime"
-            state = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            dmesg = state.stdout.read()
-
-        return dmesg
+        return bootlog
 
 
 if __name__ == "__main__":
@@ -717,16 +708,16 @@ if __name__ == "__main__":
     if not os.access(cfg.global_workdir + '/agent', os.X_OK):
         syslog.error("workdir %s needs to be executable" % cfg.global_workdir + '/agent')
 
-    baseline = TeddixBaseline(syslog,cfg)
-    raw_xml = baseline.create_xml()
+    #baseline = TeddixBaseline(syslog,cfg)
+    #raw_xml = baseline.create_xml()
     # make xml pretty ;)
-    reparsed_xml = minidom.parseString(raw_xml)
-    pretty_xml = reparsed_xml.toprettyxml(indent="  ")
+    #reparsed_xml = minidom.parseString(raw_xml)
+    #pretty_xml = reparsed_xml.toprettyxml(indent="  ")
 
-    print pretty_xml
+    #print pretty_xml
     #cfg2html = TeddixCfg2Html(syslog,cfg)
     #cfg2html.run()
-    #ora2html = TeddixOra2Html(syslog,cfg)
-    #ora2html.run()
+    dmesg = TeddixDmesg(syslog,cfg)
+    print dmesg.run()
 
 
