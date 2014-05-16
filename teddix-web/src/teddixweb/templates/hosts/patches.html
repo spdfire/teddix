@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}Teddix available patches{% endblock %}
+
+{% block content %}
+      <h1 class="page-header" >Patches</h1>
+      <p class="lead">List available patches(updates)</p>
+      <p>
+      <form class="form-inline"  method="get" action="{% url teddixweb.views.patches_view %}">
+        {% csrf_token %}
+        <div class="form-group" role="form">
+          <input type="search" class="form-control" name="search" value="{{ search }}" placeholder="Package Name">
+        </div>
+        <button type="submit" class="btn btn-primary">Search</button>
+      </form>
+      </p>
+      <table class="table table-condensed table-hover">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Version</th>
+            <th>type</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for patch in patch_list %}
+        <tr>
+          <td>{{ patch.id }}</td>
+          <td>{{ patch.name }}</td>
+          <td>{{ patch.version }}</td>
+          <td>{{ patch.type }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+{% endblock %}
+
