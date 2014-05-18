@@ -34,8 +34,31 @@ def agents_view(request):
     syslog.open_syslog()
     parser = TeddixParser.TeddixStringParser()
     agent_list = []
+    info = ''
+    error = ''
+
     search = request.GET.get('search','')
+    action = request.GET.get('action','')
+    agent_id = request.GET.get('agent_id','')
     database = TeddixDatabase.TeddixDatabase(syslog,cfg) 
+
+    if action == "delete":
+        sql = "DELETE FROM server WHERE id = %s " 
+        database.execute(sql,agent_id)
+        database.commit()
+        info = "Server has been deleted!"
+        #error  = "bbbb"
+    
+    if action == "restart":
+        info = "Server has been restarted!"
+
+    if action == "schedule":
+        info = "Schedule"
+
+    if action == "edit":
+        info = "Edit"
+
+
     sql = "SELECT id,name FROM server "
     database.execute(sql)
     result = database.fetchall()
@@ -46,7 +69,7 @@ def agents_view(request):
             agent_list.append({'id': server_id, 'name': server_name })
 
     database.disconnect()
-    context = Context({'agent_list': agent_list, 'search': search } )
+    context = Context({'agent_list': agent_list, 'search': search, "info": info, "error": error } )
     return render(request, 'hosts/agents.html', context )
 
 def os_view(request):

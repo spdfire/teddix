@@ -3,6 +3,23 @@
 {% block title %}Teddix Agents{% endblock %}
 
 {% block content %}
+      {% if error %} 
+      <div class="alert alert-danger fade in">
+        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+        <h4>Oh snap! Error occured!</h4>
+        <p>{{ error }}</p>
+        <button type="button" class="btn btn-danger" data-dismiss="alert" aria-hidden="true">Close</button>
+      </div>
+      {% endif %}
+      {% if info %} 
+      <div class="alert alert-success fade in">
+        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+        <h4>Success</h4>
+        <p>{{ info }}</p>
+        <button type="button" class="btn btn-success" data-dismiss="alert" aria-hidden="true">Close</button>
+      </div>
+      {% endif %}
+
       <h1 class="page-header">Agents</h1>
       <p class="lead">List available agents</p>
       <p>
@@ -26,12 +43,12 @@
         {% for agent in agent_list %}
         <tr>
           <td>{{ agent.id }}</td>
-          <td><a href="/agents/{{ agent.id }}">{{ agent.name }}</a></td>
+          <td>{{ agent.name }}</td>
           <td>
-            <a href="/agents/{{ agent.id }}/schedule" data-toggle="popover" data-content="Schedule new job"><img src="/static/actions/schedule.png" alt="Schedule"/></a>
-            <a href="/agents/{{ agent.id }}/restart" data-toggle="popover" data-content="Restart agent"><img src="/static/actions/restart.png" alt="Restart"/></a>
-            <a href="/agents/{{ agent.id }}/edit" data-toggle="popover" data-content="Edit agent"><img src="/static/actions/edit.png" alt="Edit"/></a>
-            <a href="/agents/{{ agent.id }}/delete" data-toggle="popover" data-content="Remove agent"><img src="/static/actions/delete.png" alt="Delete"/></a>
+            <a href="/hosts/agents/?agent_id={{ agent.id }}&action=schedule" data-toggle="popover" data-content="Schedule new job"><img src="/static/actions/schedule.png" alt="Schedule"/></a>
+            <a href="/hosts/agents/?agent_id={{ agent.id }}&action=restart" data-toggle="popover" data-content="Restart agent"><img src="/static/actions/restart.png" alt="Restart"/></a>
+            <a href="/hosts/agents/?agent_id={{ agent.id }}&action=edit" data-toggle="popover" data-content="Edit agent"><img src="/static/actions/edit.png" alt="Edit"/></a>
+            <a href="/hosts/agents/?agent_id={{ agent.id }}&action=delete" data-toggle="popover" data-content="Remove agent"><img src="/static/actions/delete.png" alt="Delete"/></a>
           </td>
         </tr>
         {% endfor %}
