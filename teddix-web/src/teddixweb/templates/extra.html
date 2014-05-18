@@ -28,9 +28,9 @@
           <td>{{ agent.id }}</td>
           <td>{{ agent.name }}</td>
           <td>
-            <a href="/extra/{{ agent.id }}/cfg2html" class="btn btn-success btn-xs" data-toggle="modal" data-target="#cfg2html-modal">cfg2html</a>
-            <a href="/extra/{{ agent.id }}/bootlog" class="btn btn-success btn-xs"  data-toggle="modal" data-target="#bootlog-modal">bootlog</a>
-            <a href="/extra/{{ agent.id }}/dmesg" class="btn btn-success btn-xs"    data-toggle="modal" data-target="#dmesg-modal">dmesg</a>
+            <a href="/extra/?report=cfg2html&agent_id={{ agent.id }}" class="btn btn-success btn-xs" data-toggle="modal" data-target="#cfg2html-modal">cfg2html</a>
+            <a href="/extra/?report=bootlog&agent_id={{ agent.id }}" class="btn btn-success btn-xs"  data-toggle="modal" data-target="#bootlog-modal">bootlog</a>
+            <a href="/extra/?report=dmesg&agent_id={{ agent.id }}" class="btn btn-success btn-xs"    data-toggle="modal" data-target="#dmesg-modal">dmesg</a>
           </td>
         </tr>
         {% endfor %}
