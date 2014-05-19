@@ -3,8 +3,7 @@
 {% block title %}Teddix Agent{% endblock %}
 
 {% block content %}
-      <h1 class="page-header">Agent</h1>
-      <p class="lead">{{ agent_name }}</p>
+      <h1 class="page-header">{{ agent_name }}</h1>
 
       <!-- Nav tabs -->
       <ul class="nav nav-tabs">
@@ -605,10 +604,78 @@
               </table>
             </div>
           </div>         
+        </div>
+
+        <div class="tab-pane fade" id="extra">
+          <div class="row">
+            <div class="col-md-12">
+              <h4>Extra Info</h4>
+              <a href="/extra/?report=cfg2html&agent_id={{ agent_id }}" class="btn btn-success btn-sm" data-toggle="modal" data-target="#cfg2html-modal">cfg2html</a>
+              <a href="/extra/?report=bootlog&agent_id={{ agent_id }}" class="btn btn-success btn-sm"  data-toggle="modal" data-target="#bootlog-modal">bootlog</a>
+              <a href="/extra/?report=dmesg&agent_id={{ agent_id }}" class="btn btn-success btn-sm"    data-toggle="modal" data-target="#dmesg-modal">dmesg</a>
+        
+    <!-- Large modal -->
+    <div class="modal fade" id="cfg2html-modal" tabindex="-1" role="dialog" aria-labelledby="cfg2html-label" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h4 class="modal-title" id="cfg2html-label">Loading...</h4>
+          </div>
+
+          <div class="modal-body"> loading...
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Large modal -->
+    <div class="modal fade" id="bootlog-modal" tabindex="-1" role="dialog" aria-labelledby="bootlog-label" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h4 class="modal-title" id="bootlog-label">Loading...</h4>
+          </div>
+
+          <div class="modal-body"> loading...
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Large modal -->
+    <div class="modal fade" id="dmesg-modal" tabindex="-1" role="dialog" aria-labelledby="dmesg-label" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h4 class="modal-title" id="dmesg-label">Loading...</h4>
+          </div>
+
+          <div class="modal-body"> loading...
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
 
 
         </div>
-        <div class="tab-pane fade" id="extra">extra</div>
       </div>
 {% endblock %}
 
