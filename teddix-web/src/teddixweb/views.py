@@ -250,6 +250,107 @@ def agents_view(request):
             dns_id += 1 
 
 
+        sql = "SELECT uid,gid,login,home,shell,locked,hashtype,groups,comment FROM sysuser WHERE baseline_id = %s"
+        database.execute(sql,baseline_id)
+        result = database.fetchall()
+        user_list = []
+        for row in result:
+            user_uid        = row[0]
+            user_gid        = row[1]
+            user_login      = row[2]
+            user_homedir    = row[3]
+            user_shell      = row[4]
+            user_locked     = row[5]
+            user_hash       = row[6]
+            user_groups     = row[7]
+            user_comment    = row[8]
+            user_list.append({'uid': user_uid, 'gid': user_gid, 'login': user_login, 'homedir': user_homedir, 'shell': user_shell, 'locked': user_locked, 'hash': user_hash, 'groups': user_groups, 'comment': user_comment })
+
+
+        sql = "SELECT familly,procversion,speed,cores,threads,htsystem,proctype,socket,extclock,serialnumber,partnumber FROM processor WHERE baseline_id = %s"
+        database.execute(sql,baseline_id)
+        result = database.fetchall()
+        cpu_id = 0 
+        cpu_list = []
+        for row in result:
+            cpu_familly = row[0]
+            cpu_version = row[1]
+            cpu_speed = row[2]
+            cpu_cores = row[3]
+            cpu_threads = row[4]
+            cpu_ht = row[5]
+            cpu_type = row[6]
+            cpu_socket = row[7]
+            cpu_extclock = row[8]
+            cpu_serialnumber = row[9]
+            cpu_partnumber = row[10]
+            cpu_list.append({'id': cpu_id, 'familly': cpu_familly, 'version': cpu_version, 'speed': cpu_speed, 'cores': cpu_cores, 'threads': cpu_threads, 'ht': cpu_ht, 'type': cpu_type, 'socket': cpu_socket, 'extclock': cpu_extclock, 'serialnumber': cpu_serialnumber, 'partnumber': cpu_partnumber})
+            cpu_id += 1 
+
+        sql = "SELECT bank,location,memorytype,modulesize,speed,width,manufacturer,serialnumber,partnumber FROM memorymodule WHERE baseline_id = %s"
+        database.execute(sql,baseline_id)
+        result = database.fetchall()
+        mem_id = 0 
+        mem_list = []
+        for row in result:
+            mem_bank = row[0]
+            mem_location = row[1]
+            mem_type = row[2]
+            mem_size = row[3]
+            mem_speed = row[4]
+            mem_width = row[5]
+            mem_manufacturer = row[6]
+            mem_serialnumber = row[7]
+            mem_partnumber = row[8]
+            mem_list.append({'id': mem_id, 'bank': mem_bank, 'location': mem_location, 'type': mem_type, 'size': mem_size, 'speed': mem_speed, 'width': mem_width, 'manufacturer': mem_manufacturer, 'serialnumber': mem_serialnumber, 'partnumber': mem_partnumber})
+            mem_id += 1 
+
+        sql = "SELECT manufacturer,productname,version,serialnumber FROM baseboard WHERE baseline_id = %s"
+        database.execute(sql,baseline_id)
+        result = database.fetchall()
+        board_id = 0 
+        board_list = []
+        for row in result:
+            board_manufacturer = row[0]
+            board_productname = row[1]
+            board_version = row[2]
+            board_serialnumber = row[3]
+            board_list.append({'id': board_id, 'manufacturer': board_manufacturer, 'productname': board_productname, 'version': board_version, 'serialnumber': board_serialnumber})
+            board_id += 1 
+
+        sql = "SELECT name,model,vendor,devtype,sectors,sectorsize,rotational,readonly,removable,major,minor FROM blockdevice WHERE baseline_id = %s"
+        database.execute(sql,baseline_id)
+        result = database.fetchall()
+        block_id = 0 
+        block_list = []
+        for row in result:
+            block_name = row[0]
+            block_model = row[1]
+            block_vendor = row[2]
+            block_type = row[3]
+            block_sectors = row[4]
+            block_sectorsize = row[5]
+            block_rotational = row[6]
+            block_readonly = row[7]
+            block_removable = row[8]
+            block_major = row[9]
+            block_minor = row[10]
+            block_list.append({'id': block_id, 'name': block_name, 'model': block_model, 'vendor': block_vendor, 'type': block_type, 'sectors': block_sectors, 'sectorsize': block_sectorsize, 'rotational': block_rotational, 'readonly': block_readonly, 'removable': block_removable, 'major': block_major, 'minor': block_minor  })
+            block_id += 1 
+
+        sql = "SELECT path,devtype,vendor,model,revision FROM pcidevice WHERE baseline_id = %s"
+        database.execute(sql,baseline_id)
+        result = database.fetchall()
+        pci_id = 0 
+        pci_list = []
+        for row in result:
+            pci_path = row[0]
+            pci_type = row[1]
+            pci_vendor = row[2]
+            pci_model = row[3]
+            pci_revision = row[4]
+            pci_list.append({'id': pci_id, 'path': pci_path, 'type': pci_type, 'vendor': pci_vendor, 'model': pci_model, 'revision': pci_revision})
+            pci_id += 1 
 
 
         database.disconnect()
@@ -275,6 +376,12 @@ def agents_view(request):
             "net4_list": net4_list,
             "net6_list": net6_list,
             "dns_list": dns_list,
+            "user_list": user_list,
+            "cpu_list": cpu_list,
+            "mem_list": mem_list,
+            "board_list": board_list,
+            "block_list": block_list,
+            "pci_list": pci_list,
             "info": info, "error": error } )
         return render(request, 'hosts/agent_detail.html', context )
 

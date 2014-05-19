@@ -15,7 +15,7 @@
         <li><a href="#updates" data-toggle="tab">Updates</a></li>
         <li><a href="#fs" data-toggle="tab">Filesystems</a></li>
         <li><a href="#network" data-toggle="tab">Network</a></li>
-        <li><a href="#users" data-toggle="tab">Users&Groups</a></li>
+        <li><a href="#users" data-toggle="tab">Users</a></li>
         <li><a href="#hardware" data-toggle="tab">Hardware</a></li>
         <li><a href="#extra" data-toggle="tab">Extra</a></li>
       </ul>
@@ -391,11 +391,224 @@
               </table>
             </div>
           </div>
+        </div>
+
+        <div class="tab-pane fade" id="users">
+          <div class="row">
+            <div class="col-md-12">
+              <h4>Users</h4>
+              <table class="table table-condensed table-hover">
+                <thead>
+                  <tr>
+                    <th>UID</th>
+                    <th>GID</th>
+                    <th>Login</th>
+                    <th>HomeDir</th>
+                    <th>Shell</th>
+                    <th>Locked</th>
+                    <th>Hash</th>
+                    <th>Comment</th>
+                  </tr>
+                </thead>
+                <tbody>
+                {% for user in user_list %}
+                  <tr>
+                    <td>{{ user.uid }}</td>
+                    <td>{{ user.gid }}</td>
+	                  <td>{{ user.login }}</td>
+	                  <td>{{ user.homedir }}</td>
+	                  <td>{{ user.shell }}</td>
+	                  <td>{{ user.locked }}</td>
+	                  <td>{{ user.hash }}</td>
+	                  <td>{{ user.comment }}</td>
+                  </tr>
+                {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+ 
+        <div class="tab-pane fade" id="hardware">
+          <div class="row">
+            <div class="col-md-12">
+              <h4>Processor</h4>
+              <table class="table table-condensed table-hover">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Familly</th>
+                    <th>Version</th>
+                    <th>Speed</th>
+                    <th>Cores</th>
+                    <th>Threads</th>
+                    <th>HT</th>
+                    <th>Type</th>
+                    <th>Socket</th>
+                    <th>Ext. Clock</th>
+                    <th>Serial Number</th>
+                    <th>Part Number</th>
+                  </tr>
+                </thead>
+                <tbody>
+                {% for cpu in cpu_list %}
+                  <tr>
+                    <td>{{ cpu.id }}</td>
+                    <td>{{ cpu.familly }}</td>
+                    <td>{{ cpu.version }}</td>
+	                  <td>{{ cpu.speed }}</td>
+	                  <td>{{ cpu.cores }}</td>
+	                  <td>{{ cpu.threads }}</td>
+	                  <td>{{ cpu.ht }}</td>
+	                  <td>{{ cpu.type }}</td>
+	                  <td>{{ cpu.socket }}</td>
+	                  <td>{{ cpu.extclock }}</td>
+	                  <td>{{ cpu.serialnumber }}</td>
+	                  <td>{{ cpu.partnumber }}</td>
+                  </tr>
+                {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>         
+          <div class="row">
+            <div class="col-md-12">
+              <h4>Memory Modules</h4>
+              <table class="table table-condensed table-hover">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Bank</th>
+                    <th>Location</th>
+                    <th>Type</th>
+                    <th>Size</th>
+                    <th>Speed</th>
+                    <th>Width</th>
+                    <th>Manufacturer</th>
+                    <th>Serial</th>
+                    <th>PartNumber</th>
+                  </tr>
+                </thead>
+                <tbody>
+                {% for mem in mem_list %}
+                  <tr>
+                    <td>{{ mem.id }}</td>
+                    <td>{{ mem.bank }}</td>
+                    <td>{{ mem.location }}</td>
+	                  <td>{{ mem.type }}</td>
+	                  <td>{{ mem.size }}</td>
+	                  <td>{{ mem.speed }}</td>
+	                  <td>{{ mem.width }}</td>
+	                  <td>{{ mem.manufacturer }}</td>
+	                  <td>{{ mem.serialnumber }}</td>
+	                  <td>{{ mem.partnumber }}</td>
+                  </tr>
+                {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>         
+          <div class="row">
+            <div class="col-md-12">
+              <h4>Main Board</h4>
+              <table class="table table-condensed table-hover">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Manufacturer</th>
+                    <th>Product Name</th>
+                    <th>Version</th>
+                    <th>Serial</th>
+                  </tr>
+                </thead>
+                <tbody>
+                {% for board in board_list %}
+                  <tr>
+                    <td>{{ board.id }}</td>
+                    <td>{{ board.manufacturer }}</td>
+                    <td>{{ board.productname }}</td>
+	                  <td>{{ board.version }}</td>
+	                  <td>{{ board.serialnumber }}</td>
+                  </tr>
+                {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>         
+          <div class="row">
+            <div class="col-md-12">
+              <h4>Disks</h4>
+              <table class="table table-condensed table-hover">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Model</th>
+                    <th>Vendor</th>
+                    <th>Type</th>
+                    <th>Sectors</th>
+                    <th>Sector Size</th>
+                    <th>Rotational</th>
+                    <th>Read Only</th>
+                    <th>Removable</th>
+                    <th>Major</th>
+                    <th>Minor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                {% for disk in block_list %}
+                  <tr>
+                    <td>{{ disk.id }}</td>
+                    <td>{{ disk.name }}</td>
+                    <td>{{ disk.model }}</td>
+                    <td>{{ disk.vendor }}</td>
+                    <td>{{ disk.type }}</td>
+                    <td>{{ disk.sectors }}</td>
+                    <td>{{ disk.sectorsize }}</td>
+                    <td>{{ disk.rotational }}</td>
+                    <td>{{ disk.readonly }}</td>
+                    <td>{{ disk.removable }}</td>
+                    <td>{{ disk.major }}</td>
+                    <td>{{ disk.minor }}</td>
+                  </tr>
+                {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>         
+          <div class="row">
+            <div class="col-md-12">
+              <h4>PCI Devices</h4>
+              <table class="table table-condensed table-hover">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Path</th>
+                    <th>Type</th>
+                    <th>Vendor</th>
+                    <th>Model</th>
+                    <th>Revision</th>
+                  </tr>
+                </thead>
+                <tbody>
+                {% for pci in pci_list %}
+                  <tr>
+                    <td>{{ pci.id }}</td>
+                    <td>{{ pci.path }}</td>
+                    <td>{{ pci.type }}</td>
+                    <td>{{ pci.vendor }}</td>
+                    <td>{{ pci.model }}</td>
+                    <td>{{ pci.revision }}</td>
+                  </tr>
+                {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>         
 
 
         </div>
-        <div class="tab-pane fade" id="users">users&groups</div>
-        <div class="tab-pane fade" id="">ip/mask</div>
+        <div class="tab-pane fade" id="extra">extra</div>
       </div>
 {% endblock %}
 
