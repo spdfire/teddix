@@ -150,6 +150,106 @@ def agents_view(request):
             patch_list.append({'id': patch_id, 'name': patch_name, 'version': patch_version, 'type': patch_type, 'description': patch_description })
             patch_id += 1 
 
+        sql = "SELECT fsdevice,fsname,fstype,fsopts,fsused,fsfree,fstotal,fspercent FROM filesystem WHERE baseline_id = %s"
+        database.execute(sql,baseline_id)
+        result = database.fetchall()
+        fs_list = [] 
+        fs_id = 0
+        for row in result:
+            fs_device = row[0]
+            fs_mount = row[1]
+            fs_type = row[2]
+            fs_opts = row[3]
+            fs_used = row[4]
+            fs_free = row[5]
+            fs_total = row[5]
+            fs_pused = row[6]
+            fs_list.append({'id':fs_id, 'device': fs_device, 'mountpoint': fs_mount, 'type': fs_type, 'options': fs_opts, 'used': fs_used, 'free': fs_free, 'total': fs_total, 'pused': fs_pused })
+            fs_id += 1 
+
+     
+        sql = "SELECT name,driver,drvver,firmware,nictype,macaddress,status,description FROM nic WHERE baseline_id = %s"
+        database.execute(sql,baseline_id)
+        result = database.fetchall()
+        nic_id = 0
+        nic_list = []
+        for row in result:
+            nic_name = row[0]
+            nic_driver = row[1]
+            nic_drvver = row[2]
+            nic_firmware = row[3]
+            nic_type = row[4]
+            nic_mac = row[5]
+            nic_status = row[6]
+            nic_description = row[7]
+            nic_list.append({'id': nic_id, 'name': nic_name, 'driver': nic_driver, 'drvver': nic_drvver, 'firmware': nic_firmware, 'type': nic_type, 'mac': nic_mac, 'status': nic_status, 'description': nic_description })
+            nic_id += 1 
+
+   
+        sql = "SELECT address,mask FROM ipv4 WHERE baseline_id = %s"
+        database.execute(sql,baseline_id)
+        result = database.fetchall()
+        ipv4_id = 0
+        ipv4_list = []
+        for row in result:
+            ipv4_ip = row[0]
+            ipv4_mask = row[1]
+            ipv4_list.append({'id': ipv4_id, 'address': ipv4_ip, 'mask': ipv4_mask })
+            ipv4_id += 1 
+
+        sql = "SELECT address,mask FROM ipv6 WHERE baseline_id = %s"
+        database.execute(sql,baseline_id)
+        result = database.fetchall()
+        ipv6_id = 0 
+        ipv6_list = []
+        for row in result:
+            ipv6_ip = row[0]
+            ipv6_mask = row[1]
+            ipv6_list.append({'id': ipv6_id, 'address': ipv6_ip, 'mask': ipv6_mask })
+            ipv6_id += 1 
+ 
+
+        sql = "SELECT destination,mask,gateway,metric,flags,interface FROM route4 WHERE baseline_id = %s"
+        database.execute(sql,baseline_id)
+        result = database.fetchall()
+        net4_id = 0
+        net4_list = []
+        for row in result:
+            net4_destination = row[0]
+            net4_mask = row[1]
+            net4_gateway = row[2]
+            net4_metric = row[3]
+            net4_flags = row[4]
+            net4_interface = row[5]
+            net4_list.append({'id': net4_id, 'destination': net4_destination, 'mask': net4_mask, 'gateway': net4_gateway, 'metric': net4_metric, 'flags': net4_flags, 'interface': net4_interface })
+            net4_id += 1 
+
+        sql = "SELECT destination,mask,gateway,metric,flags,interface FROM route6 WHERE baseline_id = %s"
+        database.execute(sql,baseline_id)
+        result = database.fetchall()
+        net6_id = 0 
+        net6_list = []
+        for row in result:
+            net6_destination = row[0]
+            net6_mask = row[1]
+            net6_gateway = row[2]
+            net6_metric = row[3]
+            net6_flags = row[4]
+            net6_interface = row[5]
+            net6_list.append({'id': net6_id, 'destination': net6_destination, 'mask': net6_mask, 'gateway': net6_gateway, 'metric': net6_metric, 'flags': net6_flags, 'interface': net6_interface})
+            net6_id += 1 
+
+        sql = "SELECT address FROM nameserver WHERE baseline_id = %s"
+        database.execute(sql,baseline_id)
+        result = database.fetchall()
+        dns_id = 0 
+        dns_list = []
+        for row in result:
+            dns_address = row[0]
+            dns_list.append({'id': dns_id, 'address': dns_address})
+            dns_id += 1 
+
+
 
 
         database.disconnect()
@@ -168,6 +268,13 @@ def agents_view(request):
             "service_list": service_list,
             "proc_list": proc_list,
             "patch_list": patch_list,
+            "fs_list": fs_list,
+            "nic_list": nic_list,
+            "ipv4_list": ipv4_list,
+            "ipv6_list": ipv6_list,
+            "net4_list": net4_list,
+            "net6_list": net6_list,
+            "dns_list": dns_list,
             "info": info, "error": error } )
         return render(request, 'hosts/agent_detail.html', context )
 
