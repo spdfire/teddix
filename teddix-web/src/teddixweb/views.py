@@ -55,8 +55,121 @@ def agents_view(request):
     if action == "schedule":
         info = "Schedule"
 
-    if action == "edit":
+    if action == "show":
         info = "Edit"
+        sql = "SELECT * FROM server WHERE id = %s " 
+        database.execute(sql,agent_id)
+        result = database.fetchall()
+        for row in result:
+            agent_id = row[0]
+            agent_name = row[1]
+            agent_created = row[2]
+        
+        sql = "SELECT COUNT(*) FROM baseline WHERE server_id = %s" 
+        database.execute(sql,agent_id)
+        result = database.fetchall()
+        for row in result:
+            agent_report_count = row[0]
+        
+        sql = "SELECT MAX(created) FROM baseline WHERE server_id = %s" 
+        database.execute(sql,agent_id)
+        result = database.fetchall()
+        for row in result:
+            agent_report_last = row[0]
+   
+        sql = "SELECT id FROM baseline WHERE created = (SELECT MAX(created) FROM baseline WHERE server_id = %s )"
+        database.execute(sql,agent_id)
+        result = database.fetchall()
+        for row in result:
+            baseline_id = row[0]
+
+        sql = "SELECT name,detail,kernel,arch,manufacturer,serialnumber FROM system WHERE baseline_id = %s "
+        database.execute(sql,baseline_id)
+        result = database.fetchall()
+        for row in result:
+            os_name             = row[0]
+            os_detail           = row[1]
+            os_kernel           = row[2]
+            os_arch             = row[3]
+            os_manufacturer     = row[4]
+            os_serialnumber     = row[5]
+
+        sql = "SELECT name,version,arch,section,installedsize,status,description FROM package WHERE baseline_id = %s"
+        database.execute(sql,baseline_id)
+        result = database.fetchall()
+        pkg_id = 0
+        pkg_list = [] 
+        for row in result:
+            pkg_name = row[0]
+            pkg_version = row[1]
+            pkg_arch = row[2]
+            pkg_section = row[3]
+            pkg_size = row[4]
+            pkg_status = row[5]
+            pkg_description = row[6]
+            pkg_list.append({'id': pkg_id, 'name': pkg_name, 'version': pkg_version, 'arch': pkg_arch, 'section': pkg_section, 'size': pkg_size,'status': pkg_status, 'description': pkg_description })
+            pkg_id += 1 
+
+        sql = "SELECT name,running,autostart FROM service WHERE baseline_id = %s"
+        database.execute(sql,baseline_id)
+        result = database.fetchall()
+        srv_id = 0
+        service_list = [] 
+        for row in result:
+            srv_name = row[0]
+            srv_status = row[1]
+            srv_autostart = row[2]
+            service_list.append({'id': srv_id, 'name': srv_name, 'status': srv_status, 'autostart': srv_autostart })
+            srv_id += 1 
+
+        sql = "SELECT pid,owner,priority,status,pcpu,pmemory,name,command FROM process WHERE baseline_id = %s"
+        database.execute(sql,baseline_id)
+        result = database.fetchall()
+        proc_list = [] 
+        for row in result:
+            proc_pid = row[0]
+            proc_owner = row[1]
+            proc_priority = row[2]
+            proc_status = row[3]
+            proc_pcpu = row[4]
+            proc_pmemory = row[5]
+            proc_name = row[6]
+            proc_command = row[7]
+            proc_list.append({'pid': proc_pid, 'owner': proc_owner, 'priority': proc_priority, 'status': proc_status, 'pcpu': proc_pcpu, 'pmemory': proc_pmemory, 'name': proc_name, 'command': proc_command})
+
+        sql = "SELECT name,version,patchtype,description FROM patch WHERE baseline_id = %s"
+        database.execute(sql,baseline_id)
+        result = database.fetchall()
+        patch_list = [] 
+        patch_id = 0
+        for row in result:
+            patch_name = row[0]
+            patch_version = row[1]
+            patch_type = row[2]
+            patch_description = row[3]
+            patch_list.append({'id': patch_id, 'name': patch_name, 'version': patch_version, 'type': patch_type, 'description': patch_description })
+            patch_id += 1 
+
+
+
+        database.disconnect()
+        context = Context({"agent_id": agent_id, 
+            "agent_name": agent_name, 
+            "agent_created": agent_created, 
+            "agent_report_count": agent_report_count, 
+            "agent_report_last": agent_report_last, 
+            "os_name": os_name,
+            "os_detail": os_detail,
+            "os_kernel": os_kernel,
+            "os_arch": os_arch,
+            "os_manufacturer": os_manufacturer,
+            "os_serialnumber": os_serialnumber,
+            "pkg_list": pkg_list,
+            "service_list": service_list,
+            "proc_list": proc_list,
+            "patch_list": patch_list,
+            "info": info, "error": error } )
+        return render(request, 'hosts/agent_detail.html', context )
 
 
     sql = "SELECT id,name FROM server "

@@ -43,7 +43,9 @@
         {% for agent in agent_list %}
         <tr>
           <td>{{ agent.id }}</td>
-          <td>{{ agent.name }}</td>
+          <td>
+            <a href="/hosts/agents/?agent_id={{ agent.id }}&action=show" data-toggle="popover" data-content="Show agent details">{{ agent.name }}</a>
+          </td>
           <td>
             <a href="/hosts/agents/?agent_id={{ agent.id }}&action=schedule" data-toggle="popover" data-content="Schedule new job"><img src="/static/actions/schedule.png" alt="Schedule"/></a>
             <a href="/hosts/agents/?agent_id={{ agent.id }}&action=restart" data-toggle="popover" data-content="Restart agent"><img src="/static/actions/restart.png" alt="Restart"/></a>
