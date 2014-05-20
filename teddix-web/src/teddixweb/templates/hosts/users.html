@@ -19,13 +19,15 @@
           <tr>
             <th>#</th>
             <th>Name</th>
+            <th>Agents</th>
         </tr>
       </thead>
       <tbody>
         {% for user in user_list %}
         <tr>
           <td>{{ user.id }}</td>
-          <td>{{ user.login }}</td>
+          <td>{{ user.name }}</td>
+          <td>{{ user.count }}</td>
         </tr>
         {% endfor %}
       </tbody>

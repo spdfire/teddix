@@ -19,9 +19,7 @@
           <tr>
             <th>#</th>
             <th>Name</th>
-            <th>Version</th>
-            <th>Architecture</th>
-            <th>Size</th>
+            <th>Agents</th>
         </tr>
       </thead>
       <tbody>
@@ -29,9 +27,7 @@
         <tr>
           <td>{{ pkg.id }}</td>
           <td>{{ pkg.name }}</td>
-	  <td>{{ pkg.version }}</td>
-	  <td>{{ pkg.arch }}</td>
-	  <td>{{ pkg.size }}</td>
+	        <td>{{ pkg.count }}</td>
         </tr>
         {% endfor %}
       </tbody>

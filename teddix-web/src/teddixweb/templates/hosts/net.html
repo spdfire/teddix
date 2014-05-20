@@ -37,15 +37,15 @@
           <tr>
             <th>#</th>
             <th>Network Name</th>
-            <th>Network Mask</th>
+            <th>Agents</th>
         </tr>
       </thead>
       <tbody>
         {% for net4 in net4_list %}
         <tr>
           <td>{{ net4.id }}</td>
-          <td>{{ net4.name }}</td>
-	  <td>{{ net4.mask }}</td>
+          <td>{{ net4.name }}/{{ net4.mask }}</td>
+          <td>{{ net4.count }}</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -58,15 +58,15 @@
           <tr>
             <th>#</th>
             <th>Network Name</th>
-            <th>Network Mask</th>
+            <th>Agents</th>
         </tr>
       </thead>
       <tbody>
         {% for net6 in net6_list %}
         <tr>
           <td>{{ net6.id }}</td>
-          <td>{{ net6.name }}</td>
-	  <td>{{ net6.mask }}</td>
+          <td>{{ net6.name }}/{{ net6.mask }}</td>
+          <td>{{ net6.count }}</td>
         </tr>
         {% endfor %}
       </tbody>

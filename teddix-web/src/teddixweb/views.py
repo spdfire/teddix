@@ -22,6 +22,31 @@ from teddix import TeddixDatabase
 # Parser                                                                        
 from teddix import TeddixParser
 
+
+def agents2ids(database):
+    agents = []  
+
+# get latest baseline ID for agents 
+def agents2baselines(database):
+    baselines = []  
+
+    sql = "SELECT * FROM server " 
+    database.execute(sql)
+    result = database.fetchall()
+    for row in result:
+        agent_id = row[0]
+        agent_name = row[1]
+        agent_created = row[2]
+ 
+        sql = "SELECT id FROM baseline WHERE created = (SELECT MAX(created) FROM baseline WHERE server_id = %s )"
+        database.execute(sql,agent_id)
+        result2 = database.fetchall()
+        for row2 in result2:
+            baselines.append(row2[0])
+
+    return baselines
+
+
 def check_permissions(request):
     if not request.user.is_authenticated():
         return redirect('/users/login/?next=%s' % request.path)
@@ -399,6 +424,7 @@ def agents_view(request):
     context = Context({'agent_list': agent_list, 'search': search, "info": info, "error": error } )
     return render(request, 'hosts/agents.html', context )
 
+
 def os_view(request):
     check_permissions(request)
 
@@ -407,22 +433,33 @@ def os_view(request):
     syslog.open_syslog()
     parser = TeddixParser.TeddixStringParser()
     os_list = []
+    os_names = []
     search = request.GET.get('search','')
     database = TeddixDatabase.TeddixDatabase(syslog,cfg) 
-    sql = "SELECT DISTINCT name FROM system "
-    database.execute(sql)
-    result = database.fetchall()
-    os_id = 0 
-    for row in result:
-        os_name = row[0]
-        sql = "SELECT DISTINCT server_id,name FROM system WHERE name = '%s' "
-        database.execute(sql % os_name)
-        os_count = database.rowcount()
-        if os_name.find(search) != -1 :
-           os_list.append({'id': os_id, 'name': os_name, 'count': os_count })
-        os_id += 1 
+   
+    baselines = agents2baselines(database)
+    agents_per_os = {}
+    for baseline in baselines: 
+        sql = "SELECT name FROM system WHERE baseline_id = %s "
+        database.execute(sql,baseline)
+        result2 = database.fetchall()
+        for row2 in result2:
+            os_name = row2[0]
 
+            if os_name not in os_names: 
+                os_names.append(os_name)
+                agents_per_os[os_name] = 1 
+            else:
+                agents_per_os[os_name] += 1 
+ 
     database.disconnect()
+    
+    os_id = 0
+    for os_name in os_names: 
+        if os_name.find(search) != -1 : 
+            os_list.append({'id': os_id, 'name': os_name, 'count': agents_per_os[os_name] })
+            os_id += 1
+
     context = Context({'os_list': os_list, 'search': search } )
     return render(request, 'hosts/os.html', context )
 
@@ -434,22 +471,33 @@ def arch_view(request):
     syslog.open_syslog()
     parser = TeddixParser.TeddixStringParser()
     arch_list = []
+    arch_names = []
     search = request.GET.get('search','')
     database = TeddixDatabase.TeddixDatabase(syslog,cfg) 
-    sql = "SELECT DISTINCT arch FROM system "
-    database.execute(sql)
-    result = database.fetchall()
-    arch_id = 0 
-    for row in result:
-        arch_name = row[0]
-        sql = "SELECT DISTINCT server_id,arch FROM system WHERE arch = '%s' "
-        database.execute(sql % arch_name)
-        arch_count = database.rowcount()
-        if arch_name.find(search) != -1 :
-           arch_list.append({'id': arch_id, 'name': arch_name, 'count': arch_count })
-        arch_id += 1 
 
+    baselines = agents2baselines(database)
+    agents_per_arch = {}
+    for baseline in baselines: 
+        sql = "SELECT arch FROM system WHERE baseline_id = %s "
+        database.execute(sql,baseline)
+        result2 = database.fetchall()
+        for row2 in result2:
+            arch_name = row2[0]
+
+            if arch_name not in arch_names: 
+                arch_names.append(arch_name)
+                agents_per_arch[arch_name] = 1 
+            else:
+                agents_per_arch[arch_name] += 1 
+ 
     database.disconnect()
+    
+    arch_id = 0
+    for arch_name in arch_names: 
+        if arch_name.find(search) != -1 : 
+            arch_list.append({'id': arch_id, 'name': arch_name, 'count': agents_per_arch[arch_name] })
+            arch_id += 1
+
     context = Context({'arch_list': arch_list, 'search': search } )
     return render(request, 'hosts/arch.html', context )
 
@@ -474,6 +522,9 @@ def net_view(request):
         for row in result:
             net4_name = row[0]
             net4_mask = row[1]
+            sql = "SELECT server_id,address,mask FROM ipv4 WHERE address = '%s' AND mask = '%s' "
+            database.execute(sql,(net4_name,net4_mask))
+            #net4_count = database.rowcount()
             if net4_name.find(search_name) != -1 :
                 net4_list.append({'id': net4_id, 'name': net4_name, 'mask': net4_mask })
             net4_id += 1 
@@ -486,6 +537,9 @@ def net_view(request):
         for row in result:
             net6_name = row[0]
             net6_mask = row[1]
+            sql = "SELECT server_id,address,mask FROM ipv6 WHERE address = '%s' AND mask = '%s' "
+            database.execute(sql,(net6_name,net6_mask))
+            #net6_count = database.rowcount()
             if net6_name.find(search_name) != -1 :
                 net6_list.append({'id': net6_id, 'name': net6_name, 'mask': net6_mask })
             net6_id += 1 
@@ -502,22 +556,33 @@ def software_view(request):
     syslog.open_syslog()
     parser = TeddixParser.TeddixStringParser()
     pkg_list = []
+    pkg_names = []
     search = request.GET.get('search','')
     database = TeddixDatabase.TeddixDatabase(syslog,cfg) 
-    sql = "SELECT DISTINCT name,version,arch,installedsize FROM package "
-    database.execute(sql)
-    result = database.fetchall()
-    pkg_id = 0 
-    for row in result:
-        pkg_name = row[0]
-        pkg_version = row[1]
-        pkg_arch = row[2]
-        pkg_size = row[3]
-        if pkg_name.find(search) != -1 :
-		pkg_list.append({'id': pkg_id, 'name': pkg_name, 'version': pkg_version, 'arch': pkg_arch, 'size': pkg_size })
-        pkg_id += 1 
+    
+    baselines = agents2baselines(database)
+    agents_per_pkg = {}
+    for baseline in baselines: 
+        sql = "SELECT name,version FROM package WHERE baseline_id = %s "
+        database.execute(sql,baseline)
+        result = database.fetchall()
+        for row in result:
+            pkg_name = row[0] + '-' + row[1]
 
+            if pkg_name not in pkg_names: 
+                pkg_names.append(pkg_name)
+                agents_per_pkg[pkg_name] = 1 
+            else:
+                agents_per_pkg[pkg_name] += 1 
+ 
     database.disconnect()
+    
+    pkg_id = 0
+    for pkg_name in pkg_names: 
+        if pkg_name.find(search) != -1 : 
+            pkg_list.append({'id': pkg_id, 'name': pkg_name, 'count': agents_per_pkg[pkg_name] })
+            pkg_id += 1
+
     context = Context({'pkg_list': pkg_list, 'search': search } )
     return render(request, 'hosts/software.html', context )
 
@@ -529,21 +594,33 @@ def patches_view(request):
     syslog.open_syslog()
     parser = TeddixParser.TeddixStringParser()
     patch_list = []
+    patch_names = []
     search = request.GET.get('search','')
     database = TeddixDatabase.TeddixDatabase(syslog,cfg) 
-    sql = "SELECT DISTINCT name,version,patchtype FROM patch "
-    database.execute(sql)
-    result = database.fetchall()
-    patch_id = 0 
-    for row in result:
-        patch_name = row[0]
-        patch_version = row[1]
-        patch_type = row[2]
-        if patch_name.find(search) != -1 :
-		patch_list.append({'id': patch_id, 'name': patch_name, 'version': patch_version, 'type': patch_type })
-        patch_id += 1 
 
+    baselines = agents2baselines(database)
+    agents_per_patch = {}
+    for baseline in baselines: 
+        sql = "SELECT name,version,patchtype FROM patch WHERE baseline_id = %s "
+        database.execute(sql,baseline)
+        result = database.fetchall()
+        for row in result:
+            patch_name = row[0] + '-' + row[1]
+
+            if patch_name not in patch_names: 
+                patch_names.append(patch_name)
+                agents_per_patch[patch_name] = 1 
+            else:
+                agents_per_patch[patch_name] += 1 
+ 
     database.disconnect()
+    
+    patch_id = 0
+    for patch_name in patch_names: 
+        if patch_name.find(search) != -1 : 
+	    patch_list.append({'id': patch_id, 'name': patch_name, 'count': agents_per_patch[patch_name] })
+            patch_id += 1
+
     context = Context({'patch_list': patch_list, 'search': search } )
     return render(request, 'hosts/patches.html', context )
 
@@ -556,19 +633,34 @@ def users_view(request):
     syslog.open_syslog()
     parser = TeddixParser.TeddixStringParser()
     user_list = []
+    names = []
     search = request.GET.get('search','')
     database = TeddixDatabase.TeddixDatabase(syslog,cfg) 
-    sql = "SELECT DISTINCT login FROM sysuser "
-    database.execute(sql)
-    result = database.fetchall()
-    user_id = 0 
-    for row in result:
-        user_login = row[0]
-        if user_login.find(search) != -1 :
-		user_list.append({'id': user_id, 'login': user_login })
-        user_id += 1 
 
+    baselines = agents2baselines(database)
+    agents_per_user = {}
+    for baseline in baselines: 
+        sql = "SELECT login FROM sysuser WHERE baseline_id = %s "
+        database.execute(sql,baseline)
+        result = database.fetchall()
+        for row in result:
+            name = row[0] 
+
+            if name not in names: 
+                names.append(name)
+                agents_per_user[name] = 1 
+            else:
+                agents_per_user[name] += 1 
+ 
     database.disconnect()
+    
+    user_id = 0
+    for name in names: 
+        if name.find(search) != -1 : 
+	    user_list.append({'id': user_id, 'name': name, 'count': agents_per_user[name] })
+            user_id += 1
+
+
     context = Context({'user_list': user_list, 'search': search } )
     return render(request, 'hosts/users.html', context )
 
@@ -580,20 +672,34 @@ def groups_view(request):
     syslog.open_syslog()
     parser = TeddixParser.TeddixStringParser()
     group_list = []
+    names = []
     search = request.GET.get('search','')
     database = TeddixDatabase.TeddixDatabase(syslog,cfg) 
 
-    sql = "SELECT DISTINCT name FROM sysgroup "
-    database.execute(sql)
-    result = database.fetchall()
-    group_id = 0 
-    for row in result:
-        group_name = row[0]
-        if group_name.find(search) != -1 :
-		group_list.append({'id': group_id, 'name': group_name })
-        group_id += 1 
+    baselines = agents2baselines(database)
+    agents_per_group = {}
+    for baseline in baselines: 
+        sql = "SELECT name FROM sysgroup WHERE baseline_id = %s "
+        database.execute(sql,baseline)
+        result = database.fetchall()
+        for row in result:
+            name = row[0] 
 
+            if name not in names: 
+                names.append(name)
+                agents_per_group[name] = 1 
+            else:
+                agents_per_group[name] += 1 
+ 
     database.disconnect()
+    
+    group_id = 0
+    for name in names: 
+        if name.find(search) != -1 : 
+	    group_list.append({'id': group_id, 'name': name, 'count': agents_per_group[name] })
+            group_id += 1
+
+
     context = Context({'group_list': group_list, 'search': search } )
     return render(request, 'hosts/groups.html', context )
 
