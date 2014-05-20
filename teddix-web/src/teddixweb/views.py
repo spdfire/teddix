@@ -67,6 +67,10 @@ def agents_view(request):
     agent_id = request.GET.get('agent_id','')
     database = TeddixDatabase.TeddixDatabase(syslog,cfg) 
 
+    if action == "new":
+        context = Context({"info": info, "error": error } )
+        return render(request, 'hosts/agent_edit.html', context )
+
     if action == "delete":
         sql = "DELETE FROM server WHERE id = %s " 
         database.execute(sql,agent_id)
@@ -89,14 +93,12 @@ def agents_view(request):
             agent_name = row[1]
             agent_created = row[2]
         
-
         database.disconnect()
         context = Context({"agent_id": agent_id, 
             "agent_name": agent_name, 
             "agent_created": agent_created, 
             "info": info, "error": error } )
         return render(request, 'hosts/agent_edit.html', context )
-
 
     if action == "show":
         sql = "SELECT * FROM server WHERE id = %s " 
