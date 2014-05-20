@@ -632,16 +632,20 @@ class TeddixServer:
                     time.sleep(1)
                 
                 if not self.terminate:
-                    t = threading.Thread(target=self.worker_thread)
-                    t.setDaemon(1)
-                    t.start()
+                    if agent_active == "yes":
+                        if agent_resolving == "ipv4":
+                            self.queue.put(agent_ipv4)
+                        elif agent_resolving == "ipv6":
+                            self.queue.put(agent_ipv6)
+                        else : # == dns
+                            self.queue.put(agent_hostname)
 
-                    if agent_resolving == "ipv4" and agent_active == "yes":
-                        self.queue.put(agent_ipv4)
-                    elif agent_resolving == "ipv6" and agent_active == "yes":
-                        self.queue.put(agent_ipv6)
-                    elif agent_active == "yes": # == dns
-                        self.queue.put(agent_hostname)
+                        t = threading.Thread(target=self.worker_thread)
+                        t.setDaemon(1)
+                        t.start()
+                    else:
+                        syslog.debug("main: agent %s not active, ignoring... " % agent_hostname)
+
             
 
             database.disconnect()
