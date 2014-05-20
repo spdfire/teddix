@@ -68,8 +68,45 @@ def agents_view(request):
     database = TeddixDatabase.TeddixDatabase(syslog,cfg) 
 
     if action == "new":
-        context = Context({"info": info, "error": error } )
+        context = Context({ "action": action, "info": info, "error": error } )
         return render(request, 'hosts/agent_edit.html', context )
+
+    if action == "new2":
+        agent_name = request.GET.get('agent_name','')
+        agent_hostname = request.GET.get('agent_hostname','')
+        agent_ipv4 = request.GET.get('agent_ipv4','')
+        agent_ipv6 = request.GET.get('agent_ipv6','')
+        agent_resolving = request.GET.get('agent_resolving','')
+        agent_active = request.GET.get('agent_active','')
+        sql = "INSERT INTO server(name,created,hostname,ipv4,ipv6,resolving,active) VALUES (%s,NOW(),%s,%s,%s,%s,%s); " 
+        database.execute(sql,(agent_name,agent_hostname,agent_ipv4,agent_ipv6,agent_resolving,agent_active))
+        database.commit()
+        info = "Agent was created"
+    
+    if action == "schedule":
+        info = "Schedule"
+
+    if action == "test":
+        info = "Connection test"
+        
+        sql = "SELECT * FROM server WHERE id = %s " 
+        database.execute(sql,agent_id)
+        result = database.fetchall()
+        for row in result:
+            agent_id = row[0]
+            agent_hostname = row[1]
+            agent_ip = ''
+
+        # ping -c 5 -W 5 host  
+        # nc -vz -w 5 google.com 80
+        # tcptraceroute -w 2 google.com 80
+        # curl --max-time 5 --insecure 
+        database.disconnect()
+        context = Context({ "agent_id": agent_id, "agent_hostname": agent_hostname,"agent_ip": agent_ip, "info": info, "error": error } )
+        return render(request, 'hosts/agent_test.html', context )
+
+    if action == "restart":
+        info = "Server has been restarted!"
 
     if action == "delete":
         sql = "DELETE FROM server WHERE id = %s " 
@@ -78,28 +115,47 @@ def agents_view(request):
         info = "Server has been deleted!"
         #error  = "bbbb"
     
-    if action == "restart":
-        info = "Server has been restarted!"
-
-    if action == "schedule":
-        info = "Schedule"
-
     if action == "edit":
-        sql = "SELECT * FROM server WHERE id = %s " 
+        sql = "SELECT id,name,created,hostname,ipv4,ipv6,resolving,active FROM server WHERE id = %s " 
         database.execute(sql,agent_id)
         result = database.fetchall()
         for row in result:
             agent_id = row[0]
             agent_name = row[1]
             agent_created = row[2]
+            agent_hostname = row[3]
+            agent_ipv4 = row[4]
+            agent_ipv6 = row[5]
+            agent_resolving = row[6]
+            agent_active = row[7]
         
         database.disconnect()
-        context = Context({"agent_id": agent_id, 
+        context = Context({
+            "action": action,
+            "agent_id": agent_id, 
             "agent_name": agent_name, 
             "agent_created": agent_created, 
+            "agent_hostname": agent_hostname, 
+            "agent_ipv4": agent_ipv4, 
+            "agent_ipv6": agent_ipv6, 
+            "agent_resolving": agent_resolving, 
+            "agent_active": agent_active, 
             "info": info, "error": error } )
         return render(request, 'hosts/agent_edit.html', context )
-
+    
+    if action == "edit2":
+        agent_id = request.GET.get('agent_id','')
+        agent_name = request.GET.get('agent_name','')
+        agent_hostname = request.GET.get('agent_hostname','')
+        agent_ipv4 = request.GET.get('agent_ipv4','')
+        agent_ipv6 = request.GET.get('agent_ipv6','')
+        agent_resolving = request.GET.get('agent_resolving','')
+        agent_active = request.GET.get('agent_active','')
+        sql = "UPDATE server SET name = %s, hostname = %s, ipv4 = %s, ipv6 = %s, resolving = %s, active = %s  WHERE id = %s " 
+        database.execute(sql,(agent_name,agent_hostname,agent_ipv4,agent_ipv6,agent_resolving,agent_active,agent_id))
+        database.commit()
+        info = "Agent was modified"
+    
     if action == "show":
         sql = "SELECT * FROM server WHERE id = %s " 
         database.execute(sql,agent_id)

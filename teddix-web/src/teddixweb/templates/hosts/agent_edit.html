@@ -4,10 +4,23 @@
 
 {% block content %}
       <h1 class="page-header">Agent</h1>
+      
+      {% if action == "new" %} 
+      <p class="lead">New agent</p>
+      {% endif%}
+      {% if action == "edit" %} 
       <p class="lead">Modify agent {{ agent_name }}</p>
+      {% endif%}
       <p>
       <form class="form-horizontal"  method="get" action="{% url teddixweb.views.agents_view %}">
         {% csrf_token %}
+        {% if action == "new" %} 
+        <div style='display:none'><input type='hidden' name='action' value='new2' /></div>
+        {% endif%}
+        {% if action == "edit" %} 
+        <div style='display:none'><input type='hidden' name='action' value='edit2' /></div>
+        <div style='display:none'><input type='hidden' name='agent_id' value='{{ agent_id }}' /></div>
+        {% endif%}
         <div class="form-group">
           <label for="agent_name" class="col-sm-2 control-label">Name</label>
           <div class="col-sm-4">
@@ -15,15 +28,21 @@
           </div>
         </div>
         <div class="form-group">
-          <label for="agent_name" class="col-sm-2 control-label">Agent FQDN</label>
+          <label for="agent_name" class="col-sm-2 control-label">DNS Hostname</label>
           <div class="col-sm-4">
-            <input type="text" class="form-control" name="agent_hostname" id="agent_hostname" value="{{ agent_fqdn }}" placeholder="Hostname">
+            <input type="text" class="form-control" name="agent_hostname" id="agent_hostname" value="{{ agent_hostname }}" placeholder="Hostname">
           </div>
         </div>
         <div class="form-group">
-          <label for="agent_ip" class="col-sm-2 control-label">IP</label>
+          <label for="agent_ipv4" class="col-sm-2 control-label">IPv4 Address</label>
           <div class="col-sm-4">
-            <input type="text" class="form-control" name="agent_ip" id="agent_ip" value="{{ agent_ip }}" placeholder="IP Address">
+            <input type="text" class="form-control" name="agent_ipv4" id="agent_ipv4" value="{{ agent_ipv4 }}" placeholder="IP Address">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="agent_ipv6" class="col-sm-2 control-label">IPv6 Address</label>
+          <div class="col-sm-4">
+            <input type="text" class="form-control" name="agent_ipv6" id="agent_ipv6" value="{{ agent_ipv6 }}" placeholder="IP Address">
           </div>
         </div>
         <div class="form-group">
@@ -35,10 +54,23 @@
             </div>
             <div class="radio">
               <label>
-                <input type="radio" name="agent_resolving" value="ip" checked> Connect to IP address
+                <input type="radio" name="agent_resolving" value="ipv4" > Connect to IPv4 address
+              </label>
+            </div>
+            <div class="radio">
+              <label>
+                <input type="radio" name="agent_resolving" value="ipv6" > Connect to IPv6 address
               </label>
             </div>
           </div>
+        </div>
+        <div class="form-group">
+          <div class="col-sm-offset-2 col-sm-10">
+            <div class="checkbox">
+              <label>
+                <input type="checkbox" name="agent_active" value="yes" checked> Start collect from this host
+              </label>
+            </div>
           </div>
         </div>
         <div class="form-group">
