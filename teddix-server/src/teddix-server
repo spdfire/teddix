@@ -140,41 +140,6 @@ class TeddixServer:
         database.execute(sql)
 
        
-    def check_dbintegrity(self,database,agents):
-        
-        self.syslog.info("main: Checking database integrity ")
-        database.execute("SELECT VERSION();")
-        database.commit()
- 
-       
-        # keep agent list in sync to DB
-        for host in agents:
-            host = host.strip()
-            host = host.lower()
-            sql = "SELECT id FROM server WHERE LOWER(name) = %s "
-            database.execute(sql,host)
-            count = database.rowcount() 
- 
-            if count < 1:
-                self.syslog.info("SQL adding new host(%s) to database" % host)
-                sql = "INSERT INTO server(name,created) VALUES (%s,NOW()); " 
-                database.execute(sql,host)
-                database.commit()
-
-            if count > 1: 
-                self.syslog.warn("SQL Cleaning duplicate server names: %s " % host)
-                result = database.fetchall()
-                for row in result:
-                    server_id = row[0]
-                    sql = "DELETE FROM server WHERE id = %s " 
-                    database.execute(sql,server_id)
-
-                    sql = "INSERT INTO server(name,created) "
-                    sql += "VALUES (%s,NOW()); " 
-                    database.execute(sql,host)
-                    database.commit()
-
- 
     def save_dbbaseline(self,database,host,baseline):
         self.syslog.debug("%s: Save baseline " % (host))
 
@@ -642,21 +607,25 @@ class TeddixServer:
         self.terminate = False 
         self.queue = Queue.Queue()
        
-        # get agents
-        conf = TeddixConfigFile.TeddixServerFile(syslog,cfg.server_serverlist) 
-        agents = conf.getlist()
-        conf.close()
-
         syslog.info("main: Entering Server loop" )
         while not self.terminate:
             syslog.info("main: Started queue run" )
             
             # check DB 
             database = TeddixDatabase.TeddixDatabase(syslog,cfg)
-            self.check_dbintegrity(database,agents)
-            database.disconnect() 
+            sql = "SELECT id,name,created,hostname,ipv4,ipv6,resolving,active FROM server " 
+            database.execute(sql)
+            result = database.fetchall()
+            for row in result:
+                agent_id = row[0]
+                agent_name = row[1]
+                agent_created = row[2]
+                agent_hostname = row[3]
+                agent_ipv4 = row[4]
+                agent_ipv6 = row[5]
+                agent_resolving = row[6]
+                agent_active = row[7]
 
-            for host in agents:
                 if (threading.active_count() > cfg.server_workers) and (not self.terminate): 
                     syslog.debug('main: Reached max active workers count (%d): sleeping ...' % (threading.active_count() -1) )
                 while (threading.active_count() > cfg.server_workers) and (not self.terminate): 
@@ -667,10 +636,15 @@ class TeddixServer:
                     t.setDaemon(1)
                     t.start()
 
-                    host = host.strip()
-                    host = host.lower()
-                    self.queue.put(host)
+                    if agent_resolving == "ipv4" and agent_active == "yes":
+                        self.queue.put(agent_ipv4)
+                    elif agent_resolving == "ipv6" and agent_active == "yes":
+                        self.queue.put(agent_ipv6)
+                    elif agent_active == "yes": # == dns
+                        self.queue.put(agent_hostname)
+            
 
+            database.disconnect()
 
             # wait for all workers to finish their job 
             #Join all existing threads to main thread.
@@ -685,7 +659,6 @@ class TeddixServer:
                 database = TeddixDatabase.TeddixDatabase(syslog,cfg);
                 self.clean_db(database)
                 database.commit()
-                database.disconnect()
                 syslog.info("main: Sleeping for %s " % cfg.server_refresh )
                 time.sleep(self.convert_to_seconds(cfg.server_refresh))
 

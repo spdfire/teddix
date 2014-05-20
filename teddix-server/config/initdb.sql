@@ -9,6 +9,11 @@ CREATE TABLE server (
 	id INT NOT NULL AUTO_INCREMENT, 
 	name VARCHAR(50), 
 	created DATETIME, 
+	hostname VARCHAR(250), 
+	ipv4 VARCHAR(250), 
+	ipv6 VARCHAR(250), 
+	resolving VARCHAR(25), 
+	active VARCHAR(25), 
 
 	PRIMARY KEY (id)
 ) ENGINE=InnoDB;
