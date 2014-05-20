@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Teddix Agent{% endblock %}
+
+{% block content %}
+      <h1 class="page-header">Agent</h1>
+      <p class="lead">Modify agent {{ agent_name }}</p>
+      <p>
+      <form class="form-horizontal"  method="get" action="{% url teddixweb.views.agents_view %}">
+        {% csrf_token %}
+        <div class="form-group">
+          <label for="agent_name" class="col-sm-2 control-label">Name</label>
+          <div class="col-sm-4">
+            <input type="text" class="form-control" name="agent_name" id="agent_name" value="{{ agent_name }}" placeholder="Agent Name">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="agent_name" class="col-sm-2 control-label">Agent FQDN</label>
+          <div class="col-sm-4">
+            <input type="text" class="form-control" name="agent_hostname" id="agent_hostname" value="{{ agent_fqdn }}" placeholder="Hostname">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="agent_ip" class="col-sm-2 control-label">IP</label>
+          <div class="col-sm-4">
+            <input type="text" class="form-control" name="agent_ip" id="agent_ip" value="{{ agent_ip }}" placeholder="IP Address">
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="col-sm-offset-2 col-sm-10">
+            <div class="radio">
+              <label>
+                <input type="radio" name="agent_resolving" value="dns" checked> Connect to hostname
+              </label>
+            </div>
+            <div class="radio">
+              <label>
+                <input type="radio" name="agent_resolving" value="ip" checked> Connect to IP address
+              </label>
+            </div>
+          </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="col-sm-offset-5 col-sm-7">
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a href="/hosts/agents" class="btn btn-danger">Cancel</a>
+          </div>
+        </div>
+      </form>
+      </p>
+
+{% endblock %}
+

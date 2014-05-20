@@ -80,8 +80,25 @@ def agents_view(request):
     if action == "schedule":
         info = "Schedule"
 
+    if action == "edit":
+        sql = "SELECT * FROM server WHERE id = %s " 
+        database.execute(sql,agent_id)
+        result = database.fetchall()
+        for row in result:
+            agent_id = row[0]
+            agent_name = row[1]
+            agent_created = row[2]
+        
+
+        database.disconnect()
+        context = Context({"agent_id": agent_id, 
+            "agent_name": agent_name, 
+            "agent_created": agent_created, 
+            "info": info, "error": error } )
+        return render(request, 'hosts/agent_edit.html', context )
+
+
     if action == "show":
-        info = "Edit"
         sql = "SELECT * FROM server WHERE id = %s " 
         database.execute(sql,agent_id)
         result = database.fetchall()
