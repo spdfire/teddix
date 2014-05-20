@@ -140,18 +140,8 @@ class TeddixServer:
         database.execute(sql)
 
        
-    def save_dbbaseline(self,database,host,baseline):
-        self.syslog.debug("%s: Save baseline " % (host))
-
-        # Get server ID 
-        sql = "SELECT id FROM server WHERE LOWER(name) = %s "  
-        database.execute(sql,host)
-        result = database.fetchall()
-        server_id = -1 
-        for row in result:
-            server_id = row[0] 
-
-        syslog.debug("SQL result: server %s have ID %s " % (host,server_id))
+    def save_dbbaseline(self,database,server_id,baseline):
+        self.syslog.debug("%s: Save baseline " % (server_id))
 
         # save baseline 
         b_hostname = baseline.find('server').find('host').get('name')
@@ -478,30 +468,19 @@ class TeddixServer:
         return True
 
  
-    def save_dbextra(self,database,host,cfg2html,dmesg,bootlog):
-        self.syslog.debug("%s: Save in database " % (host))
+    def save_dbextra(self,database,server_id,cfg2html,dmesg,bootlog):
+        self.syslog.debug("%s: Save in database " % (server_id))
 
         parser = TeddixParser.TeddixStringParser()
-        if not parser.ishostname(host):
-            self.syslog.debug("Not string %s " % (host))
-            return False
-
-        # Get server ID 
-        sql = "SELECT id FROM server WHERE LOWER(name) = %s " 
-        database.execute(sql,host)
-        result = database.fetchall()
-        server_id = -1 
-        for row in result:
-            server_id = row[0] 
         
         if not parser.isbase64(cfg2html):
-            self.syslog.debug("%s: cfg2html not encoded in base64 " % (host))
+            self.syslog.debug("%s: cfg2html not encoded in base64 " % (server_id))
             return False
         if not parser.isbase64(dmesg):
-            self.syslog.debug("%s: dmesg not encoded in base64 " % (host))
+            self.syslog.debug("%s: dmesg not encoded in base64 " % (server_id))
             return False
         if not parser.isbase64(bootlog):
-            self.syslog.debug("%s: bootlog not encoded in base64 " % (host))
+            self.syslog.debug("%s: bootlog not encoded in base64 " % (server_id))
             return False
 
         sql  = "INSERT INTO extra(server_id,created,cfg2html,dmesg,bootlog) "
@@ -514,8 +493,31 @@ class TeddixServer:
     def worker_thread(self):
        
         #grabs host from queue
-        host = self.queue.get()
-        self.syslog.debug("%s: Starting worker " % host )
+        agent_id = self.queue.get()
+        self.syslog.debug("%s: Starting worker " % agent_id )
+
+        database = TeddixDatabase.TeddixDatabase(syslog,cfg)
+        sql = "SELECT id,name,created,hostname,ipv4,ipv6,resolving,active FROM server WHERE id = %s " 
+        database.execute(sql,agent_id)
+        result = database.fetchall()
+        for row in result:
+            agent_id = row[0]
+            agent_name = row[1]
+            agent_created = row[2]
+            agent_hostname = row[3]
+            agent_ipv4 = row[4]
+            agent_ipv6 = row[5]
+            agent_resolving = row[6]
+
+        if agent_resolving == "dns":
+            host = agent_hostname
+        elif agent_resolving == "ipv4":
+            host = agent_ipv4
+        elif agent_resolving == "ipv6":
+            host = agent_ipv6
+        else:
+            host = agent_hostname
+
 
         # 1. GET /baseline 
         baseline = self.make_request(host,'/baseline')
@@ -567,14 +569,13 @@ class TeddixServer:
 
 
             # 6. Save cfg2html, dmesg and bootlog
-            database = TeddixDatabase.TeddixDatabase(syslog,cfg)
             
             if cfg2html != None and dmesg != None and bootlog != None: 
                 cfg2html_b64 = cfg2html.text
                 dmesg_b64 = dmesg.text
                 bootlog_b64 = bootlog.text
 
-                if not self.save_dbextra(database,host,cfg2html_b64,dmesg_b64,bootlog_b64):
+                if not self.save_dbextra(database,agent_id,cfg2html_b64,dmesg_b64,bootlog_b64):
                     database.rollback()
                     self.syslog.warn("%s: Unable to commit extra " % host )
                     self.syslog.debug("%s: Stopping worker" % host)
@@ -586,7 +587,7 @@ class TeddixServer:
 
             # 7. Save baseline
             if baseline != None:
-                if not self.save_dbbaseline(database,host,baseline):
+                if not self.save_dbbaseline(database,agent_id,baseline):
                     database.rollback()
                     self.syslog.warn("%s: Unable to commit baseline " % host )
                     self.syslog.debug("%s: Stopping worker" % host)
@@ -633,12 +634,7 @@ class TeddixServer:
                 
                 if not self.terminate:
                     if agent_active == "yes":
-                        if agent_resolving == "ipv4":
-                            self.queue.put(agent_ipv4)
-                        elif agent_resolving == "ipv6":
-                            self.queue.put(agent_ipv6)
-                        else : # == dns
-                            self.queue.put(agent_hostname)
+                        self.queue.put(agent_id)
 
                         t = threading.Thread(target=self.worker_thread)
                         t.setDaemon(1)
