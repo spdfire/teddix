@@ -1,25 +1,22 @@
+# django 
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import redirect
 from django.core.context_processors import csrf
 from django.template import Context, Template
+
+# pygal 
 import pygal
 from pygal.style import LightSolarizedStyle
 from pygal.style import CleanStyle
 from pygal.style import LightColorizedStyle
 
-# Syslog handler                                                                
-import logging
-from teddix import TeddixLogger                                                 
-                                                                                
-# Config parser                                                                 
+# teddix
+import logging 
+from teddix import TeddixLogger
 from teddix import TeddixConfigFile
-
-# SQL Database                                                                                                                                                
-from teddix import TeddixDatabase                                               
-                                                                                
-# Parser                                                                        
+from teddix import TeddixDatabase
 from teddix import TeddixParser
 
 
@@ -231,7 +228,7 @@ def connection_view(request):
             output += lines[i] + "\n" 
 
     context = Context({ "agent_id": agent_id, "action": action, "output": output } )
-    return render(request, 'hosts/connection_test.html', context )
+    return render(request, 'agents/connection_test.html', context )
 
 
 def agents_view(request):
@@ -252,7 +249,7 @@ def agents_view(request):
 
     if action == "new":
         context = Context({ "action": action, "info": info, "error": error } )
-        return render(request, 'hosts/agent_edit.html', context )
+        return render(request, 'agents/agent_edit.html', context )
 
     if action == "new2":
         agent_name = request.GET.get('agent_name','')
@@ -286,7 +283,7 @@ def agents_view(request):
         # curl --max-time 5 --insecure 
         database.disconnect()
         context = Context({ "agent_id": agent_id, "agent_hostname": agent_hostname,"agent_ip": agent_ip, "info": info, "error": error } )
-        return render(request, 'hosts/agent_test.html', context )
+        return render(request, 'agents/agent_test.html', context )
 
     if action == "restart":
         info = "Server has been restarted!"
@@ -324,7 +321,7 @@ def agents_view(request):
             "agent_resolving": agent_resolving, 
             "agent_active": agent_active, 
             "info": info, "error": error } )
-        return render(request, 'hosts/agent_edit.html', context )
+        return render(request, 'agents/agent_edit.html', context )
     
     if action == "edit2":
         agent_id = request.GET.get('agent_id','')
@@ -666,7 +663,7 @@ def agents_view(request):
             "block_list": block_list,
             "pci_list": pci_list,
             "info": info, "error": error } )
-        return render(request, 'hosts/agent_detail.html', context )
+        return render(request, 'agents/agent_detail.html', context )
 
 
     sql = "SELECT id,name FROM server "
@@ -680,7 +677,7 @@ def agents_view(request):
 
     database.disconnect()
     context = Context({'agent_list': agent_list, 'search': search, "info": info, "error": error } )
-    return render(request, 'hosts/agents.html', context )
+    return render(request, 'agents/agents.html', context )
 
 
 def os_view(request):
@@ -704,7 +701,7 @@ def os_view(request):
             os_id += 1
 
     context = Context({'os_list': os_list, 'search': search } )
-    return render(request, 'hosts/os.html', context )
+    return render(request, 'statistics/os.html', context )
 
 def arch_view(request):
     check_permissions(request)
@@ -728,7 +725,7 @@ def arch_view(request):
             arch_id += 1
 
     context = Context({'arch_list': arch_list, 'search': search } )
-    return render(request, 'hosts/arch.html', context )
+    return render(request, 'statistics/arch.html', context )
 
 def net_view(request):
     check_permissions(request)
@@ -777,7 +774,7 @@ def net_view(request):
 
     database.disconnect()
     context = Context({'net4_list': net4_list, 'net6_list': net6_list, 'search_name': search_name, 'search_type': search_type } )
-    return render(request, 'hosts/net.html', context )
+    return render(request, 'statistics/net.html', context )
 
 def software_view(request):
     check_permissions(request)
@@ -800,7 +797,7 @@ def software_view(request):
             pkg_id += 1
 
     context = Context({'pkg_list': pkg_list, 'search': search } )
-    return render(request, 'hosts/software.html', context )
+    return render(request, 'statistics/software.html', context )
 
 def patches_view(request):
     check_permissions(request)
@@ -824,7 +821,7 @@ def patches_view(request):
             patch_id += 1
 
     context = Context({'patch_list': patch_list, 'search': search } )
-    return render(request, 'hosts/patches.html', context )
+    return render(request, 'statistics/patches.html', context )
 
 
 def users_view(request):
@@ -849,7 +846,7 @@ def users_view(request):
 
 
     context = Context({'user_list': user_list, 'search': search } )
-    return render(request, 'hosts/users.html', context )
+    return render(request, 'statistics/users.html', context )
 
 def groups_view(request):
     check_permissions(request)
@@ -874,7 +871,7 @@ def groups_view(request):
 
 
     context = Context({'group_list': group_list, 'search': search } )
-    return render(request, 'hosts/groups.html', context )
+    return render(request, 'statistics/groups.html', context )
 
 
 def hardware_view(request):
@@ -975,7 +972,7 @@ def hardware_view(request):
 
     database.disconnect()
     context = Context({'cpu_list': cpu_list, 'mem_list': mem_list, 'board_list': board_list, 'disk_list': disk_list, 'pci_list': pci_list, 'bios_list': bios_list, 'search_name': search_name, 'search_type': search_type } )
-    return render(request, 'hosts/hardware.html', context )
+    return render(request, 'statistics/hardware.html', context )
 
 def extra_view(request):
     check_permissions(request)
@@ -1038,7 +1035,7 @@ def extra_view(request):
 
         database.disconnect()
         context = Context({'agent_list': agent_list, 'search': search } )
-        return render(request, 'extra.html', context )
+        return render(request, 'extra/extra.html', context )
 
 
 def dashboard_view(request):
@@ -1136,7 +1133,7 @@ def dashboard_view(request):
 
 def notready_view(request):
     check_permissions(request)
-    return render(request, 'hosts/notready.html' )
+    return render(request, 'notready.html' )
 
 
 

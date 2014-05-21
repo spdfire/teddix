@@ -1,18 +1,17 @@
 Source: teddix-server
-Section: unknown
+Section: python
 Priority: extra
 Maintainer: spdfire <spdfire@plusinfinity.org>
-Build-Depends: debhelper (>= 8.0.0), autotools-dev
-Standards-Version: 3.9.3
+Build-Depends: debhelper (>= 8.0.0), python-support (>= 0.90)
+Standards-Version: 3.9.4
 Homepage: http://www.teddix.info
 X-Python-Version: >= 2.6
-#Vcs-Git: git://git.debian.org/collab-maint/teddix.git
-#Vcs-Browser: http://git.debian.org/?p=collab-maint/teddix.git;a=summary
+Vcs-Git: https://github.com/spdfire/teddix.git
+Vcs-Browser: https://github.com/spdfire/teddix
 
 Package: teddix-server
 Architecture: all
-Depends: python2.6, python-daemon, python-libxml2, python-lockfile, teddix-common, mysql-server 
-# create ora2html debian package 
-Description: teddix inventory system.
+Depends: ${python:Depends}, ${misc:Depends}, python-daemon, python-libxml2, python-lockfile, teddix-common, mysql-server 
+Description: Teddix inventory system.
  Teddix is an inventory system for servers. 
  This package contain teddix server. 

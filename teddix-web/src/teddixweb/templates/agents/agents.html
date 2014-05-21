@@ -33,7 +33,7 @@
             <button type="submit" class="btn btn-primary">Search</button>
           </div>
           <div class="col-md-2">
-            <a href="/hosts/agents/?action=new" class="btn btn-success">New Agent</a>
+            <a href="/agents/?action=new" class="btn btn-success">New Agent</a>
           </div>
         </div>
       </form>
@@ -51,13 +51,13 @@
         <tr>
           <td>{{ agent.id }}</td>
           <td>
-            <a href="/hosts/agents/?agent_id={{ agent.id }}&action=show" data-toggle="popover" data-content="Show agent details">{{ agent.name }}</a>
+            <a href="/agents/?agent_id={{ agent.id }}&action=show" data-toggle="popover" data-content="Show agent details">{{ agent.name }}</a>
           </td>
           <td>
-            <a href="/hosts/agents/?agent_id={{ agent.id }}&action=show" data-toggle="popover" data-content="Show agent details"><img src="/static/actions/info.png" alt="Show"/></a>
-            <a href="/hosts/agents/?agent_id={{ agent.id }}&action=edit" data-toggle="popover" data-content="Edit agent"><img src="/static/actions/edit.png" alt="Edit"/></a>
-            <a href="/hosts/agents/?agent_id={{ agent.id }}&action=test" data-toggle="popover" data-content="Connection test"><img src="/static/actions/network.png" alt="Test"/></a>
-            <a href="/hosts/agents/?agent_id={{ agent.id }}&action=delete" data-toggle="popover" data-content="Remove agent"><img src="/static/actions/delete.png" alt="Delete"/></a>
+            <a href="/agents/?agent_id={{ agent.id }}&action=show" data-toggle="popover" data-content="Show agent details"><img src="/static/actions/info.png" alt="Show"/></a>
+            <a href="/agents/?agent_id={{ agent.id }}&action=edit" data-toggle="popover" data-content="Edit agent"><img src="/static/actions/edit.png" alt="Edit"/></a>
+            <a href="/agents/?agent_id={{ agent.id }}&action=test" data-toggle="popover" data-content="Connection test"><img src="/static/actions/network.png" alt="Test"/></a>
+            <a href="/agents/?agent_id={{ agent.id }}&action=delete" data-toggle="popover" data-content="Remove agent"><img src="/static/actions/delete.png" alt="Delete"/></a>
           </td>
         </tr>
         {% endfor %}

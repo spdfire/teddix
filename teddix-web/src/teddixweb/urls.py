@@ -9,20 +9,25 @@ urlpatterns = patterns('',
     # Examples:
     # url(r'^$', 'teddixweb.views.home', name='home'),
     # url(r'^teddixweb/', include('teddixweb.foo.urls')),
+
     url(r'^$', 'teddixweb.views.base_view', name='base_view'),
+
     url(r'^monitor/dashboard/$', 'teddixweb.views.dashboard_view', name='dashboard_view'),
     url(r'^monitor/reports/$', 'teddixweb.views.notready_view'),
     url(r'^monitor/trends/$', 'teddixweb.views.notready_view'),
     url(r'^monitor/audit/$', 'teddixweb.views.notready_view'),
-    url(r'^hosts/agents/$', 'teddixweb.views.agents_view' ),
-    url(r'^hosts/os/$', 'teddixweb.views.os_view' ),
-    url(r'^hosts/architecture/$', 'teddixweb.views.arch_view' ),
-    url(r'^hosts/network/$', 'teddixweb.views.net_view' ),
-    url(r'^hosts/software/$', 'teddixweb.views.software_view' ),
-    url(r'^hosts/patches/$', 'teddixweb.views.patches_view' ),
-    url(r'^hosts/users/$', 'teddixweb.views.users_view' ),
-    url(r'^hosts/groups/$', 'teddixweb.views.groups_view' ),
-    url(r'^hosts/hardware/$', 'teddixweb.views.hardware_view' ),
+
+    url(r'^statistics/os/$', 'teddixweb.views.os_view' ),
+    url(r'^statistics/architecture/$', 'teddixweb.views.arch_view' ),
+    url(r'^statistics/network/$', 'teddixweb.views.net_view' ),
+    url(r'^statistics/software/$', 'teddixweb.views.software_view' ),
+    url(r'^statistics/patches/$', 'teddixweb.views.patches_view' ),
+    url(r'^statistics/users/$', 'teddixweb.views.users_view' ),
+    url(r'^statistics/groups/$', 'teddixweb.views.groups_view' ),
+    url(r'^statistics/hardware/$', 'teddixweb.views.hardware_view' ),
+    
+    url(r'^agents/$', 'teddixweb.views.agents_view' ),
+    
     url(r'^extra/$', 'teddixweb.views.extra_view' ),
     url(r'^connection/$', 'teddixweb.views.connection_view' ),
     
