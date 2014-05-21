@@ -1036,8 +1036,6 @@ def dashboard_view(request):
     pie_chart.add('perl', 5)
     pie_chart.render_to_file('teddixweb/static/charts/dashboard-packages.svg')
 
-
-
     return render(request, 'monitor/dashboard.html')
 
 
