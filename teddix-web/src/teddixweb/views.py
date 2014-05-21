@@ -1134,6 +1134,11 @@ def dashboard_view(request):
     database.disconnect()
     return render(request, 'monitor/dashboard.html')
 
+def notready_view(request):
+    check_permissions(request)
+    return render(request, 'hosts/notready.html' )
+
+
 
 def base_view(request):
     check_permissions(request)

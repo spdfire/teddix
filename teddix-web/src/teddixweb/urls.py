@@ -11,6 +11,9 @@ urlpatterns = patterns('',
     # url(r'^teddixweb/', include('teddixweb.foo.urls')),
     url(r'^$', 'teddixweb.views.base_view', name='base_view'),
     url(r'^monitor/dashboard/$', 'teddixweb.views.dashboard_view', name='dashboard_view'),
+    url(r'^monitor/reports/$', 'teddixweb.views.notready_view'),
+    url(r'^monitor/trends/$', 'teddixweb.views.notready_view'),
+    url(r'^monitor/audit/$', 'teddixweb.views.notready_view'),
     url(r'^hosts/agents/$', 'teddixweb.views.agents_view' ),
     url(r'^hosts/os/$', 'teddixweb.views.os_view' ),
     url(r'^hosts/architecture/$', 'teddixweb.views.arch_view' ),
@@ -22,6 +25,8 @@ urlpatterns = patterns('',
     url(r'^hosts/hardware/$', 'teddixweb.views.hardware_view' ),
     url(r'^extra/$', 'teddixweb.views.extra_view' ),
     url(r'^connection/$', 'teddixweb.views.connection_view' ),
+    
+    url(r'^users/profile/$', 'teddixweb.views.notready_view'),
     url(r'^users/login/$', 'django.contrib.auth.views.login', {'template_name': 'login.html'}, name='login'),
     url(r'^users/logout/$', 'django.contrib.auth.views.logout', {'template_name': 'login.html'}),
 
@@ -29,5 +34,11 @@ urlpatterns = patterns('',
     # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
 
     # Uncomment the next line to enable the admin:
-    url(r'^admin/', include(admin.site.urls)),
+    #url(r'^admin/', include(admin.site.urls)),
+    
+    url(r'^admin/users/$', 'teddixweb.views.notready_view'),
+    url(r'^admin/groups/$', 'teddixweb.views.notready_view'),
+    url(r'^admin/roles/$', 'teddixweb.views.notready_view'),
+    url(r'^admin/auth/$', 'teddixweb.views.notready_view'),
+    url(r'^admin/settings/$', 'teddixweb.views.notready_view'),
 )
