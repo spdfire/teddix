@@ -1,0 +1,28 @@
+#!/bin/sh                                                                     
+
+set -e
+mode=$1
+source_package=teddix-server
+
+case "$mode" in
+  configure )
+    prev_version=$2
+
+    echo ""
+    echo "----------------------------------------------------------------"
+    echo "   Database configuration: "
+    echo "   	CREATE DATABASE teddix;  "
+    echo "   	CREATE USER 'teddix'@'localhost' IDENTIFIED BY 'mypass';  "
+    echo "   	GRANT ALL PRIVILEGES ON teddix.* To 'teddix'@'localhost'; "
+    echo ""
+    echo "   Import tables: "
+    echo "   	$ mysql -u root < /usr/share/teddix/initdb.sql "
+    echo ""
+    echo "----------------------------------------------------------------"
+    echo ""
+
+    ;;
+esac
+
+#DEBHELPER#
+
