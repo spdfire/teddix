@@ -51,6 +51,69 @@ def check_permissions(request):
     if not request.user.is_authenticated():
         return redirect('/users/login/?next=%s' % request.path)
 
+def connection_view(request):
+    check_permissions(request)
+
+    cfg = TeddixConfigFile.TeddixConfigFile()
+    syslog = TeddixLogger.TeddixLogger("TeddixWeb")
+    syslog.open_syslog()
+    parser = TeddixParser.TeddixStringParser()
+
+    action = request.GET.get('action','')
+    agent_id = request.GET.get('agent_id','')
+    database = TeddixDatabase.TeddixDatabase(syslog,cfg) 
+
+    sql = "SELECT id,name,created,hostname,ipv4,ipv6,resolving,active FROM server WHERE id = %s " 
+    database.execute(sql,agent_id)
+    result = database.fetchall()
+    for row in result:
+        agent_id = row[0]
+        agent_name = row[1]
+        agent_created = row[2]
+        agent_hostname = row[3]
+        agent_ipv4 = row[4]
+        agent_ipv6 = row[5]
+        agent_resolving = row[6]
+        agent_active = row[7]
+ 
+    if agent_resolving == "dns":
+        host = agent_hostname
+    elif agent_resolving == "ipv4":
+        host = agent_ipv4
+    elif agent_resolving == "ipv6":
+        host = agent_ipv6
+
+    # TODO: RCE vuln
+    output = ''
+    if action == "test1":
+        lines  = parser.readstdout("ping -c 3 -i 0.2 -W 10 %s" % host)
+        for i in range(len(lines)):
+            output += lines[i] + "\n" 
+
+    if action == "test2":
+        lines  = parser.readstdout("nmap -sT -p 45003 %s" % host )
+        for i in range(len(lines)):
+            output += lines[i] + "\n" 
+
+    if action == "test3":
+        lines  = parser.readstdout("tcptraceroute -w 5 %s 45003" % host)
+        for i in range(len(lines)):
+            output += lines[i] + "\n" 
+
+    if action == "test4":
+        lines  = parser.readstdout("curl --max-time 120 --connect-timeout 30 --insecure  https://%s:45003/status " % host )
+        for i in range(len(lines)):
+            output += lines[i] + "\n" 
+
+    if action == "test5":
+        lines  = parser.readstdout("curl --max-time 120 --connect-timeout 30 --insecure  https://%s:45003/baseline " % host )
+        for i in range(len(lines)):
+            output += lines[i] + "\n" 
+
+    context = Context({ "agent_id": agent_id, "action": action, "output": output } )
+    return render(request, 'hosts/connection_test.html', context )
+
+
 def agents_view(request):
     check_permissions(request)
 

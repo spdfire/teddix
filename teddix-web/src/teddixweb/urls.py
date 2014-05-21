@@ -21,6 +21,7 @@ urlpatterns = patterns('',
     url(r'^hosts/groups/$', 'teddixweb.views.groups_view' ),
     url(r'^hosts/hardware/$', 'teddixweb.views.hardware_view' ),
     url(r'^extra/$', 'teddixweb.views.extra_view' ),
+    url(r'^connection/$', 'teddixweb.views.connection_view' ),
     url(r'^users/login/$', 'django.contrib.auth.views.login', {'template_name': 'login.html'}, name='login'),
     url(r'^users/logout/$', 'django.contrib.auth.views.logout', {'template_name': 'login.html'}),
 

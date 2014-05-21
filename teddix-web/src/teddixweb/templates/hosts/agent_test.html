@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}Teddix Agent{% endblock %}
+
+{% block content %}
+      <h1 class="page-header">Connection test</h1>
+     
+      <p class="lead">Testing {{ agent_hostname }}</p>
+      <p>
+
+        <div class="progress progress-striped active">
+          <div class="progress-bar" id="progressBar" role="progressbar" aria-valuenow="5" aria-valuemin="0" aria-valuemax="100" style="width: 5%">
+            5%
+          </div>
+        </div>
+
+        <a href="#" onclick="window.location.replace(window.location.href)" class="btn btn-success">Restart tests</a>
+        <a href="/hosts/agents" class="btn btn-danger">Cancel</a>
+        
+        <h3>Ping test</h3>
+        <div id="test1"><img src="/static/ajax-loader.gif" /> Loading... Please wait...</div>
+        <h3>Port test</h3>
+        <div id="test2"><img src="/static/ajax-loader.gif" /> Loading... Please wait...</div>
+        <h3>Traceroute test</h3>
+        <div id="test3"><img src="/static/ajax-loader.gif" /> Loading... Please wait...</div>
+        <h3>Connection test</h3>
+        <div id="test4"><img src="/static/ajax-loader.gif" /> Loading... Please wait...</div>
+        <h3>Collection test</h3>
+        <div id="test5"><img src="/static/ajax-loader.gif" /> Loading... Please wait...</div>
+
+      </p>
+
+{% endblock %}
+
+{% block scripts %}
+    <script src="/static/bootstrap-progressbar.js"></script>
+{% endblock %}
