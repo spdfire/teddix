@@ -11,7 +11,7 @@ X-Python-Version: >= 2.6
 
 Package: teddix-web
 Architecture: all
-Depends: python2.6, teddix-common 
+Depends: python2.6, teddix-common, python-pygal 
 Description: teddix inventory system.
  Teddix is an inventory system for servers. 
  This package contain teddix frontend. 
