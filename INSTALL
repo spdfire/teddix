@@ -1,32 +1,55 @@
 INSTALL 
 -------------------------------------------------
-Installation is simple: 
+1. From source:: 
 
-$ python setup.py build 
-$ python setup.py install 
+   $ python setup.py build 
+   $ python setup.py install 
 
 
-PACKAGES 
--------------------------------------------------
+2. From packages 
+
 Debian:
+   - Create repository file /etc/apt/sources.list.d/teddix.list:
 
-Create repository file /etc/apt/sources.list.d/teddix.list:
+       # teddix repository
+       deb http://repo.teddix.info/debian wheezy unstable
 
-# teddix repository
-deb http://repo.teddix.info/debian wheezy unstable 
+   - apt-get install package 
 
 
 Fedora:
 
-Create repository file /etc/yum.repos.d/teddix.repo:
+   - Create repository file /etc/yum.repos.d/teddix.repo:
 
-[teddix]
-name=Teddix official repository
-baseurl=http://repo.teddix.info/redhat/fedora/$releasever/$basearch
-gpgcheck=0
-enabled=1
+      [teddix]
+      name=Teddix official repository
+      baseurl=http://repo.teddix.info/redhat/fedora/$releasever/$basearch
+      gpgcheck=0
+      enabled=1
+
+   - yum install package
 
 
-Solaris 11: 
+CONFIGURATION  
+-------------------------------------------------
+1. Agent 
 
+   - edit /etc/teddix/teddix.conf
 
+2. Server  
+
+   - Database configuration: 
+   	CREATE DATABASE teddix;  
+   	CREATE USER 'teddix'@'localhost' IDENTIFIED BY 'mypass';  
+   	GRANT ALL PRIVILEGES ON teddix.* To 'teddix'@'localhost'; 
+
+   - Import tables: 
+   	$ mysql -u root < /usr/share/teddix/initdb.sql 
+
+   - edit /etc/teddix/teddix.conf
+
+2. Web frontend  
+
+   - edit /etc/teddix/web_settings.py 
+  
+    
