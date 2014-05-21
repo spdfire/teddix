@@ -5,33 +5,40 @@
 {% block content %}
           <h1 class="page-header">Dashboard</h1>
 
-          <div class="row placeholders">
-            <div class="col-xs-6 col-sm-3 placeholder">
-              <iframe src="/static/charts/dashboard-os.svg" width="300" height="300" style="border:0;"></iframe>
+          <div class="row">
+            <div class="col-md-4 placeholder">
+              <iframe src="/static/charts/dashboard-agents.svg" width="400" height="400" style="border:0;"></iframe>
             </div>
-            <div class="col-xs-6 col-sm-3 placeholder">
-              <iframe src="/static/charts/dashboard-arch.svg" width="300" height="300" style="border:0;"></iframe>
+            <div class="col-md-4 placeholder">
+              <iframe src="/static/charts/dashboard-os.svg" width="400" height="400" style="border:0;"></iframe>
             </div>
-            <div class="col-xs-6 col-sm-3 placeholder">
-              <iframe src="/static/charts/dashboard-networks.svg" width="300" height="300" style="border:0;"></iframe>
-            </div>
-            <div class="col-xs-6 col-sm-3 placeholder">
-              <iframe src="/static/charts/dashboard-packages.svg" width="300" height="300" style="border:0;"></iframe>
+            <div class="col-md-4 placeholder">
+              <iframe src="/static/charts/dashboard-arch.svg" width="400" height="400" style="border:0;"></iframe>
             </div>
           </div>
 
-          <div class="row placeholders">
-            <div class="col-xs-6 col-sm-3 placeholder">
-              <iframe src="/static/charts/dashboard-os.svg" width="300" height="300" style="border:0;"></iframe>
+
+          <div class="row">
+            <div class="col-md-4 placeholder">
+              <iframe src="/static/charts/dashboard-patches.svg" width="400" height="400" style="border:0;"></iframe>
             </div>
-            <div class="col-xs-6 col-sm-3 placeholder">
-              <iframe src="/static/charts/dashboard-arch.svg" width="300" height="300" style="border:0;"></iframe>
+            <div class="col-md-4 placeholder">
+              <iframe src="/static/charts/dashboard-software.svg" width="400" height="400" style="border:0;"></iframe>
             </div>
-            <div class="col-xs-6 col-sm-3 placeholder">
-              <iframe src="/static/charts/dashboard-networks.svg" width="300" height="300" style="border:0;"></iframe>
+            <div class="col-md-4 placeholder">
+              <iframe src="/static/charts/dashboard-networks.svg" width="400" height="400" style="border:0;"></iframe>
             </div>
-            <div class="col-xs-6 col-sm-3 placeholder">
-              <iframe src="/static/charts/dashboard-packages.svg" width="300" height="300" style="border:0;"></iframe>
+          </div>
+
+          <div class="row">
+            <div class="col-md-4 placeholder">
+              <iframe src="/static/charts/dashboard-users-type.svg" width="400" height="400" style="border:0;"></iframe>
+            </div>
+            <div class="col-md-4 placeholder">
+              <iframe src="/static/charts/dashboard-users-status.svg" width="400" height="400" style="border:0;"></iframe>
+            </div>
+            <div class="col-md-4 placeholder">
+              <iframe src="/static/charts/dashboard-users-hash.svg" width="400" height="400" style="border:0;"></iframe>
             </div>
           </div>
 {% endblock %}

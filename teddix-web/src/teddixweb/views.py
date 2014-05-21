@@ -23,6 +23,7 @@ from teddix import TeddixDatabase
 from teddix import TeddixParser
 
 
+#### helpers ####
 def agents2ids(database):
     agents = []  
 
@@ -46,10 +47,129 @@ def agents2baselines(database):
 
     return baselines
 
+def agents2oslist(database):
+    baselines = agents2baselines(database)
+    agents_per_os = {}
+    os_names = []
+    for baseline in baselines: 
+        sql = "SELECT name FROM system WHERE baseline_id = %s "
+        database.execute(sql,baseline)
+        result2 = database.fetchall()
+        for row2 in result2:
+            os_name = row2[0]
+
+            if os_name not in os_names: 
+                os_names.append(os_name)
+                agents_per_os[os_name] = 1 
+            else:
+                agents_per_os[os_name] += 1 
+
+    return agents_per_os
+ 
+def agents2archlist(database):
+    baselines = agents2baselines(database)
+    agents_per_arch = {}
+    arch_names = []
+    for baseline in baselines: 
+        sql = "SELECT arch FROM system WHERE baseline_id = %s "
+        database.execute(sql,baseline)
+        result2 = database.fetchall()
+        for row2 in result2:
+            arch_name = row2[0]
+
+            if arch_name not in arch_names: 
+                arch_names.append(arch_name)
+                agents_per_arch[arch_name] = 1 
+            else:
+                agents_per_arch[arch_name] += 1 
+
+    return agents_per_arch
+
+def agents2softwarelist(database):
+    baselines = agents2baselines(database)
+    agents_per_pkg = {}
+    pkg_names = []
+    for baseline in baselines: 
+        sql = "SELECT name,version FROM package WHERE baseline_id = %s "
+        database.execute(sql,baseline)
+        result = database.fetchall()
+        for row in result:
+            pkg_name = row[0] 
+
+            if pkg_name not in pkg_names: 
+                pkg_names.append(pkg_name)
+                agents_per_pkg[pkg_name] = 1 
+            else:
+                agents_per_pkg[pkg_name] += 1 
+
+    return agents_per_pkg
+
+def agents2patchlist(database):
+    baselines = agents2baselines(database)
+    agents_per_patch = {}
+    patch_names = []
+
+    for baseline in baselines: 
+        sql = "SELECT name,version,patchtype FROM patch WHERE baseline_id = %s "
+        database.execute(sql,baseline)
+        result = database.fetchall()
+        for row in result:
+            patch_name = row[0] + '-' + row[1]
+
+            if patch_name not in patch_names: 
+                patch_names.append(patch_name)
+                agents_per_patch[patch_name] = 1 
+            else:
+                agents_per_patch[patch_name] += 1 
+ 
+    return agents_per_patch
+
+def agents2userlist(database):
+    baselines = agents2baselines(database)
+    agents_per_user = {}
+    names = []
+    for baseline in baselines: 
+        sql = "SELECT login FROM sysuser WHERE baseline_id = %s "
+        database.execute(sql,baseline)
+        result = database.fetchall()
+        for row in result:
+            name = row[0] 
+
+            if name not in names: 
+                names.append(name)
+                agents_per_user[name] = 1 
+            else:
+                agents_per_user[name] += 1 
+
+    return agents_per_user
+
+def agents2grouplist(database):
+    baselines = agents2baselines(database)
+    agents_per_group = {}
+    names = []
+    for baseline in baselines: 
+        sql = "SELECT name FROM sysgroup WHERE baseline_id = %s "
+        database.execute(sql,baseline)
+        result = database.fetchall()
+        for row in result:
+            name = row[0] 
+
+            if name not in names: 
+                names.append(name)
+                agents_per_group[name] = 1 
+            else:
+                agents_per_group[name] += 1 
+ 
+    return agents_per_group
+
+
 
 def check_permissions(request):
     if not request.user.is_authenticated():
         return redirect('/users/login/?next=%s' % request.path)
+
+
+#### views ####
 
 def connection_view(request):
     check_permissions(request)
@@ -571,29 +691,14 @@ def os_view(request):
     syslog.open_syslog()
     parser = TeddixParser.TeddixStringParser()
     os_list = []
-    os_names = []
     search = request.GET.get('search','')
+    
     database = TeddixDatabase.TeddixDatabase(syslog,cfg) 
-   
-    baselines = agents2baselines(database)
-    agents_per_os = {}
-    for baseline in baselines: 
-        sql = "SELECT name FROM system WHERE baseline_id = %s "
-        database.execute(sql,baseline)
-        result2 = database.fetchall()
-        for row2 in result2:
-            os_name = row2[0]
-
-            if os_name not in os_names: 
-                os_names.append(os_name)
-                agents_per_os[os_name] = 1 
-            else:
-                agents_per_os[os_name] += 1 
- 
+    agents_per_os = agents2oslist(database)
     database.disconnect()
     
     os_id = 0
-    for os_name in os_names: 
+    for os_name in agents_per_os: 
         if os_name.find(search) != -1 : 
             os_list.append({'id': os_id, 'name': os_name, 'count': agents_per_os[os_name] })
             os_id += 1
@@ -611,27 +716,13 @@ def arch_view(request):
     arch_list = []
     arch_names = []
     search = request.GET.get('search','')
+    
     database = TeddixDatabase.TeddixDatabase(syslog,cfg) 
-
-    baselines = agents2baselines(database)
-    agents_per_arch = {}
-    for baseline in baselines: 
-        sql = "SELECT arch FROM system WHERE baseline_id = %s "
-        database.execute(sql,baseline)
-        result2 = database.fetchall()
-        for row2 in result2:
-            arch_name = row2[0]
-
-            if arch_name not in arch_names: 
-                arch_names.append(arch_name)
-                agents_per_arch[arch_name] = 1 
-            else:
-                agents_per_arch[arch_name] += 1 
- 
+    agents_per_arch = agents2archlist(database)
     database.disconnect()
     
     arch_id = 0
-    for arch_name in arch_names: 
+    for arch_name in agents_per_arch: 
         if arch_name.find(search) != -1 : 
             arch_list.append({'id': arch_id, 'name': arch_name, 'count': agents_per_arch[arch_name] })
             arch_id += 1
@@ -651,7 +742,9 @@ def net_view(request):
     search_name = request.GET.get('search_name','')
     search_type = request.GET.get('search_type','ipv4')
     database = TeddixDatabase.TeddixDatabase(syslog,cfg) 
-    
+   
+    # TODO: Network field missing (db,agent,server fix)
+    # TODO: show IP/mask for now... 
     if search_type == 'ipv4':
         sql = "SELECT DISTINCT address,mask FROM ipv4 "
         database.execute(sql)
@@ -694,29 +787,14 @@ def software_view(request):
     syslog.open_syslog()
     parser = TeddixParser.TeddixStringParser()
     pkg_list = []
-    pkg_names = []
     search = request.GET.get('search','')
-    database = TeddixDatabase.TeddixDatabase(syslog,cfg) 
     
-    baselines = agents2baselines(database)
-    agents_per_pkg = {}
-    for baseline in baselines: 
-        sql = "SELECT name,version FROM package WHERE baseline_id = %s "
-        database.execute(sql,baseline)
-        result = database.fetchall()
-        for row in result:
-            pkg_name = row[0] + '-' + row[1]
-
-            if pkg_name not in pkg_names: 
-                pkg_names.append(pkg_name)
-                agents_per_pkg[pkg_name] = 1 
-            else:
-                agents_per_pkg[pkg_name] += 1 
- 
+    database = TeddixDatabase.TeddixDatabase(syslog,cfg) 
+    agents_per_pkg = agents2softwarelist(database)
     database.disconnect()
     
     pkg_id = 0
-    for pkg_name in pkg_names: 
+    for pkg_name in agents_per_pkg: 
         if pkg_name.find(search) != -1 : 
             pkg_list.append({'id': pkg_id, 'name': pkg_name, 'count': agents_per_pkg[pkg_name] })
             pkg_id += 1
@@ -734,27 +812,13 @@ def patches_view(request):
     patch_list = []
     patch_names = []
     search = request.GET.get('search','')
+
     database = TeddixDatabase.TeddixDatabase(syslog,cfg) 
-
-    baselines = agents2baselines(database)
-    agents_per_patch = {}
-    for baseline in baselines: 
-        sql = "SELECT name,version,patchtype FROM patch WHERE baseline_id = %s "
-        database.execute(sql,baseline)
-        result = database.fetchall()
-        for row in result:
-            patch_name = row[0] + '-' + row[1]
-
-            if patch_name not in patch_names: 
-                patch_names.append(patch_name)
-                agents_per_patch[patch_name] = 1 
-            else:
-                agents_per_patch[patch_name] += 1 
- 
+    agents_per_patch = agents2patchlist(database)
     database.disconnect()
     
     patch_id = 0
-    for patch_name in patch_names: 
+    for patch_name in agents_per_patch: 
         if patch_name.find(search) != -1 : 
 	    patch_list.append({'id': patch_id, 'name': patch_name, 'count': agents_per_patch[patch_name] })
             patch_id += 1
@@ -771,29 +835,14 @@ def users_view(request):
     syslog.open_syslog()
     parser = TeddixParser.TeddixStringParser()
     user_list = []
-    names = []
     search = request.GET.get('search','')
+   
     database = TeddixDatabase.TeddixDatabase(syslog,cfg) 
-
-    baselines = agents2baselines(database)
-    agents_per_user = {}
-    for baseline in baselines: 
-        sql = "SELECT login FROM sysuser WHERE baseline_id = %s "
-        database.execute(sql,baseline)
-        result = database.fetchall()
-        for row in result:
-            name = row[0] 
-
-            if name not in names: 
-                names.append(name)
-                agents_per_user[name] = 1 
-            else:
-                agents_per_user[name] += 1 
- 
+    agents_per_user = agents2userlist(database)
     database.disconnect()
-    
+
     user_id = 0
-    for name in names: 
+    for name in agents_per_user: 
         if name.find(search) != -1 : 
 	    user_list.append({'id': user_id, 'name': name, 'count': agents_per_user[name] })
             user_id += 1
@@ -812,27 +861,13 @@ def groups_view(request):
     group_list = []
     names = []
     search = request.GET.get('search','')
+
     database = TeddixDatabase.TeddixDatabase(syslog,cfg) 
-
-    baselines = agents2baselines(database)
-    agents_per_group = {}
-    for baseline in baselines: 
-        sql = "SELECT name FROM sysgroup WHERE baseline_id = %s "
-        database.execute(sql,baseline)
-        result = database.fetchall()
-        for row in result:
-            name = row[0] 
-
-            if name not in names: 
-                names.append(name)
-                agents_per_group[name] = 1 
-            else:
-                agents_per_group[name] += 1 
- 
+    agents_per_group = agents2grouplist(database)
     database.disconnect()
-    
+
     group_id = 0
-    for name in names: 
+    for name in agents_per_group: 
         if name.find(search) != -1 : 
 	    group_list.append({'id': group_id, 'name': name, 'count': agents_per_group[name] })
             group_id += 1
@@ -1008,34 +1043,95 @@ def extra_view(request):
 
 def dashboard_view(request):
     check_permissions(request)
-    pie_chart = pygal.Pie(width=300, height=300, explicit_size=False, style=CleanStyle)
+
+    cfg = TeddixConfigFile.TeddixConfigFile()
+    syslog = TeddixLogger.TeddixLogger("TeddixWeb")
+    syslog.open_syslog()
+    parser = TeddixParser.TeddixStringParser() 
+    database = TeddixDatabase.TeddixDatabase(syslog,cfg) 
+
+    # agent count 
+    line_chart = pygal.StackedLine(width=400, height=400, explicit_size=False, style=CleanStyle,legend_at_bottom=True,fill=True)
+    line_chart.title = 'Agent count'
+    line_chart.x_labels = map(str, range(1, 12))
+    line_chart.add('agents', [None, 0, 5, 16, 25, 31, 36, 45, 46, 42, 37, 45])
+    line_chart.render_to_file('teddixweb/static/charts/dashboard-agents.svg')
+    
+    # OS stats
+    agents_per_os = agents2oslist(database)
+    
+    pie_chart = pygal.Pie(width=400, height=400, explicit_size=False, legend_at_bottom=True, style=CleanStyle)
     pie_chart.title = 'Operating Systems'
-    pie_chart.add('Windows', 40)
-    pie_chart.add('Linux', 30)
-    pie_chart.add('Aix', 20)
-    pie_chart.add('HP-UX', 10)
+    
+    for name in agents_per_os: 
+        pie_chart.add(name, agents_per_os[name])
+    
     pie_chart.render_to_file('teddixweb/static/charts/dashboard-os.svg')
-    pie_chart = pygal.Pie(width=300, height=300, explicit_size=False, style=CleanStyle)
+
+    # Arch stats
+    agents_per_arch = agents2archlist(database)
+    
+    pie_chart = pygal.Pie(width=400, height=400, explicit_size=False, legend_at_bottom=True, style=CleanStyle)
     pie_chart.title = 'Architectures'
-    pie_chart.add('x86_64', 70)
-    pie_chart.add('x86', 20)
-    pie_chart.add('ppc', 5)
-    pie_chart.add('arm', 5)
+    
+    for name in agents_per_arch: 
+        pie_chart.add(name, agents_per_arch[name])
+    
     pie_chart.render_to_file('teddixweb/static/charts/dashboard-arch.svg')
-    pie_chart = pygal.Pie(width=300, height=300, explicit_size=False, style=CleanStyle)
-    pie_chart.title = 'Networks per system'
+ 
+    # patches 
+    line_chart = pygal.StackedLine(width=400, height=400, explicit_size=False, style=CleanStyle,legend_at_bottom=True,fill=True)
+    line_chart.title = 'Available updates'
+    line_chart.x_labels = map(str, range(1, 12))
+    line_chart.add('Security', [None, 0, 5, 16, 25, 31, 36, 45, 46, 42, 37, 45])
+    line_chart.add('Bugfix', [None, 0, 2, 3, 7, 15, 12, 24, 8, 8, 1, 19])
+    line_chart.add('Extra', [None, 0, 5, 16, 12, 15, 17, 7, 3, 6, 36, 4])
+    line_chart.render_to_file('teddixweb/static/charts/dashboard-patches.svg')
+   
+    # software
+    pie_chart = pygal.Pie(width=400, height=400, explicit_size=False, legend_at_bottom=True, style=CleanStyle)
+    pie_chart.title = 'Software type'
+    pie_chart.add('Core', 30)
+    pie_chart.add('Basic', 62)
+    pie_chart.add('Optional', 43)
+    pie_chart.add('Extra', 11)
+    pie_chart.render_to_file('teddixweb/static/charts/dashboard-software.svg')
+
+
+    # Network stats
+    pie_chart = pygal.Pie(width=400, height=400, explicit_size=False, legend_at_bottom=True, style=CleanStyle)
+    pie_chart.title = 'Networks'
     pie_chart.add('192.168.1.0/24', 60)
     pie_chart.add('10.0.0.0/16', 40)
+    pie_chart.add('10.1.0.0/16', 25)
+    pie_chart.add('10.2.0.0/24', 19)
     pie_chart.render_to_file('teddixweb/static/charts/dashboard-networks.svg')
-    pie_chart = pygal.Pie(width=300, height=300, explicit_size=False, style=CleanStyle)
-    pie_chart.title = 'Installed packages'
-    pie_chart.add('glibc', 60)
-    pie_chart.add('gcc', 20)
-    pie_chart.add('httpd', 10)
-    pie_chart.add('python', 5)
-    pie_chart.add('perl', 5)
-    pie_chart.render_to_file('teddixweb/static/charts/dashboard-packages.svg')
+    
+    # User type
+    pie_chart = pygal.Pie(width=400, height=400, explicit_size=False, legend_at_bottom=True, style=CleanStyle)
+    pie_chart.title = 'Account type'
+    pie_chart.add('System account', 30)
+    pie_chart.add('User account', 10)
+    pie_chart.render_to_file('teddixweb/static/charts/dashboard-users-type.svg')
 
+    # locked 
+    pie_chart = pygal.Pie(width=400, height=400, explicit_size=False, legend_at_bottom=True, style=CleanStyle)
+    pie_chart.title = 'Active accounts'
+    pie_chart.add('Locked', 310)
+    pie_chart.add('Active', 26)
+    pie_chart.render_to_file('teddixweb/static/charts/dashboard-users-status.svg')
+
+    # hash 
+    pie_chart = pygal.Pie(width=400, height=400, explicit_size=False, legend_at_bottom=True, style=CleanStyle)
+    pie_chart.title = 'Hash type'
+    pie_chart.add('sha512', 23)
+    pie_chart.add('md5', 9)
+    pie_chart.add('des', 3)
+    pie_chart.render_to_file('teddixweb/static/charts/dashboard-users-hash.svg')
+
+
+
+    database.disconnect()
     return render(request, 'monitor/dashboard.html')
 
 
