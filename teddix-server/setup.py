@@ -10,7 +10,7 @@ setup(name='teddix-server',
       license="BSD",
       scripts=['src/teddix-server'],
       # TODO: fix config file 
-      data_files=[('/etc/teddix',['config/serverlist']),
+      data_files=[
 	  ("/usr/share/teddix/",["config/initdb.sql"]),
           ('/etc/init.d', ['init.d/teddix-server'])]
      )
