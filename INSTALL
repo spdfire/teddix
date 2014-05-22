@@ -50,6 +50,14 @@ CONFIGURATION
 
 2. Web frontend  
 
-   - edit /etc/teddix/web_settings.py 
-  
-    
+   - edit /etc/teddix/websettings.py 
+   
+   - start fcgi: 
+   	$ cd /usr/share/teddix-web/ && python ./manage.py runfcgi method=threaded host=127.0.0.1 port=8000
+
+   - configure webserver to use fcgi: 
+   	https://docs.djangoproject.com/en/dev/howto/deployment/fastcgi/
+   
+   	(example for nginx: https://code.djangoproject.com/wiki/DjangoAndNginx) 
+       
+
