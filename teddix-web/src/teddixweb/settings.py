@@ -1,18 +1,19 @@
 # Django settings for teddixweb project.
-import os 
+import os, sys 
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 SITE_ROOT = os.path.abspath(os.path.dirname(__file__))
+PROJECT_SETTINGS = '/etc/teddix'
 
-# overwritten in local_settings.py
+# overwritten in websettings.py
 ADMINS = (
      ('Your name', 'user@example.com'),
 )
 
 MANAGERS = ADMINS
 
-# overwritten in local_settings.py
+# overwritten in websettings.py
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
@@ -86,7 +87,7 @@ STATICFILES_FINDERS = (
 #    'django.contrib.staticfiles.finders.DefaultStorageFinder',
 )
 
-# overwritten in local_settings.py
+# overwritten in websettings.py
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = 'SECRET_KEY'
 
@@ -168,8 +169,9 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 
 
 # Include local configuration; overwrite current configuration
+sys.path.append(PROJECT_SETTINGS)
 try:
-    from local_settings import *
+    from websettings import *
 except ImportError:
     pass
 
