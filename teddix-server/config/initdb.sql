@@ -1,5 +1,5 @@
 
-DROP DATABASE teddix;
+DROP DATABASE IF EXISTS teddix;
 CREATE DATABASE teddix;
 
 USE teddix; 

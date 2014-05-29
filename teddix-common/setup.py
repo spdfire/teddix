@@ -10,4 +10,5 @@ setup(name='teddix',
       license="BSD",
       py_modules=['teddix'],
       packages=['teddix'],
+      data_files=[('/usr/share/teddix', ['config/teddix.conf'])]
      )

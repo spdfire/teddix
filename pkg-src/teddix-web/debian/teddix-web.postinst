@@ -9,7 +9,6 @@ case "$mode" in
     prev_version=$2
 
     chmod +w /usr/share/teddix-web/teddixweb/static/charts
-
     ;;
 esac
 
