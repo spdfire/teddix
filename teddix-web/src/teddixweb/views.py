@@ -339,6 +339,7 @@ def agents_view(request):
     if action == "show":
         sql = "SELECT * FROM server WHERE id = %s " 
         database.execute(sql,agent_id)
+
         result = database.fetchall()
         for row in result:
             agent_id = row[0]
@@ -347,6 +348,7 @@ def agents_view(request):
         
         sql = "SELECT COUNT(*) FROM baseline WHERE server_id = %s" 
         database.execute(sql,agent_id)
+
         result = database.fetchall()
         for row in result:
             agent_report_count = row[0]
@@ -359,6 +361,18 @@ def agents_view(request):
    
         sql = "SELECT id FROM baseline WHERE created = (SELECT MAX(created) FROM baseline WHERE server_id = %s )"
         database.execute(sql,agent_id)
+
+        if database.rowcount() < 1:
+            error = "Selected agent does not have any collected data. "
+            database.disconnect()
+            context = Context({"agent_id": agent_id, 
+                "agent_name": agent_name, 
+                "agent_created": agent_created, 
+                "agent_report_count": agent_report_count, 
+                "agent_report_last": agent_report_last, 
+                "info": info, "error": error } )
+            return render(request, 'agents/agent_detail.html', context )
+        
         result = database.fetchall()
         for row in result:
             baseline_id = row[0]
