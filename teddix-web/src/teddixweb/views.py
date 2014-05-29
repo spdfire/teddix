@@ -363,7 +363,7 @@ def agents_view(request):
         database.execute(sql,agent_id)
 
         if database.rowcount() < 1:
-            error = "Selected agent does not have any collected data. "
+            error = "Agent does not have any hardware reports. "
             database.disconnect()
             context = Context({"agent_id": agent_id, 
                 "agent_name": agent_name, 
