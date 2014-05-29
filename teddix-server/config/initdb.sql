@@ -81,7 +81,7 @@ CREATE TABLE processor (
 	baseline_id INT NOT NULL,
 	cores VARCHAR(25), 
 	extclock VARCHAR(25), 
-	familly VARCHAR(25), 
+	family VARCHAR(25), 
 	htsystem VARCHAR(10), 
 	procid VARCHAR(25), 
 	partnumber VARCHAR(50), 

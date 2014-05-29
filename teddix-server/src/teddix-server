@@ -193,7 +193,7 @@ class TeddixServer:
             socket = child.get('socket')
             sql  = "INSERT INTO processor(server_id,baseline_id,socket,cores,extclock,family,htsystem,procid,partnumber,serialnumber,speed,threads,proctype,procversion) "
             sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
-            database.execute(sql,(server_id,baseline_id,socket,cores,extclock,familly,htsystem,procid,partnumber,serialnumber,speed,threads,proctype,procversion))
+            database.execute(sql,(server_id,baseline_id,socket,cores,extclock,family,htsystem,procid,partnumber,serialnumber,speed,threads,proctype,procversion))
 
         # RAM modules 
         root = hardware.find('memory')
