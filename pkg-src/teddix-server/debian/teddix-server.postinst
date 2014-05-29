@@ -8,6 +8,9 @@ case "$mode" in
   configure )
     prev_version=$2
 
+    mysql -u root < /usr/share/teddix/initdb.sql
+    #/etc/init.d/teddix-server start 
+
     echo ""
     echo "----------------------------------------------------------------"
     echo "   Database configuration: "

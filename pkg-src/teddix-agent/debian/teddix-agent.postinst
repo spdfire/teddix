@@ -1,0 +1,17 @@
+#!/bin/sh                                                                     
+
+set -e
+mode=$1
+source_package=teddix-agent
+
+case "$mode" in
+  configure )
+    prev_version=$2
+
+    #/etc/init.d/teddix-agent start
+
+    ;;
+esac
+
+#DEBHELPER#
+

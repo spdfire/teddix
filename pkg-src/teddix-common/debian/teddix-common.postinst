@@ -1,0 +1,19 @@
+#!/bin/sh                                                                     
+
+set -e
+mode=$1
+source_package=teddix-common
+
+case "$mode" in
+  configure )
+    prev_version=$2
+
+    [ -d /etc/teddix ] || mkdir /etc/teddix
+    [ -f /etc/teddix/teddix.conf ] || cp /usr/share/teddix/teddix.conf /etc/teddix/
+    chmod 600 /etc/teddix/teddix.conf
+
+    ;;
+esac
+
+#DEBHELPER#
+
