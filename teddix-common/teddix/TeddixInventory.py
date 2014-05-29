@@ -708,16 +708,16 @@ if __name__ == "__main__":
     if not os.access(cfg.global_workdir + '/agent', os.X_OK):
         syslog.error("workdir %s needs to be executable" % cfg.global_workdir + '/agent')
 
-    #baseline = TeddixBaseline(syslog,cfg)
-    #raw_xml = baseline.create_xml()
+    baseline = TeddixBaseline(syslog,cfg)
+    raw_xml = baseline.create_xml()
     # make xml pretty ;)
-    #reparsed_xml = minidom.parseString(raw_xml)
-    #pretty_xml = reparsed_xml.toprettyxml(indent="  ")
+    reparsed_xml = minidom.parseString(raw_xml)
+    pretty_xml = reparsed_xml.toprettyxml(indent="  ")
 
-    #print pretty_xml
+    print pretty_xml
     #cfg2html = TeddixCfg2Html(syslog,cfg)
     #cfg2html.run()
-    dmesg = TeddixDmesg(syslog,cfg)
-    print dmesg.run()
+    #dmesg = TeddixDmesg(syslog,cfg)
+    #print dmesg.run()
 
 

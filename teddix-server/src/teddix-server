@@ -181,17 +181,17 @@ class TeddixServer:
         for child in root:
             cores = child.get('cores')
             extclock = child.get('extclock')
-            familly = child.get('familly')
+            family = child.get('family')
             htsystem = child.get('htsystem')
             procid = child.get('procid')
             partnumber = child.get('partnumber')
             serialnumber = child.get('serialnumber')
-            speed = child.get('clock')
+            speed = child.get('speed')
             threads = child.get('threads')
             proctype = child.get('proctype')
-            procversion = child.get('procversion')
+            procversion = child.get('version')
             socket = child.get('socket')
-            sql  = "INSERT INTO processor(server_id,baseline_id,socket,cores,extclock,familly,htsystem,procid,partnumber,serialnumber,speed,threads,proctype,procversion) "
+            sql  = "INSERT INTO processor(server_id,baseline_id,socket,cores,extclock,family,htsystem,procid,partnumber,serialnumber,speed,threads,proctype,procversion) "
             sql += "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
             database.execute(sql,(server_id,baseline_id,socket,cores,extclock,familly,htsystem,procid,partnumber,serialnumber,speed,threads,proctype,procversion))
 
@@ -205,7 +205,7 @@ class TeddixServer:
             memorytype = child.get('memorytype')
             partnumber = child.get('partnumber')
             serialnumber = child.get('serialnumber')
-            modulesize = child.get('modulesize')
+            modulesize = child.get('memorysize')
             speed = child.get('speed')
             width = child.get('width')
             sql  = "INSERT INTO memorymodule(server_id,baseline_id,bank,formfactor,location,manufacturer,memorytype,partnumber,serialnumber,modulesize,width,speed) "
