@@ -1,0 +1,17 @@
+#!/bin/sh                                                                     
+
+set -e
+mode=$1
+source_package=teddix-web
+
+case "$mode" in
+  configure )
+    prev_version=$2
+
+    chmod +w /usr/share/teddix-web/teddixweb/static/charts
+
+    ;;
+esac
+
+#DEBHELPER#
+
