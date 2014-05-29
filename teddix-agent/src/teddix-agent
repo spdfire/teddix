@@ -89,7 +89,21 @@ class TeddixTCPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         bootlog.text = b64
 
         return xml.tostring(bootlog, 'utf-8')
+ 
+    def create_message_status(self,syslog,cfg):
+
+        status = xml.Element('status')
+        status.text = 'OK'
+
+        return xml.tostring(status, 'utf-8')
               
+ 
+    def create_message_error(self,syslog,cfg,msg):
+
+        error = xml.Element('error')
+        error.text = msg
+
+        return xml.tostring(error, 'utf-8')
 
 
     def create_message(self, code=200, info=None, req=None, raw_data=None):
@@ -217,12 +231,19 @@ class TeddixTCPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 self.syslog.warn("%s: /baseline request failed" % self.address_string())
                 self.syslog.debug("do_GET() %s " % e)
         
-        elif self.path == '/test':
-            self.syslog.info("Generating /test")
+        elif self.path == '/status':
+            self.syslog.info("Generating /status")
+            raw_status = self.create_message_status(self.syslog,self.cfg)
+            raw_message = self.create_message(200,"Request successful",'status',raw_status)
+            self.send_message(200,"Request successful",raw_message)
+            self.syslog.info("%s: /status request sent" % self.address_string())
 
 
         else:
-            self.send_error(501, "Unsupported location (%s)" % self.path)
+            err_msg = "Unsupported operation (%s)" % self.path
+            raw_error = self.create_message_error(self.syslog,self.cfg,err_msg)
+            raw_message = self.create_message(500,"Unsupported operation",'error',raw_error)
+            self.send_message(500,"Request failed",raw_message)
             self.syslog.warn("Unsupported request from %s" % self.address_string())
 
     def setup(self):
