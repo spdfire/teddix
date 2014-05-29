@@ -561,13 +561,13 @@ def agents_view(request):
             user_list.append({'uid': user_uid, 'gid': user_gid, 'login': user_login, 'homedir': user_homedir, 'shell': user_shell, 'locked': user_locked, 'hash': user_hash, 'groups': user_groups, 'comment': user_comment })
 
 
-        sql = "SELECT familly,procversion,speed,cores,threads,htsystem,proctype,socket,extclock,serialnumber,partnumber FROM processor WHERE baseline_id = %s"
+        sql = "SELECT family,procversion,speed,cores,threads,htsystem,proctype,socket,extclock,serialnumber,partnumber FROM processor WHERE baseline_id = %s"
         database.execute(sql,baseline_id)
         result = database.fetchall()
         cpu_id = 0 
         cpu_list = []
         for row in result:
-            cpu_familly = row[0]
+            cpu_family = row[0]
             cpu_version = row[1]
             cpu_speed = row[2]
             cpu_cores = row[3]
@@ -578,7 +578,7 @@ def agents_view(request):
             cpu_extclock = row[8]
             cpu_serialnumber = row[9]
             cpu_partnumber = row[10]
-            cpu_list.append({'id': cpu_id, 'familly': cpu_familly, 'version': cpu_version, 'speed': cpu_speed, 'cores': cpu_cores, 'threads': cpu_threads, 'ht': cpu_ht, 'type': cpu_type, 'socket': cpu_socket, 'extclock': cpu_extclock, 'serialnumber': cpu_serialnumber, 'partnumber': cpu_partnumber})
+            cpu_list.append({'id': cpu_id, 'family': cpu_family, 'version': cpu_version, 'speed': cpu_speed, 'cores': cpu_cores, 'threads': cpu_threads, 'ht': cpu_ht, 'type': cpu_type, 'socket': cpu_socket, 'extclock': cpu_extclock, 'serialnumber': cpu_serialnumber, 'partnumber': cpu_partnumber})
             cpu_id += 1 
 
         sql = "SELECT bank,location,memorytype,modulesize,speed,width,manufacturer,serialnumber,partnumber FROM memorymodule WHERE baseline_id = %s"
