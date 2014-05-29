@@ -159,7 +159,73 @@ def agents2grouplist(database):
  
     return agents_per_group
 
+def users2hashlist(database):
+    baselines = agents2baselines(database)
+    users_per_hash = {}
+    hash_names = []
+    for baseline in baselines: 
+        sql = "SELECT hashtype FROM sysuser WHERE baseline_id = %s AND locked = 'False'"
+        database.execute(sql,baseline)
+        result = database.fetchall()
+        for row in result:
+            hash_name = row[0]
 
+            if hash_name not in hash_names: 
+                hash_names.append(hash_name)
+                users_per_hash[hash_name] = 1 
+            else:
+                users_per_hash[hash_name] += 1 
+
+    return users_per_hash
+ 
+def users2activelist(database):
+    baselines = agents2baselines(database)
+    users_per_status = {}
+    status_names = []
+    for baseline in baselines: 
+        sql = "SELECT locked FROM sysuser WHERE baseline_id = %s "
+        database.execute(sql,baseline)
+        result = database.fetchall()
+        for row in result:
+            if row[0] == 'False':
+                status_name = 'Active'
+            elif row[0] == 'True':
+                status_name = 'Locked'
+            else:
+                status_name = 'Unknown'
+
+            if status_name not in status_names: 
+                status_names.append(status_name)
+                users_per_status[status_name] = 1 
+            else:
+                users_per_status[status_name] += 1 
+
+    return users_per_status
+ 
+def users2typelist(database):
+    baselines = agents2baselines(database)
+    users_per_type = {}
+    type_names = []
+    for baseline in baselines: 
+        sql = "SELECT uid FROM sysuser WHERE baseline_id = %s "
+        database.execute(sql,baseline)
+        result = database.fetchall()
+        for row in result:
+            if int(row[0]) < 1000:
+                type_name = 'System Account'
+            elif int(row[0]) >= 1000 :
+                type_name = 'User Account'
+            else:
+                type_name = 'Unknown'
+
+            if type_name not in type_names: 
+                type_names.append(type_name)
+                users_per_type[type_name] = 1 
+            else:
+                users_per_type[type_name] += 1 
+
+    return users_per_type
+ 
 
 def check_permissions(request):
     if not request.user.is_authenticated():
@@ -257,7 +323,7 @@ def agents_view(request):
         agent_ipv4 = request.GET.get('agent_ipv4','')
         agent_ipv6 = request.GET.get('agent_ipv6','')
         agent_resolving = request.GET.get('agent_resolving','')
-        agent_active = request.GET.get('agent_active','')
+        agent_active = request.GET.get('agent_active','no')
         sql = "INSERT INTO server(name,created,hostname,ipv4,ipv6,resolving,active) VALUES (%s,NOW(),%s,%s,%s,%s,%s); " 
         database.execute(sql,(agent_name,agent_hostname,agent_ipv4,agent_ipv6,agent_resolving,agent_active))
         database.commit()
@@ -906,15 +972,13 @@ def hardware_view(request):
     database = TeddixDatabase.TeddixDatabase(syslog,cfg) 
     
     if search_type == 'processor':
-        sql = "SELECT DISTINCT familly,speed,cores,htsystem FROM processor "
+        sql = "SELECT DISTINCT family,speed,cores,htsystem FROM processor "
         database.execute(sql)
         result = database.fetchall()
         cpu_id = 0 
         for row in result:
-            #cpu_familly = row[0]
-            #cpu_speed = row[1]
-            cpu_familly = 'TODO'
-            cpu_speed = 'TODO'
+            cpu_familly = row[0]
+            cpu_speed = row[1]
             cpu_cores = row[2]
             cpu_ht = row[3]
             #if cpu_familly.find(search_name) != -1 :
@@ -1061,13 +1125,21 @@ def dashboard_view(request):
     parser = TeddixParser.TeddixStringParser() 
     database = TeddixDatabase.TeddixDatabase(syslog,cfg) 
 
-    # agent count 
-    line_chart = pygal.StackedLine(width=400, height=400, explicit_size=False, style=CleanStyle,legend_at_bottom=True,fill=True)
-    line_chart.title = 'Agent count'
-    line_chart.x_labels = map(str, range(1, 12))
-    line_chart.add('agents', [None, 0, 5, 16, 25, 31, 36, 45, 46, 42, 37, 45])
-    line_chart.render_to_file('teddixweb/static/charts/dashboard-agents.svg')
-    
+    # agent status 
+    sql = "SELECT id FROM server WHERE active = 'yes'"
+    database.execute(sql)
+    active = database.rowcount()
+
+    sql = "SELECT id FROM server WHERE active = 'no'"
+    database.execute(sql)
+    inactive = database.rowcount()
+
+    pie_chart = pygal.Pie(width=400, height=400, explicit_size=False, legend_at_bottom=True, style=CleanStyle)
+    pie_chart.title = 'Agent status'
+    pie_chart.add('Active', active)
+    pie_chart.add('Inactive', inactive)
+    pie_chart.render_to_file('teddixweb/static/charts/dashboard-agents.svg')
+ 
     # OS stats
     agents_per_os = agents2oslist(database)
     
@@ -1119,28 +1191,41 @@ def dashboard_view(request):
     pie_chart.render_to_file('teddixweb/static/charts/dashboard-networks.svg')
     
     # User type
+    users_per_type = users2typelist(database)
     pie_chart = pygal.Pie(width=400, height=400, explicit_size=False, legend_at_bottom=True, style=CleanStyle)
     pie_chart.title = 'Account type'
-    pie_chart.add('System account', 30)
-    pie_chart.add('User account', 10)
+    for name in users_per_type: 
+        pie_chart.add(name, users_per_type[name])
+    #pie_chart.add('System account', 30)
+    #pie_chart.add('User account', 10)
     pie_chart.render_to_file('teddixweb/static/charts/dashboard-users-type.svg')
 
     # locked 
+    users_per_status = users2activelist(database)
     pie_chart = pygal.Pie(width=400, height=400, explicit_size=False, legend_at_bottom=True, style=CleanStyle)
     pie_chart.title = 'Active accounts'
-    pie_chart.add('Locked', 310)
-    pie_chart.add('Active', 26)
+    for name in users_per_status: 
+        pie_chart.add(name, users_per_status[name])
     pie_chart.render_to_file('teddixweb/static/charts/dashboard-users-status.svg')
 
     # hash 
+    users_per_hash = users2hashlist(database)
     pie_chart = pygal.Pie(width=400, height=400, explicit_size=False, legend_at_bottom=True, style=CleanStyle)
     pie_chart.title = 'Hash type'
-    pie_chart.add('sha512', 23)
-    pie_chart.add('md5', 9)
-    pie_chart.add('des', 3)
+    for name in users_per_hash: 
+        pie_chart.add(name, users_per_hash[name])
     pie_chart.render_to_file('teddixweb/static/charts/dashboard-users-hash.svg')
+    
+    
+ 
 
+    # agent count / trends 
 
+    #line_chart = pygal.StackedLine(width=400, height=400, explicit_size=False, style=CleanStyle,legend_at_bottom=True,fill=True)
+    #line_chart.title = 'Agent status'
+    #line_chart.x_labels = map(str, range(1, 12))
+    #line_chart.add('agents', [None, 0, 5, 16, 25, 31, 36, 45, 46, 42, 37, 45])
+    #line_chart.render_to_file('teddixweb/static/charts/dashboard-agents.svg')
 
     database.disconnect()
     return render(request, 'monitor/dashboard.html')
