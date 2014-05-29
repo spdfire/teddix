@@ -130,6 +130,11 @@ setup(name='teddix-web',
               [ 
               'src/teddixweb/static/charts/.keep',
               ]),
+          # startup script 
+          ('/etc/init.d', 
+              [
+              'init.d/teddix-web'
+              ]),
 
 
           ] 
