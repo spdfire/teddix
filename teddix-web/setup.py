@@ -135,6 +135,12 @@ setup(name='teddix-web',
               [
               'init.d/teddix-web'
               ]),
+          # config file 
+          ('/etc/teddix', 
+              [
+              'config/websettings.py'
+              ]),
+
 
 
           ] 
