@@ -11,7 +11,7 @@ Vcs-Browser: https://github.com/spdfire/teddix
 
 Package: teddix-web
 Architecture: all
-Depends: ${python:Depends}, ${misc:Depends}, python-pygal, python-django, teddix-common 
+Depends: ${python:Depends}, ${misc:Depends}, python-pygal, python-django, python-flup, teddix-common 
 Description: Teddix inventory system.
  Teddix is an inventory system for servers. 
  This package contain teddix web frontend. 

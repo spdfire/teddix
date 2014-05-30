@@ -11,6 +11,6 @@ Vcs-Browser: https://github.com/spdfire/teddix
 
 Package: teddix-agent
 Architecture: all
-Depends: ${python:Depends}, ${misc:Depends}, python-daemon, python-libxml2, python-lockfile, cfg2html-linux
+Depends: ${python:Depends}, ${misc:Depends}, python-daemon, python-libxml2, python-lockfile, cfg2html-linux, teddix-common
 Description: Teddix inventory system.
  This package contain teddix agent. 
