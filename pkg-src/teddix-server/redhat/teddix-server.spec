@@ -8,6 +8,10 @@ BuildRequires:      python
 Requires:           python
 Requires:           python-daemon
 Requires:           python-lockfile
+Requires:           libxml2-python
+Requires:           MySQL-python
+Requires:           mysql
+Requires:           mysql-server
 Requires:           teddix-common
 
 %description

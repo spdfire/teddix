@@ -9,6 +9,8 @@ Requires:           python
 Requires:           python-dmidecode
 Requires:           python-psutil
 Requires:           python-netifaces
+Requires:           libxml2-python 
+Requires:           MySQL-python
 Requires:           net-tools
 Requires:           iproute
 Requires:           pciutils

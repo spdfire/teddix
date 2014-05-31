@@ -5,8 +5,11 @@ Release:            1%{?dist}
 License:            BSD2
 Source:             http://www.teddix.info/download/stable/%{name}-%{version}.tar.gz
 BuildRequires:      python
-BuildRequires:      python-psutil
 Requires:           python
+Requires:           python-pygal
+Requires:           Django
+Requires:           python-flup
+Requires:           teddix-common
 
 %description
 The Teddix Agent is a program that allows the user to collect 
