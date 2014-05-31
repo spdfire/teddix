@@ -644,7 +644,7 @@ class TeddixDmesg:
         parser = TeddixParser.TeddixStringParser()
 
         if parser.checkexec('dmesg'):
-            lines = parser.readstdout('dmesg --ctime')
+            lines = parser.readstdout('dmesg')
             for i in range(len(lines)):
                 dmesg += lines[i] + "\n"
                 i += 1 
