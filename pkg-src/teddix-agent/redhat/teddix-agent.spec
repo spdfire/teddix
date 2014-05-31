@@ -8,7 +8,7 @@ BuildRequires:      python
 Requires:           python
 Requires:           python-daemon
 Requires:           python-lockfile
-Requires:           cfg2html
+Requires:           cfg2html-linux
 Requires:           teddix-common
 
 %description
