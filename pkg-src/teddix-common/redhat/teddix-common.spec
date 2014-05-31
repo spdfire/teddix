@@ -33,10 +33,16 @@ python setup.py install --root %{buildroot}
 %clean
 rm -rf %{buildroot}
 
+%post
+[ -d /etc/teddix ] || mkdir /etc/teddix
+[ -f /etc/teddix/teddix.conf ] || cp /usr/share/teddix/teddix.conf /etc/teddix/
+chmod 600 /etc/teddix/teddix.conf
+
 %files
 %defattr(-, root, root, -)
 %{python_sitelib}/teddix/*
 %{python_sitelib}/teddix-*
+%{_datarootdir}/teddix/*.conf
 
 %changelog
 * Fri Feb 08 2013 spdfire <spdfire@plusinfinity.org> 2.0
