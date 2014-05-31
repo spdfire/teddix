@@ -43,6 +43,7 @@ chmod 600 /etc/teddix/teddix.conf
 %{python_sitelib}/teddix/*
 %{python_sitelib}/teddix-*
 %{_datarootdir}/teddix/*.conf
+%config %{_sysconfdir}/teddix/*.conf
 
 %changelog
 * Fri Feb 08 2013 spdfire <spdfire@plusinfinity.org> 2.0
