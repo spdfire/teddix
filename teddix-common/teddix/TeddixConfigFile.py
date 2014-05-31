@@ -15,7 +15,7 @@ class TeddixConfigFile ():
     global_logfile     = "/var/log/teddix.log"
     global_workdir     = "/var/lib/teddix"
 
-    agent_listen      = "0.0.0.0"
+    agent_listen      = "127.0.0.1"
     agent_port        = 45003
     agent_user        = "root"
     agent_group       = "root"
@@ -24,7 +24,6 @@ class TeddixConfigFile ():
     agent_keyfile     = "/etc/teddix/agent.key"
     agent_pidfile     = "/var/run/teddix-agent.pid"
     agent_cfg2html    = "cfg2html"
-    agent_ora2html    = "ora2html"
 
     server_user       = "root"
     server_group      = "root"
@@ -92,8 +91,6 @@ class TeddixConfigFile ():
                 self.agent_pidfile    = parser.get('agent','pidfile').strip()
             if parser.has_option('agent','cfg2html'):
                 self.agent_cfg2html   = parser.get('agent','cfg2html').strip()
-            if parser.has_option('agent','ora2html'):
-                self.agent_ora2html   = parser.get('agent','ora2html').strip()
             if parser.has_option('agent','crtfile'):
                 self.agent_ora2html   = parser.get('agent','crtfile').strip()
             if parser.has_option('agent','keyfile'):
@@ -155,7 +152,6 @@ if __name__ == "__main__":
     print "crtfile=%s"      % cfg.agent_crtfile
     print "keyfile=%s"      % cfg.agent_keyfile
     print "cfg2html=%s"     % cfg.agent_cfg2html
-    print "ora2html=%s"     % cfg.agent_ora2html
 
     print "[server]"
     print "user=%s"         % cfg.server_user
