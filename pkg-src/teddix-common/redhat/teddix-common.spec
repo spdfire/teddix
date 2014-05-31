@@ -13,7 +13,6 @@ Requires:           net-tools
 Requires:           iproute
 Requires:           pciutils
 Requires:           ethtool
-Requires:           kmod
 Requires:           coreutils
 
 %description
