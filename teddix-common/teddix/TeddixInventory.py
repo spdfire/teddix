@@ -67,7 +67,11 @@ class TeddixBaseline:
             if type(v) == dict and v['dmi_type'] == 0:
                 DMI['bios',0,'BIOS Revision'] = str((v['data']['BIOS Revision']))
                 DMI['bios',0,'ROM Size'] = str((v['data']['ROM Size']))
-                DMI['bios',0,'Release Date'] = str((v['data']['Release Date']))
+                try:
+                    DMI['bios',0,'Release Date'] = str((v['data']['Relase Date']))
+                except (KeyError):
+                    DMI['bios',0,'Release Date'] = str((v['data']['Release Date']))
+
                 DMI['bios',0,'Runtime Size'] = str((v['data']['Runtime Size']))
                 DMI['bios',0,'Vendor'] = str((v['data']['Vendor']))
                 DMI['bios',0,'Version'] = str((v['data']['Version']))
