@@ -66,7 +66,7 @@ setup(name='teddix-web',
           ('/usr/share/teddix-web/teddixweb', 
               [
               'src/teddixweb/__init__.py',
-              'src/teddixweb/forms.py',
+              # 'src/teddixweb/forms.py', 
               'src/teddixweb/settings.py',
               'src/teddixweb/urls.py',
               'src/teddixweb/views.py',
@@ -136,7 +136,7 @@ setup(name='teddix-web',
               'init.d/teddix-web'
               ]),
           # config file 
-          ('/etc/teddix', 
+          ('/usr/share/teddix', 
               [
               'config/websettings.py'
               ]),

@@ -3,7 +3,7 @@ Name:               teddix-web
 Version:            2.0
 Release:            1%{?dist}
 License:            BSD2
-Source:             file:///data/%{name}-%{version}.tar.gz
+Source:             http://www.teddix.info/download/stable/%{name}-%{version}.tar.gz
 BuildRequires:      python
 BuildRequires:      python-psutil
 Requires:           python
@@ -25,10 +25,20 @@ python setup.py install --root %{buildroot}
 %clean
 rm -rf %{buildroot}
 
+%post 
+chmod 777 /usr/share/teddix-web/teddixweb/static/charts
+
+[ -d /etc/teddix ] || mkdir /etc/teddix
+[ -f /etc/teddix/websettings.py ] || cp /usr/share/teddix/websettings.py /etc/teddix/ 
+chmod 600 /etc/teddix/websettings.py
+
+
 %files
 %defattr(-, root, root, -)
 %{python_sitelib}/teddix_web*
-
+%{_sysconfdir}/init.d/*
+%{_datarootdir}/teddix-web/*
+%{_datarootdir}/teddix/websettings.py
 
 %changelog
 * Fri Feb 08 2013 spdfire <spdfire@plusinfinity.org> 2.0

@@ -3,7 +3,7 @@ Name:               teddix-common
 Version:            2.0
 Release:            1%{?dist}
 License:            BSD2
-Source:             file:///data/%{name}-%{version}.tar.gz
+Source:             http://www.teddix.info/download/stable/%{name}-%{version}.tar.gz
 BuildRequires:      python
 Requires:           python
 Requires:           python-dmidecode
@@ -43,7 +43,6 @@ chmod 600 /etc/teddix/teddix.conf
 %{python_sitelib}/teddix/*
 %{python_sitelib}/teddix-*
 %{_datarootdir}/teddix/*.conf
-%config %{_sysconfdir}/teddix/*.conf
 
 %changelog
 * Fri Feb 08 2013 spdfire <spdfire@plusinfinity.org> 2.0

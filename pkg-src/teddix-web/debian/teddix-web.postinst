@@ -10,6 +10,10 @@ case "$mode" in
 
     chmod 777 /usr/share/teddix-web/teddixweb/static/charts
 
+    [ -d /etc/teddix ] || mkdir /etc/teddix
+    [ -f /etc/teddix/websettings.py ] || cp /usr/share/teddix/websettings.py /etc
+    chmod 600 /etc/teddix/websettings.py
+
     ;;
 esac
 

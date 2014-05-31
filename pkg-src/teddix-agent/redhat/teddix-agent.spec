@@ -3,7 +3,7 @@ Name:               teddix-agent
 Version:            2.0
 Release:            1%{?dist}
 License:            BSD2
-Source:             file:///data/%{name}-%{version}.tar.gz
+Source:             http://www.teddix.info/download/stable/%{name}-%{version}.tar.gz
 BuildRequires:      python
 Requires:           python
 Requires:           python-daemon
@@ -33,7 +33,6 @@ rm -rf %{buildroot}
 %{_bindir}/*
 %{python_sitelib}/teddix_agent*
 %{_sysconfdir}/init.d/* 
-%config %{_sysconfdir}/teddix/*.conf
 
 %changelog
 * Fri Feb 08 2013 spdfire <spdfire@plusinfinity.org> 2.0
