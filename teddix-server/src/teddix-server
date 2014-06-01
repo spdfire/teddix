@@ -118,12 +118,12 @@ class TeddixServer:
             return None
        
         reply = root.find('reply')
-        request = reply.find('request').text
+        request = reply.find('request').text.strip()
         
-        if reply.find('code').text != '200': 
-            result = reply.find('result').text
-            info = reply.find('info').text
-            code = reply.find('code').text
+        if reply.find('code').text.strip() != '200': 
+            result = reply.find('result').text.strip()
+            info = reply.find('info').text.strip()
+            code = reply.find('code').text.strip()
             self.syslog.warn("%s: server error: %s(code: %s) info: %s " % (host,result,code,info) )
             return None
 
@@ -571,9 +571,9 @@ class TeddixServer:
             # 6. Save cfg2html, dmesg and bootlog
             
             if cfg2html != None and dmesg != None and bootlog != None: 
-                cfg2html_b64 = cfg2html.text
-                dmesg_b64 = dmesg.text
-                bootlog_b64 = bootlog.text
+                cfg2html_b64 = cfg2html.text.strip()
+                dmesg_b64 = dmesg.text.strip()
+                bootlog_b64 = bootlog.text.strip()
 
                 if not self.save_dbextra(database,agent_id,cfg2html_b64,dmesg_b64,bootlog_b64):
                     database.rollback()
