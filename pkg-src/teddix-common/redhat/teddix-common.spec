@@ -1,6 +1,6 @@
 Summary:            Teddix common 
 Name:               teddix-common
-Version:            2.0
+Version:            2.0alpha1
 Release:            1%{?dist}
 License:            BSD2
 Source:             http://www.teddix.info/download/stable/%{name}-%{version}.tar.gz
@@ -46,6 +46,6 @@ chmod 600 /etc/teddix/teddix.conf
 %{_datarootdir}/teddix/*.conf
 
 %changelog
-* Fri Feb 08 2013 spdfire <spdfire@plusinfinity.org> 2.0
+* Tue Jun 3 2014 spdfire <spdfire@plusinfinity.org> 2.0alpha1
 - Initial SPEC file
 
