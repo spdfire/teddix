@@ -9,6 +9,9 @@ Requires:           python
 Requires:           python-pygal
 Requires:           Django
 Requires:           python-flup
+Requires:           nmap
+Requires:           tcptraceroute
+Requires:           curl
 Requires:           teddix-common
 
 %description
