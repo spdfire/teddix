@@ -75,9 +75,9 @@ class TeddixLinux:
 
                     lines       = parser.readlines(device+'/uevent')
                     major       = parser.arraysearch('MAJOR\=(\d+)',lines)
-                    minor       = parser.arraysearch('MINOR\=(\d+)',lines[i])
-                    name        = parser.arraysearch('DEVNAME\=(.+)',lines[i])
-                    devtype     = parser.arraysearch('DEVTYPE\=(.+)',lines[i])
+                    minor       = parser.arraysearch('MINOR\=(\d+)',lines)
+                    name        = parser.arraysearch('DEVNAME\=(.+)',lines)
+                    devtype     = parser.arraysearch('DEVTYPE\=(.+)',lines)
 
                     blockdev[i] = [name,devtype,vendor,model,nr_sectors,sect_size,rotational,readonly,removable,major,minor]
                     i += 1
