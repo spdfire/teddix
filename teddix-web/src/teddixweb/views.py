@@ -82,12 +82,47 @@ def agents2archlist(database):
 
     return agents_per_arch
 
+def agents2netlist(database,ntype='ipv4'):
+    baselines = agents2baselines(database)
+    agents_per_net = {}
+    net_names = []
+    if ntype == 'ipv6':
+        for baseline in baselines: 
+            sql = "SELECT address,mask FROM ipv6 WHERE baseline_id = %s "
+            database.execute(sql,baseline)
+            result = database.fetchall()
+            for row in result:
+                net_name = row[0]
+
+                if net_name not in net_names: 
+                    net_names.append(net_name)
+                    agents_per_net[net_name] = 1 
+                else:
+                    agents_per_net[net_name] += 1 
+
+    else: 
+        for baseline in baselines: 
+            sql = "SELECT address,mask FROM ipv4 WHERE baseline_id = %s "
+            database.execute(sql,baseline)
+            result = database.fetchall()
+            for row in result:
+                net_name = row[0]
+
+                if net_name not in net_names: 
+                    net_names.append(net_name)
+                    agents_per_net[net_name] = 1 
+                else:
+                    agents_per_net[net_name] += 1 
+
+    return agents_per_net
+
+
 def agents2softwarelist(database):
     baselines = agents2baselines(database)
     agents_per_pkg = {}
     pkg_names = []
     for baseline in baselines: 
-        sql = "SELECT name,version FROM package WHERE baseline_id = %s "
+        sql = "SELECT name,section FROM package WHERE baseline_id = %s "
         database.execute(sql,baseline)
         result = database.fetchall()
         for row in result:
@@ -101,24 +136,86 @@ def agents2softwarelist(database):
 
     return agents_per_pkg
 
-def agents2patchlist(database):
+def pkgs2sectionlist(database):
+    baselines = agents2baselines(database)
+    pkgs_per_section = {}
+    pkg_sections = []
+    for baseline in baselines: 
+        sql = "SELECT name,section FROM package WHERE baseline_id = %s "
+        database.execute(sql,baseline)
+        result = database.fetchall()
+        for row in result:
+            pkg_name = row[0] 
+            pkg_section = row[1] 
+
+            if pkg_section not in pkg_sections: 
+                pkg_sections.append(pkg_section)
+                pkgs_per_section[pkg_section] = 1 
+            else:
+                pkgs_per_section[pkg_section] += 1 
+
+    return pkgs_per_section
+
+
+def agents2patchlist(database,patchtype=None):
     baselines = agents2baselines(database)
     agents_per_patch = {}
     patch_names = []
 
-    for baseline in baselines: 
-        sql = "SELECT name,version,patchtype FROM patch WHERE baseline_id = %s "
-        database.execute(sql,baseline)
-        result = database.fetchall()
-        for row in result:
-            patch_name = row[0] + '-' + row[1]
+    if patchtype == 'security':
+         for baseline in baselines: 
+            sql = "SELECT name,version,patchtype FROM patch WHERE baseline_id = %s AND patchtype = 'security'"
+            database.execute(sql,baseline)
+            result = database.fetchall()
+            for row in result:
+                patch_name = row[0] + '-' + row[1]
 
-            if patch_name not in patch_names: 
-                patch_names.append(patch_name)
-                agents_per_patch[patch_name] = 1 
-            else:
-                agents_per_patch[patch_name] += 1 
- 
+                if patch_name not in patch_names: 
+                    patch_names.append(patch_name)
+                    agents_per_patch[patch_name] = 1 
+                else:
+                    agents_per_patch[patch_name] += 1 
+    elif patchtype == 'bugfix':
+         for baseline in baselines: 
+            sql = "SELECT name,version,patchtype FROM patch WHERE baseline_id = %s AND patchtype = 'bugfix'"
+            database.execute(sql,baseline)
+            result = database.fetchall()
+            for row in result:
+                patch_name = row[0] + '-' + row[1]
+
+                if patch_name not in patch_names: 
+                    patch_names.append(patch_name)
+                    agents_per_patch[patch_name] = 1 
+                else:
+                    agents_per_patch[patch_name] += 1 
+    elif patchtype == 'improvement':
+         for baseline in baselines: 
+            sql = "SELECT name,version,patchtype FROM patch WHERE baseline_id = %s AND patchtype = 'improvement'"
+            database.execute(sql,baseline)
+            result = database.fetchall()
+            for row in result:
+                patch_name = row[0] + '-' + row[1]
+
+                if patch_name not in patch_names: 
+                    patch_names.append(patch_name)
+                    agents_per_patch[patch_name] = 1 
+                else:
+                    agents_per_patch[patch_name] += 1 
+    elif patchtype == 'other':
+        for baseline in baselines: 
+            sql = "SELECT name,version,patchtype FROM patch WHERE baseline_id = %s AND ( patchtype = 'other' OR patchtype = '' ) "
+            database.execute(sql,baseline)
+            result = database.fetchall()
+            for row in result:
+                patch_name = row[0] + '-' + row[1]
+
+                if patch_name not in patch_names: 
+                    patch_names.append(patch_name)
+                    agents_per_patch[patch_name] = 1 
+                else:
+                    agents_per_patch[patch_name] += 1 
+
+
     return agents_per_patch
 
 def agents2userlist(database):
@@ -891,14 +988,30 @@ def patches_view(request):
     search = request.GET.get('search','')
 
     database = TeddixDatabase.TeddixDatabase(syslog,cfg) 
-    agents_per_patch = agents2patchlist(database)
+    agents_per_patch_security = agents2patchlist(database,patchtype='security')
+    agents_per_patch_bugfix = agents2patchlist(database,patchtype='bugfix')
+    agents_per_patch_improvement = agents2patchlist(database,patchtype='improvement')
+    agents_per_patch_other = agents2patchlist(database,patchtype='other')
     database.disconnect()
     
     patch_id = 0
-    for patch_name in agents_per_patch: 
+    for patch_name in agents_per_patch_security: 
         if patch_name.find(search) != -1 : 
-	    patch_list.append({'id': patch_id, 'name': patch_name, 'count': agents_per_patch[patch_name] })
+            patch_list.append({'id': patch_id, 'name': patch_name, 'type': 'security','count': agents_per_patch_security[patch_name] })
             patch_id += 1
+    for patch_name in agents_per_patch_bugfix: 
+        if patch_name.find(search) != -1 : 
+            patch_list.append({'id': patch_id, 'name': patch_name, 'type': 'bugfix','count': agents_per_patch_bugfix[patch_name] })
+            patch_id += 1
+    for patch_name in agents_per_patch_improvement: 
+        if patch_name.find(search) != -1 : 
+            patch_list.append({'id': patch_id, 'name': patch_name, 'type': 'improvement','count': agents_per_patch_improvement[patch_name] })
+            patch_id += 1
+    for patch_name in agents_per_patch_other: 
+        if patch_name.find(search) != -1 : 
+            patch_list.append({'id': patch_id, 'name': patch_name, 'type': 'other','count': agents_per_patch_other[patch_name] })
+            patch_id += 1
+
 
     context = Context({'patch_list': patch_list, 'search': search } )
     return render(request, 'statistics/patches.html', context )
@@ -1161,34 +1274,83 @@ def dashboard_view(request):
         pie_chart.add(name, agents_per_arch[name])
     
     pie_chart.render_to_file('teddixweb/static/charts/dashboard-arch.svg')
+
+    # Available updates 
+    bar_chart = pygal.Bar(width=400, height=400, explicit_size=False, legend_at_bottom=True, style=CleanStyle)
+    bar_chart.title = 'Available updates'
+    
+    patches_security = agents2patchlist(database,patchtype='security')
+    count = 0
+    for name in patches_security: 
+        count += 1 
+    bar_chart.add('security', count)
+
+    patches_bugfix = agents2patchlist(database,patchtype='bugfix')
+    count = 0
+    for name in patches_bugfix: 
+        count += 1 
+    bar_chart.add('bugfix', count)
+    
+    patches_improvement = agents2patchlist(database,patchtype='improvement')
+    count = 0
+    for name in patches_improvement: 
+        count += 1 
+    bar_chart.add('improvement', count) 
+    
+    patches_other = agents2patchlist(database,patchtype='other')
+    count = 0
+    for name in patches_other: 
+        count += 1 
+    bar_chart.add('other', count)
+
+    bar_chart.render_to_file('teddixweb/static/charts/dashboard-patches.svg')
  
-    # patches 
-    line_chart = pygal.StackedLine(width=400, height=400, explicit_size=False, style=CleanStyle,legend_at_bottom=True,fill=True)
-    line_chart.title = 'Available updates'
-    line_chart.x_labels = map(str, range(1, 12))
-    line_chart.add('Security', [None, 0, 5, 16, 25, 31, 36, 45, 46, 42, 37, 45])
-    line_chart.add('Bugfix', [None, 0, 2, 3, 7, 15, 12, 24, 8, 8, 1, 19])
-    line_chart.add('Extra', [None, 0, 5, 16, 12, 15, 17, 7, 3, 6, 36, 4])
-    line_chart.render_to_file('teddixweb/static/charts/dashboard-patches.svg')
+    # Update per hosts
+    bar_chart = pygal.Bar(width=800, height=400, explicit_size=False,legend_font_size=10, legend_at_bottom=True, style=CleanStyle)
+    bar_chart.title = 'Servers to update'
+    
+    patches_security = agents2patchlist(database,patchtype='security')
+    for name in patches_security:
+        bar_chart.add(name, patches_security[name])
+
+    patches_bugfix = agents2patchlist(database,patchtype='bugfix')
+    for name in patches_bugfix: 
+        bar_chart.add(name, patches_bugfix[name])
+    
+    patches_improvement = agents2patchlist(database,patchtype='improvement')
+    for name in patches_improvement: 
+        bar_chart.add(name, patches_improvement[name])
+    
+    patches_other = agents2patchlist(database,patchtype='other')
+    for name in patches_other: 
+        bar_chart.add(name, patches_other[name])
+
+    bar_chart.render_to_file('teddixweb/static/charts/dashboard-patches2.svg')
    
     # software
+    pkgs_per_section = pkgs2sectionlist(database)
     pie_chart = pygal.Pie(width=400, height=400, explicit_size=False, legend_at_bottom=True, style=CleanStyle)
     pie_chart.title = 'Software type'
-    pie_chart.add('Core', 30)
-    pie_chart.add('Basic', 62)
-    pie_chart.add('Optional', 43)
-    pie_chart.add('Extra', 11)
+    for name in pkgs_per_section: 
+        pie_chart.add(name, pkgs_per_section[name])
     pie_chart.render_to_file('teddixweb/static/charts/dashboard-software.svg')
 
 
-    # Network stats
+    # Network stats ipv4
+    agents_per_net = agents2netlist(database,ntype='ipv4')
     pie_chart = pygal.Pie(width=400, height=400, explicit_size=False, legend_at_bottom=True, style=CleanStyle)
-    pie_chart.title = 'Networks'
-    pie_chart.add('192.168.1.0/24', 60)
-    pie_chart.add('10.0.0.0/16', 40)
-    pie_chart.add('10.1.0.0/16', 25)
-    pie_chart.add('10.2.0.0/24', 19)
+    pie_chart.title = 'IPv4 Networks'
+    for name in agents_per_net: 
+        pie_chart.add(name, agents_per_net[name])
     pie_chart.render_to_file('teddixweb/static/charts/dashboard-networks.svg')
+ 
+    # Network stats ipv6
+    agents_per_net = agents2netlist(database,ntype='ipv6')
+    pie_chart = pygal.Pie(width=400, height=400, explicit_size=False, legend_at_bottom=True, style=CleanStyle)
+    pie_chart.title = 'IPv6 Networks'
+    for name in agents_per_net: 
+        pie_chart.add(name, agents_per_net[name])
+    pie_chart.render_to_file('teddixweb/static/charts/dashboard-networks2.svg')
     
     # User type
     users_per_type = users2typelist(database)
@@ -1218,6 +1380,15 @@ def dashboard_view(request):
     
     
  
+    # patches / trends 
+    #line_chart = pygal.StackedLine(width=400, height=400, explicit_size=False, style=CleanStyle,legend_at_bottom=True,fill=True)
+    #line_chart.title = 'Available updates'
+    #line_chart.x_labels = map(str, range(1, 12))
+    #line_chart.add('Security', [None, 0, 5, 16, 25, 31, 36, 45, 46, 42, 37, 45])
+    #line_chart.add('Bugfix', [None, 0, 2, 3, 7, 15, 12, 24, 8, 8, 1, 19])
+    #line_chart.add('Extra', [None, 0, 5, 16, 12, 15, 17, 7, 3, 6, 36, 4])
+    #line_chart.render_to_file('teddixweb/static/charts/dashboard-patches.svg')
+
 
     # agent count / trends 
 
