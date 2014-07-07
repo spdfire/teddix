@@ -4,6 +4,7 @@
 import os
 import re
 import sys
+import glob
 import time
 import psutil
 import locale
@@ -657,7 +658,7 @@ class TeddixBootlog:
         self.cfg = cfg
 
     def get(self):
-        dmesg = 'N/A'
+        bootlog = ''
 
         t_bootdmesg1 = "test -f /var/log/dmesg"
         t_bootdmesg2 = "test -f /var/log/dmesg.boot"
