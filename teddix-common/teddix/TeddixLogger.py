@@ -39,8 +39,15 @@ class TeddixLogger ():
             # setup formatter
             fmt = logging.Formatter ("%(name)s: %(levelname)s: %(message)s")
 
-            # Create syslog handler and set level to INFO
-            fh = SysLogHandler (address="/dev/log",facility=self.facility)
+            system = platform.system()
+            if system == "Linux":
+                fh = SysLogHandler (address="/dev/log",facility=self.facility)
+            else:
+                # In Solaris, /dev/log is a stream device, but python expects it to be
+                # a unix domain socket. So we use the default UDP port address. 
+                SysLogHandler(facility=self.facility)
+
+            # set log level to INFO
             fh.setLevel (logging.DEBUG)
             #add formatter to fh
             fh.setFormatter (fmt)
