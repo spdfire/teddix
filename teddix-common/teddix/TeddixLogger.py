@@ -2,6 +2,7 @@
 
 
 import logging, os
+import platform
 
 class TeddixLogger ():
     name    = None
@@ -45,7 +46,7 @@ class TeddixLogger ():
             else:
                 # In Solaris, /dev/log is a stream device, but python expects it to be
                 # a unix domain socket. So we use the default UDP port address. 
-                SysLogHandler(facility=self.facility)
+                fh = SysLogHandler(facility=self.facility)
 
             # set log level to INFO
             fh.setLevel (logging.DEBUG)
