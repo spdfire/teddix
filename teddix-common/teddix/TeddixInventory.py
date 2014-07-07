@@ -621,13 +621,15 @@ class TeddixCfg2Html:
         self.agent_cfg2html_file = self.cfg.global_workdir  + '/agent' + "/" + self.cfg.global_hostname + ".txt" 
 
     def run(self):
-        try:
-            subprocess.Popen(self.cfg.agent_cfg2html,stderr=subprocess.STDOUT, stdout=subprocess.PIPE).communicate()[0]
-            self.syslog.info("cfg2html succeeded ")
-        except Exception, e:
-            self.syslog.warn("cfg2html failed ")
-            self.syslog.debug("run() %s " % e)
-    
+        parser = TeddixParser.TeddixStringParser()
+        if parser.checkexec(self.cfg.agent_cfg2html):
+            if parser.getretval(self.cfg.agent_cfg2html) == 0:
+                self.syslog.info("%s succeeded " % self.cfg.agent_cfg2html )
+            else:
+                self.syslog.warn("%s failed " % self.cfg.agent_cfg2html)
+        else:
+            self.syslog.warn("%s failed " % self.cfg.agent_cfg2html)
+
     def create_html(self):
         f = open(self.agent_cfg2html_file, 'r')
         html = f.read()
@@ -649,7 +651,7 @@ class TeddixDmesg:
             for i in range(len(lines)):
                 dmesg += lines[i] + "\n"
                 i += 1 
-                                            
+
         return dmesg
 
 class TeddixBootlog:
