@@ -663,6 +663,7 @@ class TeddixBootlog:
         t_bootdmesg2 = "test -f /var/log/dmesg.boot"
         t_bootdmesg3 = "test -f /var/log/boot.dmesg"
         t_bootdmesg4 = "test -f /var/log/boot.log"
+        t_bootdmesg5 = "test -d /etc/svc/volatile"
         if subprocess.call(t_bootdmesg1,shell=True) == 0:
             self.syslog.debug("Found /var/log/dmesg" )
             f = open('/var/log/dmesg', 'r')
@@ -686,6 +687,13 @@ class TeddixBootlog:
             f = open('/var/log/boot.log', 'r')
             bootlog = f.read()
             f.close()
+        elif subprocess.call(t_bootdmesg5,shell=True) == 0:
+            self.syslog.debug("Found /etc/svc/volatile" )
+            for log in glob.glob('/etc/svc/volatile/*.log'): 
+                f = open(log, 'r')
+                bootlog += "%s:" % log
+                bootlog += f.read()
+                f.close()
 
         return bootlog
 
