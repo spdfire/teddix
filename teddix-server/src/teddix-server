@@ -83,7 +83,7 @@ class TeddixServer:
     def make_request(self,host,request):
         self.syslog.debug("%s: Make request \"GET %s\" " % (host,request))
         try:
-            conn = httplib.HTTPSConnection(host, 45003,timeout=600)
+            conn = httplib.HTTPSConnection(host, 45003,timeout=1800)
             conn.request("GET", request)
             resp = conn.getresponse()
             conn.close()
