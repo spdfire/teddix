@@ -4,10 +4,21 @@ set -e
 mode=$1
 source_package=teddix-server
 
+# source debconf library
+. /usr/share/debconf/confmodule
+
+# Source dbconfig-common functions
+if [ -f /usr/share/dbconfig-common/dpkg/postinst.mysql  ]; then
+  . /usr/share/dbconfig-common/dpkg/postinst.mysql
+fi
+
 case "$mode" in
   configure )
     prev_version=$2
 
+    cp -v /usr/share/teddix-server/init.d/teddix-server.debian /etc/init.d/teddix-server
+    #create user+db 
+    dbc_go teddix $@ 
     #mysql -u root < /usr/share/teddix/initdb.sql
     #/etc/init.d/teddix-server start 
 

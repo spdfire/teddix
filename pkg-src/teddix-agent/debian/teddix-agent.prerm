@@ -1,0 +1,18 @@
+#!/bin/sh                                                                     
+
+set -e
+mode=$1
+source_package=teddix-agent
+
+case "$mode" in
+  remove|upgrade|deconfigure)
+    prev_version=$2
+
+    [ -f /etc/init.d/teddix-agent ] && /etc/init.d/teddix-agent stop 
+    [ -f /etc/init.d/teddix-agent ] && rm -v /etc/init.d/teddix-agent 
+
+    ;;
+esac
+
+#DEBHELPER#
+

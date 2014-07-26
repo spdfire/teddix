@@ -8,7 +8,9 @@ case "$mode" in
   configure )
     prev_version=$2
 
-    #/etc/init.d/teddix-agent start
+    cp -v /usr/share/teddix-agent/init.d/teddix-agent.debian /etc/init.d/teddix-agent 
+    openssl req -new -x509 -keyout /etc/teddix/agent.key -out /etc/teddix/agent.crt -days 365 -nodes -config /etc/ssl/openssl.cnf -batch
+    /etc/init.d/teddix-agent start
 
     ;;
 esac

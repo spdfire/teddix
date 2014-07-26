@@ -1,0 +1,28 @@
+#!/bin/sh                                                                     
+
+set -e
+mode=$1
+source_package=teddix-server
+
+# source debconf library
+. /usr/share/debconf/confmodule
+
+# Source dbconfig-common functions
+if [ -f /usr/share/dbconfig-common/dpkg/postrm.mysql  ]; then
+  . /usr/share/dbconfig-common/dpkg/postrm.mysql
+fi
+
+case "$mode" in
+  remove|upgrade|deconfigure)
+    prev_version=$2
+
+    [ -f /etc/init.d/teddix-server ] && /etc/init.d/teddix-server stop 
+    [ -f /etc/init.d/teddix-server ] && rm -v /etc/init.d/teddix-server 
+    
+    dbc_go teddix $@ 
+
+    ;;
+esac
+
+#DEBHELPER#
+

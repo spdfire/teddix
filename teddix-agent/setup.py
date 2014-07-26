@@ -9,5 +9,12 @@ setup(name='teddix-agent',
       author_email='spdfire@plusinfinity.org',
       license="BSD",
       scripts=['src/teddix-agent'],
-      data_files=[('/etc/init.d', ['init.d/teddix-agent'])]
+      data_files=[
+          ('/usr/share/teddix-agent/init.d/', 
+              [ 
+                  'init.d/teddix-agent.debian' ,
+                  'init.d/teddix-agent.sunos-smf',
+                  'init.d/teddix-agent.generic',
+              ]),
+        ]
      )

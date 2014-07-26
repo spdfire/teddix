@@ -11,7 +11,7 @@ Vcs-Browser: https://github.com/spdfire/teddix
 
 Package: teddix-server
 Architecture: all
-Depends: ${python:Depends}, ${misc:Depends}, python-daemon, python-libxml2, python-lockfile, teddix-common, mysql-server 
+Depends: ${python:Depends}, ${misc:Depends}, python-daemon, python-libxml2, python-lockfile, teddix-common, mysql-server, dbconfig-common 
 Description: Teddix inventory system.
  Teddix is an inventory system for servers. 
  This package contain teddix server. 

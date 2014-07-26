@@ -9,8 +9,14 @@ setup(name='teddix-server',
       author_email='spdfire@plusinfinity.org',
       license="BSD",
       scripts=['src/teddix-server'],
-      # TODO: fix config file 
       data_files=[
-	  ("/usr/share/teddix/",["config/initdb.sql"]),
-          ('/etc/init.d', ['init.d/teddix-server'])]
+          ("/usr/share/teddix/",
+              ["config/initdb.sql"]
+              ),
+          ('/usr/share/teddix-server/init.d/', 
+              [ 
+                  'init.d/teddix-server.debian' ,
+                  'init.d/teddix-server.generic',
+              ]),
+        ]
      )
