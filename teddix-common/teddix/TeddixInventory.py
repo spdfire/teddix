@@ -623,7 +623,7 @@ class TeddixCfg2Html:
     def run(self):
         parser = TeddixParser.TeddixStringParser()
         if parser.checkexec(self.cfg.agent_cfg2html):
-            if parser.getretval(self.cfg.agent_cfg2html + '-o ' + self.cfg.global_workdir + '/agent' ) == 0:
+            if parser.getretval(self.cfg.agent_cfg2html + ' -o ' + self.cfg.global_workdir + '/agent' ) == 0:
                 self.syslog.info("%s succeeded " % self.cfg.agent_cfg2html )
             else:
                 self.syslog.warn("%s failed " % self.cfg.agent_cfg2html)

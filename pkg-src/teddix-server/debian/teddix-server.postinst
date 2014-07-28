@@ -16,64 +16,27 @@ case "$mode" in
   configure )
     prev_version=$2
 
+    [ ! -d /etc/teddix ] && mkdir /etc/teddix
+    [ ! -f /etc/teddix/teddix.conf ] && cp -v /usr/share/teddix/teddix.conf /etc/teddix/teddix.conf
     cp -v /usr/share/teddix-server/init.d/teddix-server.debian /etc/init.d/teddix-server
-    
-    cat > /tmp/teddix-db.template << EOF 
-# Database configuration 
-dbtype = mysql
-dbhost = localhost
-dbport = 3306
-dbuser = _DBC_DBUSER_
-dbpass = _DBC_DBPASS_
-dbname = _DBC_DBNAME_
-EOF
-
-    dbc_generate_include_args="-o template_infile=/tmp/teddix-db.template"
-    dbc_generate_include=template:/etc/teddix/teddix-db.conf
-    dbc_generate_include_owner="root:root"
-    dbc_generate_include_perms="600"
     
     dbc_go teddix $@
     
     # Activate trigger
     dpkg-trigger teddix-server
 
-    cat /etc/teddix/teddix.conf | while read line; do
-        case "$line" in
-             "dbuser"*)
-		  grep dbuser /etc/teddix/teddix-db.conf
-                  ;;
-              "dbpass"*)
-		  grep dbpass /etc/teddix/teddix-db.conf
-                  ;;
-              "dbname"*)
-		  grep dbname /etc/teddix/teddix-db.conf
-                  ;;
-              *)
-                  printf "%s\n" "$line"
-                  ;;
-        esac
-    done > /tmp/teddix.final
+    # Generate config 
+    user=$(grep '^dbc_dbuser=' /etc/dbconfig-common/teddix.conf | sed "s/dbc_dbuser='\(.*\)'.*/\1/")
+    pass=$(grep '^dbc_dbpass=' /etc/dbconfig-common/teddix.conf | sed "s/dbc_dbpass='\(.*\)'.*/\1/")
+    dbname=$(grep '^dbc_dbname=' /etc/dbconfig-common/teddix.conf | sed "s/dbc_dbname='\(.*\)'.*/\1/")
 
-    mv /tmp/teddix.final /etc/teddix/teddix.conf
+    sed -i "s/.*dbuser.*=.*/dbuser = $user/" /etc/teddix/teddix.conf
+    sed -i "s/.*dbpass.*=.*/dbpass = $pass/" /etc/teddix/teddix.conf
+    sed -i "s/.*dbname.*=.*/dbname = $dbname/" /etc/teddix/teddix.conf
 
+    # init database
     dbc_mysql_exec_file /usr/share/teddix/initdb.sql || true
     /etc/init.d/teddix-server start 
-
-    rm /tmp/teddix-db.template 
-
-    #echo ""
-    #echo "----------------------------------------------------------------"
-    #echo "   Database configuration: "
-    #echo "   	CREATE DATABASE teddix;  "
-    #echo "   	CREATE USER 'teddix'@'localhost' IDENTIFIED BY 'mypass';  "
-    #echo "   	GRANT ALL PRIVILEGES ON teddix.* To 'teddix'@'localhost'; "
-    #echo ""
-    #echo "   Import tables: "
-    #echo "   	$ mysql -u root < /usr/share/teddix/initdb.sql "
-    #echo ""
-    #echo "----------------------------------------------------------------"
-    #echo ""
 
     ;;
 esac

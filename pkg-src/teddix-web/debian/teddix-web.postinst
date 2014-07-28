@@ -4,15 +4,47 @@ set -e
 mode=$1
 source_package=teddix-web
 
+# source debconf library
+. /usr/share/debconf/confmodule
+
+# Source dbconfig-common functions
+if [ -f /usr/share/dbconfig-common/dpkg/postinst.mysql  ]; then
+  . /usr/share/dbconfig-common/dpkg/postinst.mysql
+fi
+
 case "$mode" in
   configure )
     prev_version=$2
 
-    chmod 777 /usr/share/teddix-web/teddixweb/static/charts
+    cp -v /usr/share/teddix-web/init.d/teddix-web.debian /etc/init.d/teddix-web
+    
+    [ ! -d /etc/teddix ] && mkdir /etc/teddix
+    [ ! -f /etc/teddix/websettings.py ] && cp -v /usr/share/teddix/websettings.py /etc/teddix
+    
+    chmod -v 777 /usr/share/teddix-web/teddixweb/static/charts
+    
+    dbc_go teddixweb $@
 
-    [ -d /etc/teddix ] || mkdir /etc/teddix
-    [ -f /etc/teddix/websettings.py ] || cp -v /usr/share/teddix/websettings.py /etc/teddix
-    chmod 600 /etc/teddix/websettings.py
+    # generate config
+    user=$(grep '^dbc_dbuser=' /etc/dbconfig-common/teddixweb.conf | sed "s/dbc_dbuser='\(.*\)'.*/\1/")
+    pass=$(grep '^dbc_dbpass=' /etc/dbconfig-common/teddixweb.conf | sed "s/dbc_dbpass='\(.*\)'.*/\1/")
+    dbname=$(grep '^dbc_dbname=' /etc/dbconfig-common/teddixweb.conf | sed "s/dbc_dbname='\(.*\)'.*/\1/")
+    key=$(tr -dc "[:alpha:]" < /dev/urandom | head -c 64)
+
+    sed -i "s/.*'USER':.*'\(.*\)'.*/        'USER': '$user',/" /etc/teddix/websettings.py
+    sed -i "s/.*'PASSWORD':.*'\(.*\)'.*/        'PASSWORD': '$pass',/" /etc/teddix/websettings.py
+    sed -i "s/.*'NAME':.*'\(.*\)'.*/        'NAME': '$dbname',/" /etc/teddix/websettings.py
+    sed -i "s/SECRET_KEY.*=.*/SECRET_KEY = '$key'/" /etc/teddix/websettings.py
+
+    #Create DB
+    /usr/share/teddix-web/manage.py syncdb --noinput
+    /usr/share/teddix-web/manage.py createsuperuser --username admin --email admin@exmaple.com --noinput || true 
+    echo "from django.contrib.auth.models import User; u = User.objects.get(username__exact='admin'); u.set_password('admin'); u.save(); " | /usr/share/teddix-web/manage.py shell 
+
+    /etc/init.d/teddix-web start 
+
+    # Activate trigger
+    dpkg-trigger teddix-web
 
     ;;
 esac

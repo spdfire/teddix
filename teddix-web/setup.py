@@ -131,7 +131,7 @@ setup(name='teddix-web',
               'src/teddixweb/static/charts/.keep',
               ]),
           # config file 
-          ('/usr/share/teddix-web', 
+          ('/usr/share/teddix', 
               [
               'config/websettings.py'
               ]),
