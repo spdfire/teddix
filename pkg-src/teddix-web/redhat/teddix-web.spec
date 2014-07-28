@@ -38,6 +38,22 @@ chmod 777 /usr/share/teddix-web/teddixweb/static/charts
 [ -f /etc/teddix/websettings.py ] || cp /usr/share/teddix/websettings.py /etc/teddix/ 
 chmod 600 /etc/teddix/websettings.py
 
+key=$(tr -dc "[:alpha:]" < /dev/urandom | head -c 64)
+sed -i "s/SECRET_KEY.*=.*/SECRET_KEY = '$key'/" /etc/teddix/websettings.py
+
+echo ""
+echo "----------------------------------------------------------------"
+echo "   Database configuration: "
+echo "      CREATE DATABASE teddixweb;  "
+echo "      CREATE USER 'teddix'@'localhost' IDENTIFIED BY 'mypass';  "
+echo "      GRANT ALL PRIVILEGES ON teddixweb.* To 'teddix'@'localhost'; "
+echo ""
+echo "   Initialize database & create admin user: "
+echo "      $ /usr/share/teddix-web/manage.py syncdb "
+echo ""
+echo "----------------------------------------------------------------"
+echo ""
+
 
 %files
 %defattr(-, root, root, -)

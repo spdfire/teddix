@@ -32,6 +32,10 @@ python setup.py install --root %{buildroot}
 rm -rf %{buildroot}
 
 %post
+[ ! -d /etc/teddix ] && mkdir /etc/teddix
+[ ! -f /etc/teddix/teddix.conf ] && cp -v /usr/share/teddix/teddix.conf /etc/teddix/teddix.conf
+cp -v /usr/share/teddix-server/init.d/teddix-server.generic /etc/init.d/teddix-server
+
 echo ""
 echo "----------------------------------------------------------------"
 echo "   Database configuration: "
