@@ -33,7 +33,7 @@ rm -rf %{buildroot}
 %post 
 [ ! -d /etc/teddix ] && mkdir /etc/teddix
 [ ! -f /etc/teddix/teddix.conf ] && cp -v /usr/share/teddix/teddix.conf /etc/teddix/teddix.conf
-[ ! -f /etc/init.d/teddix-agent ] && cp -v /usr/share/teddix-agent/init.d/teddix-agent.debian /etc/init.d/teddix-agent 
+[ ! -f /etc/init.d/teddix-agent ] && cp -v /usr/share/teddix-agent/init.d/teddix-agent.generic /etc/init.d/teddix-agent 
 [ ! -f /etc/teddix/agent.key ] && openssl req -new -x509 -keyout /etc/teddix/agent.key -out /etc/teddix/agent.crt -days 365 -nodes -config /etc/pki/tls/openssl.cnf -batch
 
 %files

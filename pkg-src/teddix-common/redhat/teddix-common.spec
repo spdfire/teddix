@@ -35,9 +35,8 @@ python setup.py install --root %{buildroot}
 rm -rf %{buildroot}
 
 %post
-[ -d /etc/teddix ] || mkdir /etc/teddix
-[ -f /etc/teddix/teddix.conf ] || cp /usr/share/teddix/teddix.conf /etc/teddix/
-chmod 600 /etc/teddix/teddix.conf
+[ ! -d /etc/teddix ] && mkdir /etc/teddix
+[ ! -f /etc/teddix/teddix.conf ] && cp /usr/share/teddix/teddix.conf /etc/teddix/
 
 %files
 %defattr(-, root, root, -)

@@ -34,7 +34,7 @@ rm -rf %{buildroot}
 %post
 [ ! -d /etc/teddix ] && mkdir /etc/teddix
 [ ! -f /etc/teddix/teddix.conf ] && cp -v /usr/share/teddix/teddix.conf /etc/teddix/teddix.conf
-cp -v /usr/share/teddix-server/init.d/teddix-server.generic /etc/init.d/teddix-server
+[ ! -f /etc/init.d/teddix-server ] && cp -v /usr/share/teddix-server/init.d/teddix-server.generic /etc/init.d/teddix-server
 
 echo ""
 echo "----------------------------------------------------------------"
