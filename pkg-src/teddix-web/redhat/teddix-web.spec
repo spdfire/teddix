@@ -38,6 +38,7 @@ chmod 777 /usr/share/teddix-web/teddixweb/static/charts
 [ ! -f /etc/teddix/websettings.py ] && cp /usr/share/teddix/websettings.py /etc/teddix/ 
 [ ! -f /etc/init.d/teddix-web ] && cp -v /usr/share/teddix-web/init.d/teddix-web.generic /etc/init.d/teddix-web
 chmod 600 /etc/teddix/websettings.py
+chmod +x /etc/init.d/teddix-web 
 
 key=$(tr -dc "[:alpha:]" < /dev/urandom | head -c 64)
 sed -i "s/SECRET_KEY.*=.*/SECRET_KEY = '$key'/" /etc/teddix/websettings.py
