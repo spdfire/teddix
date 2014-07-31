@@ -68,6 +68,7 @@ case "$1" in
 		;;
 	restart)
 		stop
+		sleep 3
 		start
 		;;
 	reload)
@@ -75,11 +76,13 @@ case "$1" in
 		;;
 	force-reload)
 		stop
+		sleep 3
 		start
 		;;
 	condrestart|try-restart)
 		if status $name > /dev/null; then
 			stop
+			sleep 3
 			start
 		fi
 		;;
