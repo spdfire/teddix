@@ -424,10 +424,12 @@ class TeddixLinux:
             pusertime = parser.str2uni(pcputime.user)
 
             # TODO: it takes too much time
-            #pcpu = p.get_cpu_percent(interval=0.1)
-            pcpu = ''
+            pcpu = p.get_cpu_percent(interval=0.1)
+            #pcpu = ''
+            #pcpu = p.get_cpu_percent(interval=None)
+            pcpu = str(parser.str2float(pcpu))
             pmem = p.get_memory_percent()
-            pmem = parser.str2uni(pmem)
+            pmem = str(parser.str2float(pmem))
             ppriority = parser.str2uni(p.get_nice())
             pstatus = parser.str2uni(p.status)
             powner = parser.str2uni(p.username)

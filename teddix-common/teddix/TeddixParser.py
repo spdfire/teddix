@@ -97,7 +97,7 @@ class TeddixStringParser:
         if not self.isfloat(value):
             return None
         else:
-            return float(value)
+            return round(float(value),2)
 
     def str2hostname(self,value):
         if not self.ishostname(value):
