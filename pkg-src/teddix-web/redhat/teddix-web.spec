@@ -60,7 +60,6 @@ echo ""
 %files
 %defattr(-, root, root, -)
 %{python_sitelib}/teddix_web*
-%{_sysconfdir}/init.d/*
 %{_datarootdir}/teddix-web/*
 %{_datarootdir}/teddix/websettings.py
 

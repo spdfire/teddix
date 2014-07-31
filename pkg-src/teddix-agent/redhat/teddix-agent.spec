@@ -40,7 +40,7 @@ chmod +x /etc/init.d/teddix-agent
 %defattr(-, root, root, -)
 %{_bindir}/*
 %{python_sitelib}/teddix_agent*
-%{_sysconfdir}/init.d/* 
+%{_datarootdir}/teddix-agent/* 
 
 %changelog
 * Tue Jun 3 2014 spdfire <spdfire@plusinfinity.org> 2.0alpha1

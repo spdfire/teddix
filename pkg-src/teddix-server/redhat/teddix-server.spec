@@ -54,7 +54,7 @@ echo ""
 %defattr(-, root, root, -)
 %{_bindir}/*
 %{python_sitelib}/teddix_server*
-%{_sysconfdir}/init.d/* 
+%{_datarootdir}/teddix-server/*
 %{_datarootdir}/teddix/*.sql
 
 %changelog
