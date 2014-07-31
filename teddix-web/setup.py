@@ -102,13 +102,6 @@ setup(name='teddix-web',
               [ 
               'src/teddixweb/templates/monitor/dashboard.html',
               ]),
-          ('/usr/share/teddix-web/teddixweb/templates/extra', 
-              [ 
-              'src/teddixweb/templates/extra/extra.html',
-              'src/teddixweb/templates/extra/cfg2html.html',
-              'src/teddixweb/templates/extra/bootlog.html',
-              'src/teddixweb/templates/extra/dmesg.html' 
-              ]),
           # teddix images/logos 
           ('/usr/share/teddix-web/teddixweb/static', 
               [ 
