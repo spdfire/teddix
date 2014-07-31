@@ -810,6 +810,31 @@ def agents_view(request):
             pci_id += 1 
 
 
+        cfg2html = 'No data'
+        sql = "SELECT cfg2html FROM extra WHERE server_id = %s AND created = (SELECT MAX(created) FROM extra)" 
+        database.execute(sql,agent_id)
+        result = database.fetchall()
+        for row in result:
+    	    b64_cfg2html = row[0]
+	    cfg2html = parser.b64decode(b64_cfg2html)
+
+        bootlog = 'No data'
+        sql = "SELECT bootlog FROM extra WHERE server_id = %s AND created = (SELECT MAX(created) FROM extra)" 
+        database.execute(sql,agent_id)
+        result = database.fetchall()
+        for row in result:
+    	    b64_bootlog = row[0]
+	    bootlog = parser.b64decode(b64_bootlog)
+
+        dmesg = 'No data'
+        sql = "SELECT dmesg FROM extra WHERE server_id = %s AND created = (SELECT MAX(created) FROM extra)" 
+        database.execute(sql,agent_id)
+        result = database.fetchall()
+        for row in result:
+    	    b64_dmesg = row[0]
+	    dmesg = parser.b64decode(b64_dmesg)
+
+
         database.disconnect()
         context = Context({"agent_id": agent_id, 
             "agent_name": agent_name, 
@@ -839,6 +864,9 @@ def agents_view(request):
             "board_list": board_list,
             "block_list": block_list,
             "pci_list": pci_list,
+            "cfg2html": cfg2html,
+            "bootlog": bootlog,
+            "dmesg": dmesg,
             "info": info, "error": error } )
         return render(request, 'agents/agent_detail.html', context )
 
@@ -1164,70 +1192,6 @@ def hardware_view(request):
     database.disconnect()
     context = Context({'cpu_list': cpu_list, 'mem_list': mem_list, 'board_list': board_list, 'disk_list': disk_list, 'pci_list': pci_list, 'bios_list': bios_list, 'search_name': search_name, 'search_type': search_type } )
     return render(request, 'statistics/hardware.html', context )
-
-def extra_view(request):
-    check_permissions(request)
-
-    cfg = TeddixConfigFile.TeddixConfigFile()
-    syslog = TeddixLogger.TeddixLogger("TeddixWeb")
-    syslog.open_syslog()
-    parser = TeddixParser.TeddixStringParser()
-    search = request.GET.get('search','')
-    agent_id = request.GET.get('agent_id','')
-    report = request.GET.get('report','')
-    
-    database = TeddixDatabase.TeddixDatabase(syslog,cfg) 
-    if report == "cfg2html":
-        sql = "SELECT cfg2html FROM extra WHERE server_id = %s AND created = (SELECT MAX(created) FROM extra)" 
-        database.execute(sql,agent_id)
-        result = database.fetchall()
-        for row in result:
-    	    b64_cfg2html = row[0]
-	    cfg2html = parser.b64decode(b64_cfg2html)
-
-        database.disconnect()
-        context = Context({'cfg2html': cfg2html, 'search': search } )
-        return render(request, 'extra/cfg2html.html', context )
-
-    if report == "bootlog":
-        sql = "SELECT bootlog FROM extra WHERE server_id = %s AND created = (SELECT MAX(created) FROM extra)" 
-        database.execute(sql,agent_id)
-        result = database.fetchall()
-        for row in result:
-    	    b64_bootlog = row[0]
-	    bootlog = parser.b64decode(b64_bootlog)
-
-        database.disconnect()
-        context = Context({'bootlog': bootlog, 'search': search } )
-        return render(request, 'extra/bootlog.html', context )
-
-    if report == "dmesg":
-        sql = "SELECT dmesg FROM extra WHERE server_id = %s AND created = (SELECT MAX(created) FROM extra)" 
-        database.execute(sql,agent_id)
-        result = database.fetchall()
-        for row in result:
-    	    b64_dmesg = row[0]
-	    dmesg = parser.b64decode(b64_dmesg)
-
-        database.disconnect()
-        context = Context({'dmesg': dmesg, 'search': search } )
-        return render(request, 'extra/dmesg.html', context )
-
-    else: 
-        agent_list = []
-        sql = "SELECT id,name FROM server "
-        database.execute(sql)
-        result = database.fetchall()
-        for row in result:
-            server_id = row[0]
-            server_name = row[1]
-            if server_name.find(search) != -1 :
-                agent_list.append({'id': server_id, 'name': server_name })
-
-        database.disconnect()
-        context = Context({'agent_list': agent_list, 'search': search } )
-        return render(request, 'extra/extra.html', context )
-
 
 def dashboard_view(request):
     check_permissions(request)

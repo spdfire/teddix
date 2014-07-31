@@ -28,7 +28,6 @@ urlpatterns = patterns('',
     
     url(r'^agents/$', 'teddixweb.views.agents_view' ),
     
-    url(r'^extra/$', 'teddixweb.views.extra_view' ),
     url(r'^connection/$', 'teddixweb.views.connection_view' ),
     
     url(r'^users/profile/$', 'teddixweb.views.notready_view'),
