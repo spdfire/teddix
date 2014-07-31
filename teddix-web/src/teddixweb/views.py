@@ -811,24 +811,24 @@ def agents_view(request):
 
 
         cfg2html = 'No data'
-        sql = "SELECT cfg2html FROM extra WHERE server_id = %s AND created = (SELECT MAX(created) FROM extra)" 
-        database.execute(sql,agent_id)
+        sql = "SELECT cfg2html FROM extra WHERE server_id = %s AND created = (SELECT MAX(created) FROM extra WHERE server_id = %s )" 
+        database.execute(sql,(agent_id,agent_id))
         result = database.fetchall()
         for row in result:
     	    b64_cfg2html = row[0]
 	    cfg2html = parser.b64decode(b64_cfg2html)
 
         bootlog = 'No data'
-        sql = "SELECT bootlog FROM extra WHERE server_id = %s AND created = (SELECT MAX(created) FROM extra)" 
-        database.execute(sql,agent_id)
+        sql = "SELECT bootlog FROM extra WHERE server_id = %s AND created = (SELECT MAX(created) FROM extra WHERE server_id = %s )" 
+        database.execute(sql,(agent_id,agent_id))
         result = database.fetchall()
         for row in result:
     	    b64_bootlog = row[0]
 	    bootlog = parser.b64decode(b64_bootlog)
 
         dmesg = 'No data'
-        sql = "SELECT dmesg FROM extra WHERE server_id = %s AND created = (SELECT MAX(created) FROM extra)" 
-        database.execute(sql,agent_id)
+        sql = "SELECT dmesg FROM extra WHERE server_id = %s AND created = (SELECT MAX(created) FROM extra WHERE server_id = %s )" 
+        database.execute(sql,(agent_id,agent_id))
         result = database.fetchall()
         for row in result:
     	    b64_dmesg = row[0]
