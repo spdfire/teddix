@@ -1,0 +1,95 @@
+#!/bin/bash
+#
+# teddix-agent		Start up the teddix-agent daemon
+#
+# chkconfig: 2345 55 25
+# description: This service starts up the teddix-agent daemon.
+#
+# processname: teddix-agent
+# config: /etc/teddix/teddix.conf
+# pidfile: /var/run/teddix-agent.pid
+
+### BEGIN INIT INFO
+# Provides: teddix-agent
+# Required-Start: $local_fs $network $syslog
+# Required-Stop: $local_fs $syslog
+# Should-Start: $syslog
+# Should-Stop: $network $syslog
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: Start up the teddix-agent daemon.
+# Description:       This service starts up the teddix-agent daemon.
+### END INIT INFO
+
+# source function library
+. /etc/rc.d/init.d/functions
+
+prog=/usr/bin/teddix-agent
+name=teddix-agent
+pidfile=/var/run/teddix-agent.pid
+
+start()
+{
+	[ -x $prog ] || exit 5
+	[ -f /etc/teddix/teddix.conf ] || exit 6
+	[ -f /etc/teddix/agent.key ] || exit 6
+	[ -f /etc/teddix/agent.crt ] || exit 6
+
+	echo -n $"Starting $name: "
+	$prog  && success || failure
+	RETVAL=$?
+	echo
+	return $RETVAL
+}
+
+stop()
+{
+	echo -n $"Stopping $name: "
+	killproc -p $pidfile 
+	RETVAL=$?
+	echo
+	return $RETVAL
+}
+
+#reload()
+#{
+#	echo -n $"Reloading $prog: "
+#	killproc -p $PID_FILE $SSHD -HUP
+#	RETVAL=$?
+#	echo
+#	return $RETVAL
+#}
+
+
+case "$1" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	restart)
+		stop
+		start
+		;;
+	reload)
+		RETVAL=3
+		;;
+	force-reload)
+		stop
+		start
+		;;
+	condrestart|try-restart)
+		if status $name > /dev/null; then
+			stop
+			start
+		fi
+		;;
+	status)
+		status $name
+		;;
+	*)
+		echo $"Usage: $0 {start|stop|restart|reload|force-reload|condrestart|try-restart|status}"
+		RETVAL=2
+esac
+exit $RETVAL

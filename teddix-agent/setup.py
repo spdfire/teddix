@@ -13,6 +13,7 @@ setup(name='teddix-agent',
           ('/usr/share/teddix-agent/init.d/', 
               [ 
                   'init.d/teddix-agent.debian' ,
+                  'init.d/teddix-agent.rhel' ,
                   'init.d/teddix-agent.sunos-smf',
                   'init.d/teddix-agent.generic',
               ]),

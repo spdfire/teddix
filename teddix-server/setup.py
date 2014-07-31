@@ -16,6 +16,7 @@ setup(name='teddix-server',
           ('/usr/share/teddix-server/init.d/', 
               [ 
                   'init.d/teddix-server.debian' ,
+                  'init.d/teddix-server.rhel' ,
                   'init.d/teddix-server.generic',
               ]),
         ]

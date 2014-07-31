@@ -138,6 +138,7 @@ setup(name='teddix-web',
           ('/usr/share/teddix-web/init.d/', 
               [ 
                   'init.d/teddix-web.debian' ,
+                  'init.d/teddix-web.rhel',
                   'init.d/teddix-web.generic',
               ]),
 
