@@ -1,3 +1,9 @@
+teddix-server (2.0alpha2) unstable; urgency=low
+
+  * prepare for next alpha 
+
+ -- spdfire <spdfire@plusinfinity.org>  Thu, 31 Jul 2014 20:09:35 +0200
+
 teddix-server (2.0alpha1) unstable; urgency=low
 
   * Initial release

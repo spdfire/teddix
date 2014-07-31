@@ -1,6 +1,6 @@
 Summary:            Teddix Agent 
 Name:               teddix-agent
-Version:            2.0alpha1
+Version:            2.0alpha2
 Release:            1%{?dist}
 License:            BSD2
 Source:             http://www.teddix.info/download/stable/%{name}-%{version}.tar.gz
