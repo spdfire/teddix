@@ -36,7 +36,7 @@ start()
 	[ -f /etc/teddix/websettings.py ] || exit 6
 
 	echo -n $"Starting $name: "
-	$prog $opts && success || failure
+	$prog runfcgi $opts && success || failure
 	RETVAL=$?
 	echo
 	return $RETVAL
