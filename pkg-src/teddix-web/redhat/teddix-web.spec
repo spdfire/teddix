@@ -36,7 +36,7 @@ chmod 777 /usr/share/teddix-web/teddixweb/static/charts
 
 [ ! -d /etc/teddix ] && mkdir /etc/teddix
 [ ! -f /etc/teddix/websettings.py ] && cp /usr/share/teddix/websettings.py /etc/teddix/ 
-[ ! -f /etc/init.d/teddix-web ] && cp -v /usr/share/teddix-web/init.d/teddix-web.generic /etc/init.d/teddix-web
+[ ! -f /etc/init.d/teddix-web ] && cp -v /usr/share/teddix-web/init.d/teddix-web.rhel /etc/init.d/teddix-web
 chmod 600 /etc/teddix/websettings.py
 chmod +x /etc/init.d/teddix-web 
 

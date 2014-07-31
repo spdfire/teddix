@@ -33,7 +33,7 @@ rm -rf %{buildroot}
 %post 
 [ ! -d /etc/teddix ] && mkdir /etc/teddix
 [ ! -f /etc/teddix/teddix.conf ] && cp -v /usr/share/teddix/teddix.conf /etc/teddix/teddix.conf
-[ ! -f /etc/init.d/teddix-agent ] && cp -v /usr/share/teddix-agent/init.d/teddix-agent.generic /etc/init.d/teddix-agent 
+[ ! -f /etc/init.d/teddix-agent ] && cp -v /usr/share/teddix-agent/init.d/teddix-agent.rhel /etc/init.d/teddix-agent 
 chmod +x /etc/init.d/teddix-agent
 
 %files
