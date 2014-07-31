@@ -87,19 +87,18 @@ class TeddixLinux:
 
     # Get installed packages
     def getpkgs(self):
-        parser = TeddixParser.TeddixStringParser() 
+        parser = TeddixParser.TeddixStringParser()
+        lines = ''
         
         # [name][ver][pkgsize][instsize][section][status][info][homepage][signed][files][arch]
         if parser.checkexec('rpm'):
             self.syslog.debug("%s is RPM based" % self.system)
             cmd = "rpm -qa --queryformat '\[%{NAME}\]\[%{VERSION}-%{RELEASE}\]\[%{ARCHIVESIZE}\]\[%{SIZE}\]\[%{GROUP}\]\[installed\]\[%{SUMMARY}\]\[%{URL}\]\[\]\[\]\[%{ARCH}\]\n'"
             lines = parser.readstdout(cmd)
-        elif parser.checkexec('dpkg-query'):
+        if parser.checkexec('dpkg-query'):
             self.syslog.debug("%s is DEB based " % self.system)
             cmd = "dpkg-query --show --showformat='[${Package}][${Version}][][${Installed-Size}][${Section}][${Status}][${binary:Summary}][${Homepage}][][][${Architecture}]\n'"
             lines = parser.readstdout(cmd)
-        else:
-            self.syslog.warn("Unknown pkg system")
 
         packages = { }
         i = 0 
