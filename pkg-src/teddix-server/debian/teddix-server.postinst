@@ -38,6 +38,8 @@ case "$mode" in
     dbc_mysql_exec_file /usr/share/teddix/initdb.sql || true
     /etc/init.d/teddix-server start 
 
+    update-rc.d teddix-server defaults
+
     ;;
 esac
 

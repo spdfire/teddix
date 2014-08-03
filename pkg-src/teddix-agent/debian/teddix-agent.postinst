@@ -13,6 +13,7 @@ case "$mode" in
     [ ! -d /etc/teddix ] && mkdir /etc/teddix
     [ ! -f /etc/teddix/teddix.conf ] && cp -v /usr/share/teddix/teddix.conf /etc/teddix/teddix.conf
     /etc/init.d/teddix-agent start
+    update-rc.d teddix-agent defaults
 
     ;;
 esac

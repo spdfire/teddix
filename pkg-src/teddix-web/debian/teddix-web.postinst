@@ -43,6 +43,7 @@ case "$mode" in
 
     /etc/init.d/teddix-web start 
 
+    update-rc.d teddix-web defaults
     # Activate trigger
     dpkg-trigger teddix-web
 
