@@ -2,7 +2,7 @@
 #
 # teddix-server		Start up the teddix-server daemon
 #
-# chkconfig: 2345 55 25
+# chkconfig: - 70 30
 # description: This service starts up the teddix-server daemon.
 #
 # processname: teddix-server
