@@ -18,7 +18,7 @@ import TeddixConfigFile
 
 class TeddixDatabase:
     def connect(self,dbtype,dbhost,dbport,dbuser,dbpass,dbname):
-        
+
         self.syslog.info("Connecting to %s database: %s@%s:%d/%s " % (dbtype,dbuser,dbhost,dbport,dbname))
         # Open database connection
         if dbtype.lower() == "mysql": 
@@ -50,16 +50,16 @@ class TeddixDatabase:
 
     def execute(self,sql,opts=None):
         # Try to run the query and catch any exception
-        self.syslog.debug("SQL execute(): %s " % sql[:250] )
+        #self.syslog.debug("SQL execute(): %s " % sql[:250] )
         try:
             self.cursor.execute(sql,opts)
         except Exception, e:
             self.syslog.error("SQL error: %s" % e)
             self.syslog.warn("Starting rollback")
             self.db.rollback()
-    
+
     def fetchall(self):
-        self.syslog.debug("SQL fetchall()")
+        #self.syslog.debug("SQL fetchall()")
         try:
             result = self.cursor.fetchall()
         except Exception, e:
@@ -71,7 +71,7 @@ class TeddixDatabase:
     def rowcount(self):
         try:
             result = self.cursor.rowcount
-            self.syslog.debug("SQL rowcount(): %s" % result)
+            #self.syslog.debug("SQL rowcount(): %s" % result)
         except Exception, e:
             self.syslog.warn("Error in SQL rowcount(): %s" % e)
             return 
@@ -81,7 +81,7 @@ class TeddixDatabase:
     def insert_id(self):
         try:
             result = self.db.insert_id()
-            self.syslog.debug("SQL insert_id(): %s" % result)
+            #self.syslog.debug("SQL insert_id(): %s" % result)
         except Exception, e:
             self.syslog.warn("Error in SQL insert_id(): %s" % e)
             return 
@@ -140,9 +140,9 @@ if __name__ == "__main__":
 
     syslog.info("Logging subsystem initialized")
 
-    database = TeddixDatabase(syslog,cfg);
+    database = TeddixDatabase(syslog,cfg)
     database.execute("SELECT VERSION();")
-    
+
     result = database.fetchall()
     for row in result:
         syslog.debug("SQL result: %s " % row)
