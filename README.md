@@ -23,9 +23,9 @@ To setup your environment, you need at least one teddix-server, one teddix-web a
 
 ##Contributing
 
-If you are interested in development: clone repo, install development version, try to fix [problems](http://www.teddix.info/mantis) or implement new [features](http://www.teddix.info/documentation/contribute/#roadmap) then submit patches.  
+If you are interested in development: clone repo, install development version, try to fix [problems](https://github.com/spdfire/teddix/issues) or implement new [features](http://www.teddix.info/documentation/contribute/#roadmap) then submit patches.  
 
-Bug tracking system can be found at: http://www.teddix.info/mantis
+Bug tracking system can be found at: https://github.com/spdfire/teddix/issues
 
 The public GitHub source repository can be found at: https://github.com/spdfire/teddix
 
