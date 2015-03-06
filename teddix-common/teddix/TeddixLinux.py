@@ -436,7 +436,7 @@ class TeddixLinux:
             pname = parser.str2uni(p.name)
 
             pcmd = ''
-            for pp in p.cmdline:
+            for pp in p.cmdline():
                 pp += ' '
                 pcmd += pp  
             pcmd = parser.str2uni(pcmd)
